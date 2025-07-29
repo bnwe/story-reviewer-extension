@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Story Reviewer - Feedback</title>
+    <link rel="stylesheet" href="feedback.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>User Story Feedback</h1>
+            <div class="header-actions">
+                <button id="refreshBtn" class="btn btn-secondary" title="Refresh feedback">
+                    <span class="icon">🔄</span>
+                    Refresh
+                </button>
+                <button id="settingsBtn" class="btn btn-secondary" title="Open settings">
+                    <span class="icon">⚙️</span>
+                    Settings
+                </button>
+            </div>
+        </header>
+        
+        <div class="content">
+            <!-- Loading state -->
+            <div id="loadingState" class="state loading-state">
+                <div class="loading-spinner"></div>
+                <h2>Analyzing your user story...</h2>
+                <p>Please wait while we generate feedback for your story.</p>
+            </div>
+            
+            <!-- Error state -->
+            <div id="errorState" class="state error-state" style="display: none;">
+                <div class="error-icon">⚠️</div>
+                <h2>Unable to Generate Feedback</h2>
+                <p id="errorMessage">An error occurred while generating feedback.</p>
+                <div class="error-actions">
+                    <button id="retryBtn" class="btn btn-primary">Try Again</button>
+                    <button id="checkSettingsBtn" class="btn btn-secondary">Check Settings</button>
+                </div>
+            </div>
+            
+            <!-- No API key state -->
+            <div id="noApiKeyState" class="state no-api-key-state" style="display: none;">
+                <div class="setup-icon">🔑</div>
+                <h2>API Key Required</h2>
+                <p>To get feedback on your user stories, you need to configure an API key for your chosen LLM provider.</p>
+                <div class="setup-actions">
+                    <button id="openSettingsBtn" class="btn btn-primary">Configure API Key</button>
+                </div>
+            </div>
+            
+            <!-- Success state -->
+            <div id="successState" class="state success-state" style="display: none;">
+                <div class="original-story">
+                    <h2>Original Story</h2>
+                    <div id="originalContent" class="content-box"></div>
+                </div>
+                
+                <div class="feedback-section">
+                    <div class="feedback-header">
+                        <h2>AI Feedback</h2>
+                        <div class="feedback-actions">
+                            <button id="copyAllBtn" class="btn btn-secondary">
+                                <span class="icon">📋</span>
+                                Copy All
+                            </button>
+                            <button id="exportBtn" class="btn btn-secondary">
+                                <span class="icon">💾</span>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+                    <div id="feedbackContent" class="feedback-content"></div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="footer">
+            <div class="footer-info">
+                <span id="timestampInfo">Last updated: Never</span>
+                <span id="providerInfo">Provider: Not configured</span>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Copy success notification -->
+    <div id="copyNotification" class="notification" style="display: none;">
+        <span class="icon">✅</span>
+        <span>Copied to clipboard!</span>
+    </div>
+    
+    <script src="feedback.js"></script>
+</body>
+</html>

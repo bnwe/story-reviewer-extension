@@ -4,6 +4,12 @@
   "version": "1.0.0",
   "description": "Extract user story content from Azure DevOps for AI-powered feedback",
   
+  "applications": {
+    "gecko": {
+      "id": "azure-devops-story-reviewer@anthropic.com"
+    }
+  },
+  
   "permissions": [
     "activeTab",
     "storage",
@@ -32,7 +38,10 @@
     "default_popup": "popup/popup.html"
   },
   
+  "options_page": "options/options.html",
+  
   "web_accessible_resources": [
-    "content/*"
+    "content/*",
+    "feedback/*"
   ]
 }

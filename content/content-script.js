@@ -64,9 +64,19 @@ class AzureDevOpsStoryExtractor {
 
   cleanup() {
     // Remove existing buttons
-    const existingButtons = document.querySelectorAll('#story-extractor-btn');
+    const existingButtons = document.querySelectorAll('#story-extractor-btn, #story-feedback-btn');
     existingButtons.forEach(button => button.remove());
+    
+    // Remove button containers
+    const buttonContainers = document.querySelectorAll('div[style*="inline-flex"]');
+    buttonContainers.forEach(container => {
+      if (container.querySelector('#story-extractor-btn') || container.querySelector('#story-feedback-btn')) {
+        container.remove();
+      }
+    });
+    
     this.extractButton = null;
+    this.feedbackButton = null;
     this.isInitialized = false;
     this.isCreatingButton = false;
   }
@@ -153,12 +163,19 @@ class AzureDevOpsStoryExtractor {
   }
 
   createInlineButton(searchHeader) {
-    // Create extraction button and inject inline
+    // Create button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.cssText = `
+      display: inline-flex;
+      gap: 8px;
+      margin-right: 8px;
+    `;
+
+    // Create extraction button
     const extractButton = document.createElement('button');
     extractButton.id = 'story-extractor-btn';
-    extractButton.textContent = 'Extract Story Content';
+    extractButton.textContent = 'Extract Story';
     extractButton.style.cssText = `
-      margin-right: 8px;
       padding: 6px 12px;
       background-color: #0078d4;
       color: white;
@@ -173,6 +190,26 @@ class AzureDevOpsStoryExtractor {
       white-space: nowrap;
     `;
 
+    // Create feedback button
+    const feedbackButton = document.createElement('button');
+    feedbackButton.id = 'story-feedback-btn';
+    feedbackButton.textContent = 'Get Feedback';
+    feedbackButton.style.cssText = `
+      padding: 6px 12px;
+      background-color: #107c10;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 13px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
+    `;
+
+    // Button event listeners
     extractButton.addEventListener('click', () => this.extractStoryContent());
     extractButton.addEventListener('mouseenter', () => {
       extractButton.style.backgroundColor = '#106ebe';
@@ -181,9 +218,22 @@ class AzureDevOpsStoryExtractor {
       extractButton.style.backgroundColor = '#0078d4';
     });
 
-    // Insert button as first child of search header (to the left of search field)
-    searchHeader.insertBefore(extractButton, searchHeader.firstChild);
+    feedbackButton.addEventListener('click', () => this.openFeedbackWindow());
+    feedbackButton.addEventListener('mouseenter', () => {
+      feedbackButton.style.backgroundColor = '#0e6e0e';
+    });
+    feedbackButton.addEventListener('mouseleave', () => {
+      feedbackButton.style.backgroundColor = '#107c10';
+    });
+
+    // Add buttons to container
+    buttonContainer.appendChild(extractButton);
+    buttonContainer.appendChild(feedbackButton);
+
+    // Insert container as first child of search header
+    searchHeader.insertBefore(buttonContainer, searchHeader.firstChild);
     this.extractButton = extractButton;
+    this.feedbackButton = feedbackButton;
   }
 
   createFixedExtractButton() {
@@ -219,7 +269,23 @@ class AzureDevOpsStoryExtractor {
     this.extractButton = extractButton;
   }
 
-  extractStoryContent() {
+  openFeedbackWindow() {
+    // First extract current content if not already extracted
+    this.extractStoryContent(true);
+    
+    // Open feedback window
+    const feedbackUrl = chrome.runtime.getURL('feedback/feedback.html');
+    const windowFeatures = 'width=1000,height=700,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,directories=no,status=no';
+    
+    try {
+      window.open(feedbackUrl, 'storyFeedback', windowFeatures);
+    } catch (error) {
+      console.error('Failed to open feedback window:', error);
+      this.showExtractionError('Failed to open feedback window. Please check popup blocker settings.');
+    }
+  }
+
+  extractStoryContent(silent = false) {
     try {
       const content = this.getStoryContentFromDOM();
       
@@ -242,9 +308,9 @@ class AzureDevOpsStoryExtractor {
           content: content
         }, (response) => {
           if (response && response.success) {
-            this.showExtractionSuccess(content, validation);
+            this.showExtractionSuccess(content, validation, silent);
           } else {
-            this.showExtractionError('Failed to store extracted content');
+            if (!silent) this.showExtractionError('Failed to store extracted content');
           }
         });
       } else {
@@ -378,7 +444,16 @@ class AzureDevOpsStoryExtractor {
     return content;
   }
 
-  showExtractionSuccess(content, validation) {
+  showExtractionSuccess(content, validation, silent = false) {
+    if (silent) {
+      // Log detailed extraction results only
+      console.log('Extracted content (silent):', content);
+      if (validation && validation.issues.length > 0) {
+        console.warn('Validation issues:', validation.issues);
+      }
+      return;
+    }
+    
     let message = 'Story content extracted successfully!';
     
     // Add validation details to success message

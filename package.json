@@ -7,8 +7,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint": "eslint content/ background/ popup/ tests/",
-    "lint:fix": "eslint --fix content/ background/ popup/ tests/",
+    "lint": "eslint content/ background/ popup/ options/ feedback/ tests/",
+    "lint:fix": "eslint --fix content/ background/ popup/ options/ feedback/ tests/",
     "build": "npm run lint && npm run test",
     "dev": "web-ext run --source-dir . --target firefox-desktop",
     "package": "web-ext build --source-dir . --artifacts-dir dist/"
@@ -36,6 +36,8 @@
       "content/**/*.js",
       "background/**/*.js",
       "popup/**/*.js",
+      "options/**/*.js",
+      "feedback/**/*.js",
       "!**/node_modules/**"
     ],
     "coverageDirectory": "tests/coverage",
@@ -71,7 +73,15 @@
       "global": "writable",
       "TestUtils": "readonly",
       "process": "readonly",
-      "module": "readonly"
+      "module": "readonly",
+      "getApiUrl": "readonly",
+      "getApiHeaders": "readonly",
+      "getTestPayload": "readonly",
+      "getFeedbackPayload": "readonly",
+      "validateApiResponse": "readonly",
+      "extractFeedbackFromResponse": "readonly",
+      "testApiConnection": "readonly",
+      "sendToLLM": "readonly"
     }
   },
   "webExt": {
