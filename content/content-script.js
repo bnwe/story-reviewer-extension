@@ -297,8 +297,11 @@ class AzureDevOpsStoryExtractor {
       }
     }
 
-    // Extract description with enhanced handling
+    // Extract description with enhanced handling for rich text editor
     const descriptionSelectors = [
+      '.rooster-editor[aria-label="Description"]',
+      '[aria-label="Description"].rooster-editor',
+      '.rooster-editor.text-element',
       '[data-testid="work-item-form-description"]',
       '.work-item-form-description',
       '.workitem-description',
@@ -314,14 +317,28 @@ class AzureDevOpsStoryExtractor {
         if (typeof ExtractionUtils !== 'undefined') {
           content.description = ExtractionUtils.extractRichTextContent(descElement);
         } else {
-          content.description = (descElement.value || descElement.textContent || descElement.innerHTML).trim();
+          // Handle contenteditable divs properly - extract HTML formatting
+          if (descElement.contentEditable === 'true' || descElement.getAttribute('contenteditable') === 'true') {
+            content.description = descElement.innerHTML.trim();
+          } else {
+            content.description = (descElement.value || descElement.textContent || descElement.innerHTML).trim();
+          }
         }
-        if (content.description) break;
+        if (content.description && 
+            content.description !== 'Click to add Description.' &&
+            !content.description.includes('Click to add Description.') &&
+            content.description !== '<div><br> </div>') {
+          break;
+        }
       }
     }
 
-    // Extract acceptance criteria with enhanced handling
+    // Extract acceptance criteria with enhanced handling for rich text editor
     const acSelectors = [
+      '.rooster-editor[aria-label="Acceptance Criteria"]',
+      '[aria-label="Acceptance Criteria"].rooster-editor',
+      '.rooster-editor[aria-label*="Acceptance"]',
+      '[aria-label*="Acceptance"].rooster-editor',
       '[data-testid="work-item-form-acceptance-criteria"]',
       '.work-item-form-acceptance-criteria',
       '.workitem-acceptance-criteria',
@@ -335,9 +352,20 @@ class AzureDevOpsStoryExtractor {
         if (typeof ExtractionUtils !== 'undefined') {
           content.acceptanceCriteria = ExtractionUtils.extractRichTextContent(acElement);
         } else {
-          content.acceptanceCriteria = (acElement.value || acElement.textContent || acElement.innerHTML).trim();
+          // Handle contenteditable divs properly - extract HTML formatting
+          if (acElement.contentEditable === 'true' || acElement.getAttribute('contenteditable') === 'true') {
+            content.acceptanceCriteria = acElement.innerHTML.trim();
+          } else {
+            content.acceptanceCriteria = (acElement.value || acElement.textContent || acElement.innerHTML).trim();
+          }
         }
-        if (content.acceptanceCriteria) break;
+        // Filter out placeholder text and empty HTML
+        if (content.acceptanceCriteria && 
+            !content.acceptanceCriteria.includes('Click to add') && 
+            content.acceptanceCriteria !== '<div><br> </div>' &&
+            content.acceptanceCriteria.length > 0) {
+          break;
+        }
       }
     }
 

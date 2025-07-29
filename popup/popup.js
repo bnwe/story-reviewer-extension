@@ -89,9 +89,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const descriptionValue = document.getElementById('descriptionValue');
     const acValue = document.getElementById('acValue');
 
+    // Use textContent for title (usually plain text)
     titleValue.textContent = content.title || '';
-    descriptionValue.textContent = content.description || '';
-    acValue.textContent = content.acceptanceCriteria || '';
+    
+    // Use innerHTML for description and acceptance criteria to render HTML formatting
+    descriptionValue.innerHTML = content.description || '';
+    acValue.innerHTML = content.acceptanceCriteria || '';
 
     contentDiv.style.display = 'block';
     

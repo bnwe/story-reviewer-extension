@@ -146,3 +146,63 @@ h1 {
 .field .value::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
+
+/* HTML formatting styles for extracted content */
+.field .value ol,
+.field .value ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.field .value ol {
+    list-style-type: decimal;
+}
+
+.field .value ul {
+    list-style-type: disc;
+}
+
+.field .value li {
+    margin: 4px 0;
+    line-height: 1.4;
+}
+
+.field .value ol ol {
+    list-style-type: lower-alpha;
+    margin: 4px 0;
+}
+
+.field .value ol ol ol {
+    list-style-type: lower-roman;
+}
+
+.field .value div {
+    margin: 4px 0;
+}
+
+.field .value p {
+    margin: 6px 0;
+}
+
+.field .value a {
+    color: #0078d4;
+    text-decoration: underline;
+}
+
+.field .value a:hover {
+    color: #106ebe;
+}
+
+.field .value strong,
+.field .value b {
+    font-weight: bold;
+}
+
+.field .value em,
+.field .value i {
+    font-style: italic;
+}
+
+.field .value br {
+    line-height: 1.4;
+}

@@ -34,10 +34,10 @@ class ExtractionUtils {
       return Array.from(lines).map(line => line.textContent).join('\n');
     }
     
-    // Handle rich text editors
+    // Handle rich text editors - preserve HTML formatting
     const richTextEditor = element.querySelector('[contenteditable="true"]');
     if (richTextEditor) {
-      return this.sanitizeContent(richTextEditor.innerHTML);
+      return richTextEditor.innerHTML.trim();
     }
     
     // Handle standard input/textarea elements
@@ -45,7 +45,12 @@ class ExtractionUtils {
       return element.value;
     }
     
-    // Handle div with text content
+    // For direct contenteditable elements, preserve HTML
+    if (element.contentEditable === 'true' || element.getAttribute('contenteditable') === 'true') {
+      return element.innerHTML.trim();
+    }
+    
+    // Handle div with text content - fallback to sanitized content
     return this.sanitizeContent(element.innerHTML || element.textContent);
   }
 
