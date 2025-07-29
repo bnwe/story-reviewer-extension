@@ -8,6 +8,8 @@ class AzureDevOpsStoryExtractor {
   constructor() {
     this.isInitialized = false;
     this.extractButton = null;
+    this.observer = null;
+    this.isCreatingButton = false;
     this.init();
   }
 
@@ -18,6 +20,55 @@ class AzureDevOpsStoryExtractor {
     } else {
       this.setupExtractor();
     }
+
+    // Set up observers for SPA navigation
+    this.setupNavigationObserver();
+  }
+
+  setupNavigationObserver() {
+    // Watch for URL changes in SPA
+    let lastUrl = location.href;
+    new MutationObserver(() => {
+      const url = location.href;
+      if (url !== lastUrl) {
+        lastUrl = url;
+        setTimeout(() => this.reinitialize(), 500); // Delay to allow page to load
+      }
+    }).observe(document, { subtree: true, childList: true });
+
+    // Also watch for DOM changes that might indicate page content has changed
+    this.observer = new MutationObserver((mutations) => {
+      const hasRelevantChanges = mutations.some(mutation => 
+        Array.from(mutation.addedNodes).some(node => 
+          node.nodeType === Node.ELEMENT_NODE && 
+          (node.classList?.contains('expandable-search-header') || 
+           node.querySelector?.('.expandable-search-header'))
+        )
+      );
+      
+      if (hasRelevantChanges && !this.extractButton && !this.isCreatingButton) {
+        setTimeout(() => this.setupExtractor(), 100);
+      }
+    });
+    
+    this.observer.observe(document.body, { 
+      childList: true, 
+      subtree: true 
+    });
+  }
+
+  reinitialize() {
+    this.cleanup();
+    this.setupExtractor();
+  }
+
+  cleanup() {
+    // Remove existing buttons
+    const existingButtons = document.querySelectorAll('#story-extractor-btn');
+    existingButtons.forEach(button => button.remove());
+    this.extractButton = null;
+    this.isInitialized = false;
+    this.isCreatingButton = false;
   }
 
   setupExtractor() {
@@ -25,6 +76,14 @@ class AzureDevOpsStoryExtractor {
     if (!this.isWorkItemPage()) {
       return;
     }
+
+    // Prevent concurrent button creation
+    if (this.isCreatingButton) {
+      return;
+    }
+
+    // Clean up any existing buttons first
+    this.cleanup();
 
     this.createExtractButton();
     this.isInitialized = true;
@@ -41,7 +100,94 @@ class AzureDevOpsStoryExtractor {
   }
 
   createExtractButton() {
-    // Create extraction button and inject into page
+    // Prevent concurrent button creation
+    if (this.isCreatingButton) {
+      return;
+    }
+    
+    this.isCreatingButton = true;
+    
+    // Wait for search header to be available with retry logic
+    this.waitForSearchHeader().then(searchHeader => {
+      // Double-check we still need to create the button
+      if (document.querySelector('#story-extractor-btn')) {
+        this.isCreatingButton = false;
+        return;
+      }
+      
+      if (searchHeader) {
+        this.createInlineButton(searchHeader);
+      } else {
+        console.warn('Search header not found after retries, falling back to fixed positioning');
+        this.createFixedExtractButton();
+      }
+      
+      this.isCreatingButton = false;
+    }).catch(error => {
+      console.error('Error creating extract button:', error);
+      this.isCreatingButton = false;
+    });
+  }
+
+  waitForSearchHeader(maxRetries = 10, delay = 200) {
+    return new Promise((resolve) => {
+      let retries = 0;
+      
+      const checkForHeader = () => {
+        const searchHeader = document.querySelector('.flex-row.expandable-search-header');
+        if (searchHeader) {
+          resolve(searchHeader);
+          return;
+        }
+        
+        retries++;
+        if (retries < maxRetries) {
+          setTimeout(checkForHeader, delay);
+        } else {
+          resolve(null);
+        }
+      };
+      
+      checkForHeader();
+    });
+  }
+
+  createInlineButton(searchHeader) {
+    // Create extraction button and inject inline
+    const extractButton = document.createElement('button');
+    extractButton.id = 'story-extractor-btn';
+    extractButton.textContent = 'Extract Story Content';
+    extractButton.style.cssText = `
+      margin-right: 8px;
+      padding: 6px 12px;
+      background-color: #0078d4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 13px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
+    `;
+
+    extractButton.addEventListener('click', () => this.extractStoryContent());
+    extractButton.addEventListener('mouseenter', () => {
+      extractButton.style.backgroundColor = '#106ebe';
+    });
+    extractButton.addEventListener('mouseleave', () => {
+      extractButton.style.backgroundColor = '#0078d4';
+    });
+
+    // Insert button as first child of search header (to the left of search field)
+    searchHeader.insertBefore(extractButton, searchHeader.firstChild);
+    this.extractButton = extractButton;
+  }
+
+  createFixedExtractButton() {
+    // Fallback method for fixed positioning when search header not found
     const extractButton = document.createElement('button');
     extractButton.id = 'story-extractor-btn';
     extractButton.textContent = 'Extract Story Content';
