@@ -1,6 +1,9 @@
 // Content script for Azure DevOps Story Reviewer extension
 // Runs on Azure DevOps work item pages to extract user story content
 
+// Cross-browser compatibility
+const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+
 class AzureDevOpsStoryExtractor {
   constructor() {
     this.isInitialized = false;
@@ -88,7 +91,7 @@ class AzureDevOpsStoryExtractor {
         content.validation = validation;
         
         // Send extracted content to background script
-        chrome.runtime.sendMessage({
+        browserAPI.runtime.sendMessage({
           type: 'STORY_CONTENT_EXTRACTED',
           content: content
         }, (response) => {

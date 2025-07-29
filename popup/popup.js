@@ -1,6 +1,9 @@
 // Popup script for Azure DevOps Story Reviewer extension
 // Handles UI interactions and displays extracted content
 
+// Cross-browser compatibility
+const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+
 document.addEventListener('DOMContentLoaded', () => {
   const extractBtn = document.getElementById('extractBtn');
   const viewBtn = document.getElementById('viewBtn');
@@ -16,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function initializePopup() {
     // Check if we have stored extracted content
-    chrome.storage.local.get(['extractedContent', 'extractionTimestamp'], (result) => {
+    browserAPI.storage.local.get(['extractedContent', 'extractionTimestamp'], (result) => {
       if (result.extractedContent && result.extractionTimestamp) {
         const timestamp = new Date(result.extractionTimestamp);
         const now = new Date();
@@ -34,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Check current tab
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    browserAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]) {
         const isWorkItemPage = isAzureDevOpsWorkItem(tabs[0].url);
         extractBtn.disabled = !isWorkItemPage;
@@ -51,11 +54,11 @@ document.addEventListener('DOMContentLoaded', () => {
     extractBtn.disabled = true;
 
     // Send message to content script to extract content
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      chrome.tabs.sendMessage(tabs[0].id, { action: 'extractContent' }, (response) => {
+    browserAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      browserAPI.tabs.sendMessage(tabs[0].id, { action: 'extractContent' }, (response) => {
         extractBtn.disabled = false;
         
-        if (chrome.runtime.lastError) {
+        if (browserAPI.runtime.lastError) {
           updateStatus('Error: Could not communicate with the page. Please refresh and try again.');
           return;
         }
@@ -72,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function viewLastExtraction() {
-    chrome.storage.local.get(['extractedContent'], (result) => {
+    browserAPI.storage.local.get(['extractedContent'], (result) => {
       if (result.extractedContent) {
         displayExtractedContent(result.extractedContent);
       } else {
