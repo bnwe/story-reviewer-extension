@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Story Reviewer</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Azure DevOps Story Reviewer</h1>
+        <p class="description">Extract user story content from Azure DevOps for AI-powered feedback.</p>
+        
+        <div class="status" id="status">
+            <p>Navigate to an Azure DevOps work item and click "Extract Story Content" to begin.</p>
+        </div>
+        
+        <div class="actions">
+            <button id="extractBtn" class="btn-primary">Extract Content</button>
+            <button id="viewBtn" class="btn-secondary" disabled>View Last Extraction</button>
+        </div>
+        
+        <div class="content" id="extractedContent" style="display: none;">
+            <h3>Extracted Content</h3>
+            <div class="field">
+                <label>Title:</label>
+                <div class="value" id="titleValue"></div>
+            </div>
+            <div class="field">
+                <label>Description:</label>
+                <div class="value" id="descriptionValue"></div>
+            </div>
+            <div class="field">
+                <label>Acceptance Criteria:</label>
+                <div class="value" id="acValue"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html>

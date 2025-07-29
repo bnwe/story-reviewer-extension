@@ -1,0 +1,90 @@
+{
+  "name": "azure-devops-story-reviewer",
+  "version": "1.0.0",
+  "description": "Firefox extension to extract user story content from Azure DevOps for AI-powered feedback",
+  "main": "manifest.json",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint content/ background/ popup/ tests/",
+    "lint:fix": "eslint --fix content/ background/ popup/ tests/",
+    "build": "npm run lint && npm run test",
+    "dev": "web-ext run --source-dir . --target firefox-desktop",
+    "package": "web-ext build --source-dir . --artifacts-dir dist/"
+  },
+  "keywords": [
+    "firefox-extension",
+    "azure-devops",
+    "user-stories",
+    "content-extraction",
+    "ai-feedback"
+  ],
+  "author": "Development Team",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.5.0",
+    "jest-environment-jsdom": "^29.5.0",
+    "eslint": "^8.42.0",
+    "eslint-plugin-mozilla": "^3.6.0",
+    "web-ext": "^7.6.2"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+    "collectCoverageFrom": [
+      "content/**/*.js",
+      "background/**/*.js",
+      "popup/**/*.js",
+      "!**/node_modules/**"
+    ],
+    "coverageDirectory": "tests/coverage",
+    "coverageReporters": ["text", "lcov", "html"],
+    "testMatch": [
+      "<rootDir>/tests/**/*.test.js"
+    ]
+  },
+  "eslintConfig": {
+    "extends": ["eslint:recommended"],
+    "env": {
+      "browser": true,
+      "es2021": true,
+      "jest": true,
+      "webextensions": true,
+      "node": true
+    },
+    "parserOptions": {
+      "ecmaVersion": 2021,
+      "sourceType": "module"
+    },
+    "rules": {
+      "no-unused-vars": "warn",
+      "no-console": "off",
+      "prefer-const": "error",
+      "no-var": "error"
+    },
+    "globals": {
+      "chrome": "readonly",
+      "browser": "readonly",
+      "ExtractionUtils": "readonly",
+      "AzureDevOpsStoryExtractor": "readonly",
+      "global": "writable",
+      "TestUtils": "readonly",
+      "process": "readonly",
+      "module": "readonly"
+    }
+  },
+  "webExt": {
+    "sourceDir": ".",
+    "artifactsDir": "dist/",
+    "ignoreFiles": [
+      "tests/",
+      "node_modules/",
+      "package.json",
+      "package-lock.json",
+      "README.md",
+      ".git/",
+      ".gitignore"
+    ]
+  }
+}

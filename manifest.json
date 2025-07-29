@@ -1,0 +1,37 @@
+{
+  "manifest_version": 2,
+  "name": "Azure DevOps Story Reviewer",
+  "version": "1.0.0",
+  "description": "Extract user story content from Azure DevOps for AI-powered feedback",
+  
+  "permissions": [
+    "activeTab",
+    "https://dev.azure.com/*",
+    "https://*.visualstudio.com/*"
+  ],
+  
+  "content_scripts": [
+    {
+      "matches": [
+        "https://dev.azure.com/*",
+        "https://*.visualstudio.com/*"
+      ],
+      "js": ["content/extraction-utils.js", "content/content-script.js"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "background": {
+    "scripts": ["background/background.js"],
+    "persistent": false
+  },
+  
+  "browser_action": {
+    "default_title": "Story Reviewer",
+    "default_popup": "popup/popup.html"
+  },
+  
+  "web_accessible_resources": [
+    "content/*"
+  ]
+}

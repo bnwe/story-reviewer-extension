@@ -1,0 +1,148 @@
+/* Popup styles for Azure DevOps Story Reviewer extension */
+
+body {
+    width: 350px;
+    min-height: 200px;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    background-color: #f5f5f5;
+}
+
+.container {
+    padding: 16px;
+}
+
+h1 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #0078d4;
+}
+
+.description {
+    margin: 0 0 16px 0;
+    color: #666;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.status {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.status p {
+    margin: 0;
+    color: #333;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.btn-primary, .btn-secondary {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #0078d4;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: #106ebe;
+}
+
+.btn-secondary {
+    background-color: #f3f2f1;
+    color: #323130;
+    border: 1px solid #8a8886;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: #edebe9;
+}
+
+.btn-primary:disabled, .btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.content {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 12px;
+}
+
+.content h3 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: #0078d4;
+}
+
+.field {
+    margin-bottom: 12px;
+}
+
+.field:last-child {
+    margin-bottom: 0;
+}
+
+.field label {
+    display: block;
+    font-weight: 600;
+    color: #323130;
+    margin-bottom: 4px;
+    font-size: 12px;
+}
+
+.field .value {
+    padding: 6px 8px;
+    background-color: #f8f8f8;
+    border: 1px solid #e1dfdd;
+    border-radius: 3px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #323130;
+    max-height: 80px;
+    overflow-y: auto;
+}
+
+.field .value:empty::before {
+    content: 'No content extracted';
+    color: #999;
+    font-style: italic;
+}
+
+/* Scrollbar styling */
+.field .value::-webkit-scrollbar {
+    width: 6px;
+}
+
+.field .value::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.field .value::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.field .value::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
