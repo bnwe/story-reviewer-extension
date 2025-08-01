@@ -1,5 +1,6 @@
 // Utility functions for Azure DevOps content extraction
 // Handles different layouts, rich text formatting, and edge cases
+// Used by content-script.js for extraction operations
 
 class ExtractionUtils {
   

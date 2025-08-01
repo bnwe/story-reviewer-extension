@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateStatus(message) {
-    statusDiv.innerHTML = `<p>${message}</p>`;
+    statusDiv.textContent = message;
   }
 
   function isAzureDevOpsWorkItem(url) {

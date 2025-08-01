@@ -446,8 +446,7 @@ class AzureDevOpsStoryExtractor {
 
   showExtractionSuccess(content, validation, silent = false) {
     if (silent) {
-      // Log detailed extraction results only
-      console.log('Extracted content (silent):', content);
+      // Silent extraction - no logging for security
       if (validation && validation.issues.length > 0) {
         console.warn('Validation issues:', validation.issues);
       }
@@ -461,17 +460,16 @@ class AzureDevOpsStoryExtractor {
       message += ` (${validation.issues.length} validation issues found)`;
     }
     
-    const notification = this.createNotification(message, 'success');
+    this.createNotification(message, 'success');
     
-    // Log detailed extraction results
-    console.log('Extracted content:', content);
+    // Content extracted successfully
     if (validation && validation.issues.length > 0) {
       console.warn('Validation issues:', validation.issues);
     }
   }
 
   showExtractionError(message) {
-    const notification = this.createNotification(
+    this.createNotification(
       `Extraction failed: ${message}`,
       'error'
     );

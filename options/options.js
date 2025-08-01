@@ -112,7 +112,6 @@ class OptionsManager {
     
     async saveSettings() {
         const settings = this.getCurrentSettings();
-        const statusMessage = document.getElementById('statusMessage');
         
         try {
             await this.storeSettings(settings);
