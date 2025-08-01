@@ -193,6 +193,13 @@ The extension requires these permissions:
 7. Push to branch: `git push origin feature/amazing-feature`
 8. Open a Pull Request
 
+## Planned Features
+
+- Make prompt customizable
+- Improve response formatting
+- Support copy-pasting of snippets in the response
+- Support for Mistral
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
