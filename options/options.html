@@ -38,6 +38,42 @@
         </div>
         
         <div class="section">
+            <h2>Custom Prompts</h2>
+            <div class="prompt-tabs">
+                <button class="prompt-tab active" data-provider="openai">OpenAI</button>
+                <button class="prompt-tab" data-provider="anthropic">Anthropic</button>
+                <button class="prompt-tab" data-provider="custom">Custom API</button>
+            </div>
+            
+            <div class="prompt-content">
+                <div class="form-group">
+                    <label for="customPrompt">Prompt Template:</label>
+                    <textarea id="customPrompt" placeholder="Enter your custom prompt template. Use {{storyContent}} for story content, {{timestamp}} for current time, and {{provider}} for API provider name." rows="10"></textarea>
+                    <div class="character-count">
+                        <span id="promptCharCount">0</span> characters
+                    </div>
+                </div>
+                
+                <div class="prompt-variables">
+                    <h4>Available Variables:</h4>
+                    <div class="variable-list">
+                        <span class="variable-tag">{{storyContent}}</span>
+                        <span class="variable-tag">{{timestamp}}</span>
+                        <span class="variable-tag">{{provider}}</span>
+                        <span class="variable-tag">{{feedbackType}}</span>
+                    </div>
+                </div>
+                
+                <div class="prompt-actions">
+                    <button type="button" id="previewPrompt" class="preview-btn">Preview Prompt</button>
+                    <button type="button" id="resetPrompt" class="reset-prompt-btn">Reset to Default</button>
+                </div>
+                
+                <div id="promptValidation" class="validation-message"></div>
+            </div>
+        </div>
+        
+        <div class="section">
             <h2>Instructions</h2>
             <div class="instructions">
                 <h3>Getting API Keys:</h3>
@@ -56,6 +92,23 @@
         </div>
         
         <div id="statusMessage" class="status-message"></div>
+    </div>
+    
+    <!-- Preview Modal -->
+    <div id="previewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Prompt Preview</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="preview-content">
+                    <h4>Final Prompt:</h4>
+                    <div id="previewText" class="preview-text"></div>
+                    <button type="button" id="copyPreview" class="copy-btn">Copy to Clipboard</button>
+                </div>
+            </div>
+        </div>
     </div>
     
     <script src="options.js"></script>

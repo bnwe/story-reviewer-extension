@@ -38,6 +38,32 @@ describe('Options Page Tests', () => {
       <button id="resetSettings">Reset Settings</button>
       <span id="connectionStatus" class="status"></span>
       <div id="statusMessage" class="status-message"></div>
+      
+      <!-- Prompt Management Elements -->
+      <div class="prompt-tabs">
+        <button class="prompt-tab active" data-provider="openai">OpenAI</button>
+        <button class="prompt-tab" data-provider="anthropic">Anthropic</button>
+        <button class="prompt-tab" data-provider="custom">Custom API</button>
+      </div>
+      <textarea id="customPrompt" rows="10"></textarea>
+      <span id="promptCharCount">0</span>
+      <button id="previewPrompt">Preview Prompt</button>
+      <button id="resetPrompt">Reset to Default</button>
+      <div id="promptValidation" class="validation-message"></div>
+      
+      <!-- Preview Modal -->
+      <div id="previewModal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Prompt Preview</h3>
+            <button class="modal-close">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div id="previewText" class="preview-text"></div>
+            <button id="copyPreview">Copy to Clipboard</button>
+          </div>
+        </div>
+      </div>
     `;
 
     // Load OptionsManager class by executing the file content
@@ -70,7 +96,8 @@ describe('Options Page Tests', () => {
       expect(options.defaultSettings).toEqual({
         apiProvider: 'openai',
         apiKey: '',
-        customEndpoint: ''
+        customEndpoint: '',
+        customPrompts: {}
       });
     });
 
@@ -78,7 +105,8 @@ describe('Options Page Tests', () => {
       const savedSettings = {
         apiProvider: 'anthropic',
         apiKey: 'test-key',
-        customEndpoint: ''
+        customEndpoint: '',
+        customPrompts: {}
       };
       
       mockChrome.storage.sync.get.mockImplementation((defaults, callback) => {
@@ -171,7 +199,8 @@ describe('Options Page Tests', () => {
         settings: {
           apiProvider: 'openai',
           apiKey: 'test-key',
-          customEndpoint: ''
+          customEndpoint: '',
+          customPrompts: expect.any(Object)
         }
       }, expect.any(Function));
       
@@ -216,7 +245,8 @@ describe('Options Page Tests', () => {
       expect(mockChrome.storage.sync.set).toHaveBeenCalledWith({
         apiProvider: 'openai',
         apiKey: 'test-key',
-        customEndpoint: ''
+        customEndpoint: '',
+        customPrompts: expect.any(Object)
       }, expect.any(Function));
       
       expect(statusMessage.textContent).toBe('Settings saved successfully!');
@@ -278,7 +308,8 @@ describe('Options Page Tests', () => {
       expect(mockChrome.storage.sync.set).toHaveBeenCalledWith({
         apiProvider: 'openai',
         apiKey: 'new-key',
-        customEndpoint: ''
+        customEndpoint: '',
+        customPrompts: expect.any(Object)
       }, expect.any(Function));
     });
   });
@@ -296,7 +327,8 @@ describe('Options Page Tests', () => {
       expect(settings).toEqual({
         apiProvider: 'anthropic',
         apiKey: 'test-key',
-        customEndpoint: 'https://api.example.com'
+        customEndpoint: 'https://api.example.com',
+        customPrompts: expect.any(Object)
       });
     });
 

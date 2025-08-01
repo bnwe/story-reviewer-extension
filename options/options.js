@@ -3,9 +3,32 @@ class OptionsManager {
         this.defaultSettings = {
             apiProvider: 'openai',
             apiKey: '',
-            customEndpoint: ''
+            customEndpoint: '',
+            customPrompts: {}
         };
         
+        this.defaultPrompts = {
+            openai: `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
+
+User Story Content:
+{{storyContent}}
+
+Please provide your feedback in a structured format with clear sections for different aspects of the story.`,
+            anthropic: `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
+
+User Story Content:
+{{storyContent}}
+
+Please provide your feedback in a structured format with clear sections for different aspects of the story.`,
+            custom: `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
+
+User Story Content:
+{{storyContent}}
+
+Please provide your feedback in a structured format with clear sections for different aspects of the story.`
+        };
+        
+        this.currentProvider = 'openai';
         this.init();
     }
     
@@ -23,15 +46,42 @@ class OptionsManager {
         const saveSettingsBtn = document.getElementById('saveSettings');
         const resetSettingsBtn = document.getElementById('resetSettings');
         
+        // Prompt management elements
+        const promptTabs = document.querySelectorAll('.prompt-tab');
+        const customPromptTextarea = document.getElementById('customPrompt');
+        const previewPromptBtn = document.getElementById('previewPrompt');
+        const resetPromptBtn = document.getElementById('resetPrompt');
+        const previewModal = document.getElementById('previewModal');
+        const modalClose = document.querySelector('.modal-close');
+        const copyPreviewBtn = document.getElementById('copyPreview');
+        
         apiProviderSelect.addEventListener('change', this.handleProviderChange.bind(this));
         toggleApiKeyBtn.addEventListener('click', this.toggleApiKeyVisibility.bind(this));
         testConnectionBtn.addEventListener('click', this.testConnection.bind(this));
         saveSettingsBtn.addEventListener('click', this.saveSettings.bind(this));
         resetSettingsBtn.addEventListener('click', this.resetSettings.bind(this));
         
+        // Prompt management events
+        promptTabs.forEach(tab => {
+            tab.addEventListener('click', this.handlePromptTabChange.bind(this));
+        });
+        customPromptTextarea.addEventListener('input', this.handlePromptInput.bind(this));
+        previewPromptBtn.addEventListener('click', this.showPromptPreview.bind(this));
+        resetPromptBtn.addEventListener('click', this.resetCurrentPrompt.bind(this));
+        modalClose.addEventListener('click', this.closePreviewModal.bind(this));
+        copyPreviewBtn.addEventListener('click', this.copyPreviewToClipboard.bind(this));
+        
+        // Close modal when clicking outside
+        previewModal.addEventListener('click', (e) => {
+            if (e.target === previewModal) {
+                this.closePreviewModal();
+            }
+        });
+        
         // Auto-save on input changes
         apiKeyInput.addEventListener('input', this.autoSave.bind(this));
         customEndpointInput.addEventListener('input', this.autoSave.bind(this));
+        customPromptTextarea.addEventListener('input', this.autoSavePrompt.bind(this));
     }
     
     handleProviderChange() {
@@ -43,6 +93,9 @@ class OptionsManager {
         } else {
             customEndpointGroup.style.display = 'none';
         }
+        
+        // Sync with prompt tabs
+        this.switchToPromptTab(provider);
         
         this.autoSave();
     }
@@ -146,7 +199,8 @@ class OptionsManager {
         return {
             apiProvider: document.getElementById('apiProvider').value,
             apiKey: document.getElementById('apiKey').value.trim(),
-            customEndpoint: document.getElementById('customEndpoint').value.trim()
+            customEndpoint: document.getElementById('customEndpoint').value.trim(),
+            customPrompts: this.getAllCustomPrompts()
         };
     }
     
@@ -164,6 +218,10 @@ class OptionsManager {
         document.getElementById('apiProvider').value = settings.apiProvider;
         document.getElementById('apiKey').value = settings.apiKey;
         document.getElementById('customEndpoint').value = settings.customEndpoint;
+        
+        // Load custom prompts
+        this.currentProvider = settings.apiProvider;
+        this.loadPromptsIntoUI(settings.customPrompts || {});
         
         // Trigger provider change to show/hide custom endpoint
         this.handleProviderChange();
@@ -217,6 +275,171 @@ class OptionsManager {
             'custom': 'Custom API'
         };
         return names[provider] || provider;
+    }
+    
+    // Prompt Management Methods
+    handlePromptTabChange(event) {
+        const provider = event.target.dataset.provider;
+        this.switchToPromptTab(provider);
+    }
+    
+    switchToPromptTab(provider) {
+        // Update active tab
+        document.querySelectorAll('.prompt-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelector(`[data-provider="${provider}"]`).classList.add('active');
+        
+        // Save current prompt before switching
+        if (this.currentProvider) {
+            this.saveCurrentPrompt();
+        }
+        
+        // Switch to new provider
+        this.currentProvider = provider;
+        this.loadCurrentPrompt();
+    }
+    
+    handlePromptInput(event) {
+        const charCount = event.target.value.length;
+        document.getElementById('promptCharCount').textContent = charCount;
+        
+        // Basic validation
+        this.validatePrompt(event.target.value);
+    }
+    
+    validatePrompt(prompt) {
+        
+        if (!prompt.trim()) {
+            this.showValidation('Prompt cannot be empty', 'error');
+            return false;
+        }
+        
+        // Check for required {{storyContent}} variable
+        if (!prompt.includes('{{storyContent}}')) {
+            this.showValidation('Warning: Prompt should include {{storyContent}} variable', 'warning');
+            return true; // Still valid, just a warning
+        }
+        
+        // Check for unclosed variables
+        const unclosedVars = prompt.match(/\{\{[^}]*$/g);
+        if (unclosedVars) {
+            this.showValidation('Error: Unclosed template variables found', 'error');
+            return false;
+        }
+        
+        this.hideValidation();
+        return true;
+    }
+    
+    showValidation(message, type) {
+        const validationElement = document.getElementById('promptValidation');
+        validationElement.textContent = message;
+        validationElement.className = `validation-message ${type}`;
+        validationElement.style.display = 'block';
+    }
+    
+    hideValidation() {
+        const validationElement = document.getElementById('promptValidation');
+        validationElement.style.display = 'none';
+    }
+    
+    async showPromptPreview() {
+        const promptTemplate = document.getElementById('customPrompt').value;
+        
+        if (!this.validatePrompt(promptTemplate)) {
+            return;
+        }
+        
+        // Sample data for preview
+        const sampleData = {
+            storyContent: `Title: Sample User Story
+Description: As a user, I want to be able to save my work so that I don't lose my progress.
+Acceptance Criteria:
+- User can click save button
+- Work is automatically saved every 5 minutes
+- User receives confirmation when save is complete`,
+            timestamp: new Date().toISOString(),
+            provider: this.getProviderDisplayName(this.currentProvider),
+            feedbackType: 'General Review'
+        };
+        
+        const previewText = this.substituteVariables(promptTemplate, sampleData);
+        
+        document.getElementById('previewText').textContent = previewText;
+        document.getElementById('previewModal').style.display = 'block';
+    }
+    
+    substituteVariables(template, data) {
+        let result = template;
+        for (const [key, value] of Object.entries(data)) {
+            const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+            result = result.replace(regex, value);
+        }
+        return result;
+    }
+    
+    closePreviewModal() {
+        document.getElementById('previewModal').style.display = 'none';
+    }
+    
+    async copyPreviewToClipboard() {
+        const previewText = document.getElementById('previewText').textContent;
+        
+        try {
+            await navigator.clipboard.writeText(previewText);
+            this.showStatusMessage('Prompt copied to clipboard!', 'success');
+        } catch (error) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = previewText;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            this.showStatusMessage('Prompt copied to clipboard!', 'success');
+        }
+    }
+    
+    resetCurrentPrompt() {
+        if (confirm(`Reset ${this.getProviderDisplayName(this.currentProvider)} prompt to default?`)) {
+            const defaultPrompt = this.defaultPrompts[this.currentProvider];
+            document.getElementById('customPrompt').value = defaultPrompt;
+            this.handlePromptInput({ target: { value: defaultPrompt } });
+            this.autoSavePrompt();
+        }
+    }
+    
+    saveCurrentPrompt() {
+        const promptValue = document.getElementById('customPrompt').value;
+        if (!this.customPrompts) {
+            this.customPrompts = {};
+        }
+        this.customPrompts[this.currentProvider] = promptValue;
+    }
+    
+    loadCurrentPrompt() {
+        const savedPrompt = this.customPrompts?.[this.currentProvider];
+        const promptValue = savedPrompt || this.defaultPrompts[this.currentProvider];
+        
+        document.getElementById('customPrompt').value = promptValue;
+        this.handlePromptInput({ target: { value: promptValue } });
+    }
+    
+    loadPromptsIntoUI(customPrompts) {
+        this.customPrompts = customPrompts;
+        this.loadCurrentPrompt();
+    }
+    
+    getAllCustomPrompts() {
+        // Save current prompt before getting all
+        this.saveCurrentPrompt();
+        return this.customPrompts || {};
+    }
+    
+    async autoSavePrompt() {
+        this.saveCurrentPrompt();
+        await this.autoSave();
     }
 }
 
