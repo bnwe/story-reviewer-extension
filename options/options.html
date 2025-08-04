@@ -1,16 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Story Reviewer Settings</title>
     <link rel="stylesheet" href="options.css">
 </head>
 <body>
     <div class="container">
-        <h1>Story Reviewer Settings</h1>
+        <h1>⚙️ Story Reviewer Settings</h1>
         
-        <div class="section">
-            <h2>LLM API Configuration</h2>
+        <div class="section api-config-section">
+            <div class="section-header">
+                <h2>🔌 LLM API Configuration</h2>
+                <div class="help-toggle" id="apiHelpToggle">
+                    <span class="help-icon">?</span>
+                    <span class="help-text">Need help?</span>
+                </div>
+            </div>
+            
+            <div class="contextual-help" id="apiHelp">
+                <div class="help-content">
+                    <h4>🔑 Getting API Keys:</h4>
+                    <div class="help-links">
+                        <div class="help-item">
+                            <strong>OpenAI:</strong> <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>
+                        </div>
+                        <div class="help-item">
+                            <strong>Anthropic:</strong> <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a>
+                        </div>
+                        <div class="help-item">
+                            <strong>Custom API:</strong> Contact your API provider for endpoint URL and authentication details
+                        </div>
+                    </div>
+                    <div class="security-note">
+                        🔒 <strong>Security:</strong> Your API key is stored securely in your browser and never shared with third parties.
+                    </div>
+                </div>
+            </div>
             <div class="form-group">
                 <label for="apiProvider">API Provider:</label>
                 <select id="apiProvider">
@@ -37,8 +64,11 @@
             </div>
         </div>
         
-        <div class="section">
-            <h2>Custom Prompts</h2>
+        <div class="section prompts-section">
+            <div class="section-header">
+                <h2>📝 Custom Prompts</h2>
+                <div class="section-description">Customize AI prompts for each provider</div>
+            </div>
             <div class="prompt-tabs">
                 <button class="prompt-tab active" data-provider="openai">OpenAI</button>
                 <button class="prompt-tab" data-provider="anthropic">Anthropic</button>
@@ -55,12 +85,25 @@
                 </div>
                 
                 <div class="prompt-variables">
-                    <h4>Available Variables:</h4>
+                    <h4>📋 Available Variables:</h4>
+                    <div class="variable-help-text">Click any variable to copy to clipboard</div>
                     <div class="variable-list">
-                        <span class="variable-tag">{{storyContent}}</span>
-                        <span class="variable-tag">{{timestamp}}</span>
-                        <span class="variable-tag">{{provider}}</span>
-                        <span class="variable-tag">{{feedbackType}}</span>
+                        <button type="button" class="variable-tag" data-variable="{{storyContent}}">
+                            <span class="variable-name">{{storyContent}}</span>
+                            <span class="variable-desc">Story content</span>
+                        </button>
+                        <button type="button" class="variable-tag" data-variable="{{timestamp}}">
+                            <span class="variable-name">{{timestamp}}</span>
+                            <span class="variable-desc">Current time</span>
+                        </button>
+                        <button type="button" class="variable-tag" data-variable="{{provider}}">
+                            <span class="variable-name">{{provider}}</span>
+                            <span class="variable-desc">API provider</span>
+                        </button>
+                        <button type="button" class="variable-tag" data-variable="{{feedbackType}}">
+                            <span class="variable-name">{{feedbackType}}</span>
+                            <span class="variable-desc">Feedback type</span>
+                        </button>
                     </div>
                 </div>
                 
@@ -70,7 +113,8 @@
                 </div>
                 
                 <div class="import-export-section">
-                    <h4>Import/Export Prompts</h4>
+                    <h4>💾 Import/Export Prompts</h4>
+                    <div class="import-export-description">Save your custom prompts or restore from backup files</div>
                     <div class="import-export-actions">
                         <button type="button" id="exportPrompts" class="export-btn">Export All Prompts</button>
                         <button type="button" id="importPrompts" class="import-btn">Import Prompts</button>
@@ -82,18 +126,6 @@
             </div>
         </div>
         
-        <div class="section">
-            <h2>Instructions</h2>
-            <div class="instructions">
-                <h3>Getting API Keys:</h3>
-                <ul>
-                    <li><strong>OpenAI:</strong> Visit <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a></li>
-                    <li><strong>Anthropic:</strong> Visit <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a></li>
-                    <li><strong>Custom API:</strong> Contact your API provider for endpoint URL and authentication details</li>
-                </ul>
-                <p><strong>Note:</strong> Your API key is stored securely in your browser and never shared with third parties.</p>
-            </div>
-        </div>
         
         <div class="actions">
             <button type="button" id="saveSettings" class="save-btn">Save Settings</button>

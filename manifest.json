@@ -14,7 +14,10 @@
     "activeTab",
     "storage",
     "https://dev.azure.com/*",
-    "https://*.visualstudio.com/*"
+    "https://*.visualstudio.com/*",
+    "https://api.openai.com/*",
+    "https://api.anthropic.com/*",
+    "https://*/*"
   ],
   
   "content_scripts": [

@@ -90,6 +90,9 @@ Please provide your feedback in a structured format with clear sections for diff
         apiKeyInput.addEventListener('input', this.autoSave.bind(this));
         customEndpointInput.addEventListener('input', this.autoSave.bind(this));
         customPromptTextarea.addEventListener('input', this.autoSavePrompt.bind(this));
+        
+        // Enhanced UI functionality
+        this.bindEnhancedEvents();
     }
     
     handleProviderChange() {
@@ -889,6 +892,81 @@ Acceptance Criteria:
         
         // Update local copy
         this.customPrompts = settings.customPrompts;
+    }
+    
+    // Enhanced UI Methods
+    bindEnhancedEvents() {
+        // Help toggle functionality
+        const helpToggle = document.getElementById('apiHelpToggle');
+        const helpContent = document.getElementById('apiHelp');
+        
+        if (helpToggle && helpContent) {
+            helpToggle.addEventListener('click', () => {
+                helpContent.classList.toggle('show');
+                
+                // Update help text
+                const helpText = helpToggle.querySelector('.help-text');
+                if (helpContent.classList.contains('show')) {
+                    helpText.textContent = 'Hide help';
+                } else {
+                    helpText.textContent = 'Need help?';
+                }
+            });
+        }
+        
+        // Variable tag click to copy functionality
+        const variableTags = document.querySelectorAll('.variable-tag');
+        variableTags.forEach(tag => {
+            tag.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const variable = tag.dataset.variable;
+                
+                try {
+                    await navigator.clipboard.writeText(variable);
+                    this.showVariableCopiedFeedback(tag);
+                } catch (error) {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = variable;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    this.showVariableCopiedFeedback(tag);
+                }
+            });
+            
+            // Add keyboard support
+            tag.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    tag.click();
+                }
+            });
+        });
+    }
+    
+    showVariableCopiedFeedback(tagElement) {
+        // Temporarily change the tag appearance to show it was copied
+        const originalContent = tagElement.innerHTML;
+        const variableName = tagElement.querySelector('.variable-name').textContent;
+        
+        tagElement.innerHTML = `
+            <span class="variable-name">${variableName}</span>
+            <span class="variable-desc">✓ Copied!</span>
+        `;
+        
+        tagElement.style.background = 'rgba(16, 185, 129, 0.1)';
+        tagElement.style.borderColor = 'var(--color-success)';
+        
+        setTimeout(() => {
+            tagElement.innerHTML = originalContent;
+            tagElement.style.background = '';
+            tagElement.style.borderColor = '';
+        }, 1500);
+        
+        // Also show a status message
+        this.showStatusMessage(`Variable ${variableName} copied to clipboard!`, 'success');
     }
 }
 

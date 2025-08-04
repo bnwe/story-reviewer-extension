@@ -167,8 +167,8 @@ class AzureDevOpsStoryExtractor {
     const buttonContainer = document.createElement('div');
     buttonContainer.style.cssText = `
       display: inline-flex;
-      gap: 8px;
-      margin-right: 8px;
+      gap: 0.5rem;
+      margin-right: 0.75rem;
     `;
 
     // Create extraction button
@@ -176,18 +176,24 @@ class AzureDevOpsStoryExtractor {
     extractButton.id = 'story-extractor-btn';
     extractButton.textContent = 'Extract Story';
     extractButton.style.cssText = `
-      padding: 6px 12px;
-      background-color: #0078d4;
+      padding: 0.5rem 0.75rem;
+      background: #2563eb;
       color: white;
-      border: none;
-      border-radius: 4px;
+      border: 1px solid #2563eb;
+      border-radius: 0.375rem;
       cursor: pointer;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 13px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      line-height: 1;
       height: 32px;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       white-space: nowrap;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
     `;
 
     // Create feedback button
@@ -195,35 +201,45 @@ class AzureDevOpsStoryExtractor {
     feedbackButton.id = 'story-feedback-btn';
     feedbackButton.textContent = 'Get Feedback';
     feedbackButton.style.cssText = `
-      padding: 6px 12px;
-      background-color: #107c10;
+      padding: 0.5rem 0.75rem;
+      background: #10b981;
       color: white;
-      border: none;
-      border-radius: 4px;
+      border: 1px solid #10b981;
+      border-radius: 0.375rem;
       cursor: pointer;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 13px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      line-height: 1;
       height: 32px;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       white-space: nowrap;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
     `;
 
     // Button event listeners
     extractButton.addEventListener('click', () => this.extractStoryContent());
     extractButton.addEventListener('mouseenter', () => {
-      extractButton.style.backgroundColor = '#106ebe';
+      extractButton.style.background = '#1d4ed8';
+      extractButton.style.borderColor = '#1d4ed8';
     });
     extractButton.addEventListener('mouseleave', () => {
-      extractButton.style.backgroundColor = '#0078d4';
+      extractButton.style.background = '#2563eb';
+      extractButton.style.borderColor = '#2563eb';
     });
 
     feedbackButton.addEventListener('click', () => this.openFeedbackWindow());
     feedbackButton.addEventListener('mouseenter', () => {
-      feedbackButton.style.backgroundColor = '#0e6e0e';
+      feedbackButton.style.background = '#059669';
+      feedbackButton.style.borderColor = '#059669';
     });
     feedbackButton.addEventListener('mouseleave', () => {
-      feedbackButton.style.backgroundColor = '#107c10';
+      feedbackButton.style.background = '#10b981';
+      feedbackButton.style.borderColor = '#10b981';
     });
 
     // Add buttons to container
@@ -243,26 +259,37 @@ class AzureDevOpsStoryExtractor {
     extractButton.textContent = 'Extract Story Content';
     extractButton.style.cssText = `
       position: fixed;
-      top: 20px;
-      right: 20px;
+      top: 1.25rem;
+      right: 1.25rem;
       z-index: 10000;
-      padding: 10px 15px;
-      background-color: #0078d4;
+      padding: 0.75rem 1rem;
+      background: #2563eb;
       color: white;
-      border: none;
-      border-radius: 4px;
+      border: 1px solid #2563eb;
+      border-radius: 0.5rem;
       cursor: pointer;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 14px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      line-height: 1;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
     `;
 
     extractButton.addEventListener('click', () => this.extractStoryContent());
     extractButton.addEventListener('mouseenter', () => {
-      extractButton.style.backgroundColor = '#106ebe';
+      extractButton.style.background = '#1d4ed8';
+      extractButton.style.borderColor = '#1d4ed8';
+      extractButton.style.transform = 'translateY(-1px)';
+      extractButton.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)';
     });
     extractButton.addEventListener('mouseleave', () => {
-      extractButton.style.backgroundColor = '#0078d4';
+      extractButton.style.background = '#2563eb';
+      extractButton.style.borderColor = '#2563eb';
+      extractButton.style.transform = 'translateY(0)';
+      extractButton.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
     });
 
     document.body.appendChild(extractButton);
@@ -479,19 +506,42 @@ class AzureDevOpsStoryExtractor {
     const notification = document.createElement('div');
     notification.style.cssText = `
       position: fixed;
-      top: 70px;
-      right: 20px;
+      top: 1.25rem;
+      right: 1.25rem;
       z-index: 10001;
-      padding: 12px 16px;
-      background-color: ${type === 'success' ? '#107c10' : '#d13438'};
+      padding: 0.75rem 1rem;
+      background: ${type === 'success' ? '#10b981' : '#ef4444'};
       color: white;
-      border-radius: 4px;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 14px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      max-width: 300px;
+      border-radius: 0.5rem;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      max-width: 320px;
+      border: 1px solid ${type === 'success' ? '#10b981' : '#ef4444'};
+      animation: slideInRight 0.3s ease-out;
+      -webkit-font-smoothing: antialiased;
     `;
     notification.textContent = message;
+
+    // Add CSS animation keyframes if not already added
+    if (!document.querySelector('#story-reviewer-animations')) {
+      const style = document.createElement('style');
+      style.id = 'story-reviewer-animations';
+      style.textContent = `
+        @keyframes slideInRight {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
 
     document.body.appendChild(notification);
 
