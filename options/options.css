@@ -126,16 +126,16 @@ h4 {
 
 /* Enhanced Section Styling */
 .api-config-section {
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.02), rgba(37, 99, 235, 0.05));
-    border: 1px solid rgba(37, 99, 235, 0.1);
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.12));
+    border: 1px solid rgba(37, 99, 235, 0.3);
     border-radius: var(--radius-xl);
     padding: var(--space-6);
     position: relative;
 }
 
 .prompts-section {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.02), rgba(16, 185, 129, 0.05));
-    border: 1px solid rgba(16, 185, 129, 0.1);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.12));
+    border: 1px solid rgba(16, 185, 129, 0.3);
     border-radius: var(--radius-xl);
     padding: var(--space-6);
 }
@@ -257,15 +257,27 @@ textarea {
     border-color: var(--color-slate-300);
 }
 
-.preview-btn, .export-btn, .import-btn {
-    background: var(--color-slate-100);
-    color: var(--color-text-primary);
-    border-color: var(--color-border);
+.preview-btn {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--color-accent);
+    border-color: rgba(37, 99, 235, 0.3);
+    font-weight: var(--font-weight-semibold);
 }
 
-.preview-btn:hover, .export-btn:hover, .import-btn:hover {
-    background: var(--color-slate-200);
-    border-color: var(--color-slate-300);
+.preview-btn:hover {
+    background: rgba(37, 99, 235, 0.15);
+    border-color: rgba(37, 99, 235, 0.4);
+}
+
+.export-btn, .import-btn {
+    background: rgba(100, 116, 139, 0.1);
+    color: var(--color-text-primary);
+    border-color: rgba(100, 116, 139, 0.25);
+}
+
+.export-btn:hover, .import-btn:hover {
+    background: rgba(100, 116, 139, 0.15);
+    border-color: rgba(100, 116, 139, 0.35);
 }
 
 .copy-btn {
@@ -356,8 +368,8 @@ textarea {
 /* Prompt Variables */
 .prompt-variables {
     margin: var(--space-4) 0;
-    background: var(--color-slate-50);
-    border: 1px solid var(--color-border-light);
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(16, 185, 129, 0.15);
     border-radius: var(--radius-lg);
     padding: var(--space-4);
 }
@@ -418,17 +430,23 @@ textarea {
 }
 
 .variable-tag::after {
-    content: '📋';
+    content: 'Copy';
     position: absolute;
     top: var(--space-1);
-    right: var(--space-1);
+    right: var(--space-2);
     opacity: 0;
     transition: opacity var(--transition-normal);
-    font-size: 10px;
+    font-size: var(--font-size-xs);
+    color: var(--color-accent);
+    font-weight: var(--font-weight-medium);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2px 4px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-accent);
 }
 
 .variable-tag:hover::after {
-    opacity: 0.5;
+    opacity: 1;
 }
 
 .character-count {
@@ -456,8 +474,8 @@ textarea {
 /* Import/Export Section */
 .import-export-section {
     margin: var(--space-4) 0;
-    background: var(--color-slate-50);
-    border: 1px solid var(--color-border-light);
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(16, 185, 129, 0.15);
     border-radius: var(--radius-lg);
     padding: var(--space-4);
 }

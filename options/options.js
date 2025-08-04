@@ -909,7 +909,7 @@ Acceptance Criteria:
                 if (helpContent.classList.contains('show')) {
                     helpText.textContent = 'Hide help';
                 } else {
-                    helpText.textContent = 'Need help?';
+                    helpText.textContent = 'Show help';
                 }
             });
         }

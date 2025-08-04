@@ -15,7 +15,7 @@
                 <h2>🔌 LLM API Configuration</h2>
                 <div class="help-toggle" id="apiHelpToggle">
                     <span class="help-icon">?</span>
-                    <span class="help-text">Need help?</span>
+                    <span class="help-text">Show help</span>
                 </div>
             </div>
             
@@ -84,8 +84,13 @@
                     </div>
                 </div>
                 
+                <div class="prompt-actions">
+                    <button type="button" id="previewPrompt" class="preview-btn">Preview Prompt</button>
+                    <button type="button" id="resetPrompt" class="reset-prompt-btn">Reset to Default</button>
+                </div>
+                
                 <div class="prompt-variables">
-                    <h4>📋 Available Variables:</h4>
+                    <h4>Available Variables:</h4>
                     <div class="variable-help-text">Click any variable to copy to clipboard</div>
                     <div class="variable-list">
                         <button type="button" class="variable-tag" data-variable="{{storyContent}}">
@@ -107,13 +112,8 @@
                     </div>
                 </div>
                 
-                <div class="prompt-actions">
-                    <button type="button" id="previewPrompt" class="preview-btn">Preview Prompt</button>
-                    <button type="button" id="resetPrompt" class="reset-prompt-btn">Reset to Default</button>
-                </div>
-                
                 <div class="import-export-section">
-                    <h4>💾 Import/Export Prompts</h4>
+                    <h4>Import/Export Prompts</h4>
                     <div class="import-export-description">Save your custom prompts or restore from backup files</div>
                     <div class="import-export-actions">
                         <button type="button" id="exportPrompts" class="export-btn">Export All Prompts</button>
