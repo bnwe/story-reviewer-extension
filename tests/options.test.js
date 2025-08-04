@@ -34,8 +34,6 @@ describe('Options Page Tests', () => {
       <div id="customEndpointGroup" style="display: none;"></div>
       <button id="toggleApiKey">Show</button>
       <button id="testConnection">Test Connection</button>
-      <button id="saveSettings">Save Settings</button>
-      <button id="resetSettings">Reset Settings</button>
       <span id="connectionStatus" class="status"></span>
       <div id="statusMessage" class="status-message"></div>
       
@@ -234,71 +232,6 @@ describe('Options Page Tests', () => {
     });
   });
 
-  describe('Settings Management', () => {
-    test('should save settings successfully', async () => {
-      const options = new OptionsManager();
-      const statusMessage = document.getElementById('statusMessage');
-      
-      document.getElementById('apiProvider').value = 'openai';
-      document.getElementById('apiKey').value = 'test-key';
-      
-      // Mock successful storage
-      mockChrome.storage.sync.set.mockImplementation((settings, callback) => {
-        callback();
-      });
-      
-      await options.saveSettings();
-      
-      expect(mockChrome.storage.sync.set).toHaveBeenCalledWith({
-        apiProvider: 'openai',
-        apiKey: 'test-key',
-        customEndpoint: '',
-        customPrompts: expect.any(Object)
-      }, expect.any(Function));
-      
-      expect(statusMessage.textContent).toBe('Settings saved successfully!');
-      expect(statusMessage.className).toBe('status-message success');
-    });
-
-    test('should handle save failure', async () => {
-      const options = new OptionsManager();
-      const statusMessage = document.getElementById('statusMessage');
-      
-      // Mock storage failure
-      mockChrome.storage.sync.set.mockImplementation((settings, callback) => {
-        mockChrome.runtime.lastError = { message: 'Storage quota exceeded' };
-        callback();
-      });
-      
-      await options.saveSettings();
-      
-      expect(statusMessage.textContent).toBe('Failed to save settings: Storage quota exceeded');
-      expect(statusMessage.className).toBe('status-message error');
-    });
-
-    test('should reset settings to defaults', async () => {
-      const options = new OptionsManager();
-      const statusMessage = document.getElementById('statusMessage');
-      
-      // Mock confirm dialog
-      global.confirm = jest.fn(() => true);
-      
-      // Mock successful storage
-      mockChrome.storage.sync.set.mockImplementation((settings, callback) => {
-        callback();
-      });
-      
-      await options.resetSettings();
-      
-      expect(mockChrome.storage.sync.set).toHaveBeenCalledWith(
-        options.defaultSettings,
-        expect.any(Function)
-      );
-      
-      expect(statusMessage.textContent).toBe('Settings reset to defaults');
-      expect(statusMessage.className).toBe('status-message success');
-    });
-  });
 
   describe('Auto-save Functionality', () => {
     test('should auto-save on input changes', async () => {

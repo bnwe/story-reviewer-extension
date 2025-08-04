@@ -58,7 +58,7 @@ A browser extension that extracts user story content from Azure DevOps work item
    - **Anthropic**: Enter your Anthropic API key  
    - **Custom**: Enter your custom endpoint URL and API key
 4. Test the connection to ensure everything works
-5. Save your settings
+5. Settings are automatically saved as you make changes
 
 ## Usage
 

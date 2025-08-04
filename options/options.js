@@ -45,8 +45,6 @@ Please provide your feedback in a structured format with clear sections for diff
         const customEndpointInput = document.getElementById('customEndpoint');
         const toggleApiKeyBtn = document.getElementById('toggleApiKey');
         const testConnectionBtn = document.getElementById('testConnection');
-        const saveSettingsBtn = document.getElementById('saveSettings');
-        const resetSettingsBtn = document.getElementById('resetSettings');
         
         // Prompt management elements
         const promptTabs = document.querySelectorAll('.prompt-tab');
@@ -63,8 +61,6 @@ Please provide your feedback in a structured format with clear sections for diff
         apiProviderSelect.addEventListener('change', this.handleProviderChange.bind(this));
         toggleApiKeyBtn.addEventListener('click', this.toggleApiKeyVisibility.bind(this));
         testConnectionBtn.addEventListener('click', this.testConnection.bind(this));
-        saveSettingsBtn.addEventListener('click', this.saveSettings.bind(this));
-        resetSettingsBtn.addEventListener('click', this.resetSettings.bind(this));
         
         // Prompt management events
         promptTabs.forEach(tab => {
@@ -174,28 +170,7 @@ Please provide your feedback in a structured format with clear sections for diff
         });
     }
     
-    async saveSettings() {
-        const settings = this.getCurrentSettings();
-        
-        try {
-            await this.storeSettings(settings);
-            this.showStatusMessage('Settings saved successfully!', 'success');
-        } catch (error) {
-            this.showStatusMessage(`Failed to save settings: ${error.message}`, 'error');
-        }
-    }
     
-    async resetSettings() {
-        if (confirm('Are you sure you want to reset all settings to defaults?')) {
-            try {
-                await this.storeSettings(this.defaultSettings);
-                this.loadSettingsIntoUI(this.defaultSettings);
-                this.showStatusMessage('Settings reset to defaults', 'success');
-            } catch (error) {
-                this.showStatusMessage(`Failed to reset settings: ${error.message}`, 'error');
-            }
-        }
-    }
     
     async autoSave() {
         const settings = this.getCurrentSettings();
