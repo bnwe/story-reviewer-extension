@@ -141,7 +141,8 @@ describe('Background Script Tests', () => {
   describe('Feedback Payload Generation', () => {
     test('should generate correct feedback payload for OpenAI', () => {
       const content = { title: 'Test Story', description: 'Test description' };
-      const payload = getFeedbackPayload('openai', content);
+      const promptTemplate = 'Please review: {{storyContent}}';
+      const payload = getFeedbackPayload('openai', content, promptTemplate);
       
       expect(payload.model).toBe('gpt-4');
       expect(payload.messages[0].content).toContain('Test Story');
@@ -152,7 +153,8 @@ describe('Background Script Tests', () => {
 
     test('should generate correct feedback payload for Anthropic', () => {
       const content = { title: 'Test Story', description: 'Test description' };
-      const payload = getFeedbackPayload('anthropic', content);
+      const promptTemplate = 'Please review: {{storyContent}}';
+      const payload = getFeedbackPayload('anthropic', content, promptTemplate);
       
       expect(payload.model).toBe('claude-3-sonnet-20240229');
       expect(payload.messages[0].content).toContain('Test Story');
@@ -165,7 +167,8 @@ describe('Background Script Tests', () => {
         description: 'Story description',
         acceptanceCriteria: 'AC1: Criteria'
       };
-      const payload = getFeedbackPayload('openai', content);
+      const promptTemplate = 'Please review: {{storyContent}}';
+      const payload = getFeedbackPayload('openai', content, promptTemplate);
       
       expect(payload.messages[0].content).toContain('User Story Title');
       expect(payload.messages[0].content).toContain('Story description');

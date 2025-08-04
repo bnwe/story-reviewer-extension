@@ -61,6 +61,10 @@
                     <div class="feedback-header">
                         <h2>AI Feedback</h2>
                         <div class="feedback-actions">
+                            <button id="toggleDebugBtn" class="btn btn-tertiary" title="Toggle debug info">
+                                <span class="icon">🔍</span>
+                                Debug
+                            </button>
                             <button id="copyAllBtn" class="btn btn-secondary">
                                 <span class="icon">📋</span>
                                 Copy All
@@ -71,6 +75,32 @@
                             </button>
                         </div>
                     </div>
+                    
+                    <!-- Debug information section -->
+                    <div id="debugInfo" class="debug-info" style="display: none;">
+                        <div class="debug-header">
+                            <h3>Prompt Debug Information</h3>
+                        </div>
+                        <div class="debug-content">
+                            <div class="debug-item">
+                                <label>Prompt Type:</label>
+                                <span id="debugPromptType">Loading...</span>
+                            </div>
+                            <div class="debug-item">
+                                <label>Provider:</label>
+                                <span id="debugProvider">Loading...</span>
+                            </div>
+                            <div class="debug-item">
+                                <label>Generated At:</label>
+                                <span id="debugTimestamp">Loading...</span>
+                            </div>
+                            <div class="debug-item">
+                                <label>Prompt Preview:</label>
+                                <div id="debugPromptPreview" class="prompt-preview">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div id="feedbackContent" class="feedback-content"></div>
                 </div>
             </div>

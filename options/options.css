@@ -340,6 +340,53 @@ textarea:focus {
     background: #0e6e0e;
 }
 
+.import-export-section {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-left: 4px solid #6c757d;
+}
+
+.import-export-section h4 {
+    margin: 0 0 10px 0;
+    color: #323130;
+    font-size: 14px;
+}
+
+.import-export-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.export-btn, .import-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.export-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.export-btn:hover {
+    background: #5a6268;
+}
+
+.import-btn {
+    background: #17a2b8;
+    color: white;
+}
+
+.import-btn:hover {
+    background: #138496;
+}
+
 .validation-message {
     margin-top: 10px;
     padding: 10px;

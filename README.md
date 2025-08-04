@@ -195,7 +195,6 @@ The extension requires these permissions:
 
 ## Planned Features
 
-- Make prompt customizable
 - Improve response formatting
 - Support copy-pasting of snippets in the response
 - Support for Mistral

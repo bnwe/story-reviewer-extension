@@ -49,6 +49,9 @@ describe('Options Page Tests', () => {
       <span id="promptCharCount">0</span>
       <button id="previewPrompt">Preview Prompt</button>
       <button id="resetPrompt">Reset to Default</button>
+      <button id="exportPrompts">Export All Prompts</button>
+      <button id="importPrompts">Import Prompts</button>
+      <input type="file" id="importFile" accept=".json" style="display: none;">
       <div id="promptValidation" class="validation-message"></div>
       
       <!-- Preview Modal -->
@@ -97,7 +100,9 @@ describe('Options Page Tests', () => {
         apiProvider: 'openai',
         apiKey: '',
         customEndpoint: '',
-        customPrompts: {}
+        customPrompts: {},
+        promptVersion: '1.0',
+        promptBackups: []
       });
     });
 
@@ -106,7 +111,9 @@ describe('Options Page Tests', () => {
         apiProvider: 'anthropic',
         apiKey: 'test-key',
         customEndpoint: '',
-        customPrompts: {}
+        customPrompts: {},
+        promptVersion: '1.0',
+        promptBackups: []
       };
       
       mockChrome.storage.sync.get.mockImplementation((defaults, callback) => {

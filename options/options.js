@@ -4,7 +4,9 @@ class OptionsManager {
             apiProvider: 'openai',
             apiKey: '',
             customEndpoint: '',
-            customPrompts: {}
+            customPrompts: {},
+            promptVersion: '1.0',
+            promptBackups: []
         };
         
         this.defaultPrompts = {
@@ -54,6 +56,9 @@ Please provide your feedback in a structured format with clear sections for diff
         const previewModal = document.getElementById('previewModal');
         const modalClose = document.querySelector('.modal-close');
         const copyPreviewBtn = document.getElementById('copyPreview');
+        const exportPromptsBtn = document.getElementById('exportPrompts');
+        const importPromptsBtn = document.getElementById('importPrompts');
+        const importFileInput = document.getElementById('importFile');
         
         apiProviderSelect.addEventListener('change', this.handleProviderChange.bind(this));
         toggleApiKeyBtn.addEventListener('click', this.toggleApiKeyVisibility.bind(this));
@@ -70,6 +75,9 @@ Please provide your feedback in a structured format with clear sections for diff
         resetPromptBtn.addEventListener('click', this.resetCurrentPrompt.bind(this));
         modalClose.addEventListener('click', this.closePreviewModal.bind(this));
         copyPreviewBtn.addEventListener('click', this.copyPreviewToClipboard.bind(this));
+        exportPromptsBtn.addEventListener('click', this.exportPrompts.bind(this));
+        importPromptsBtn.addEventListener('click', this.triggerImport.bind(this));
+        importFileInput.addEventListener('change', this.handleImportFile.bind(this));
         
         // Close modal when clicking outside
         previewModal.addEventListener('click', (e) => {
@@ -233,10 +241,44 @@ Please provide your feedback in a structured format with clear sections for diff
                 if (chrome.runtime.lastError) {
                     resolve(this.defaultSettings);
                 } else {
-                    resolve(result);
+                    // Migrate existing settings if needed
+                    const migratedSettings = this.migrateSettingsSchema(result);
+                    resolve(migratedSettings);
                 }
             });
         });
+    }
+    
+    migrateSettingsSchema(settings) {
+        const migrated = { ...settings };
+        let needsMigration = false;
+        
+        // Ensure customPrompts object exists
+        if (!migrated.customPrompts) {
+            migrated.customPrompts = {};
+            needsMigration = true;
+        }
+        
+        // Ensure promptVersion exists for future migrations
+        if (!migrated.promptVersion) {
+            migrated.promptVersion = '1.0';
+            needsMigration = true;
+        }
+        
+        // Initialize promptBackups array if not present
+        if (!migrated.promptBackups) {
+            migrated.promptBackups = [];
+            needsMigration = true;
+        }
+        
+        // Auto-save migrated settings if changes were made
+        if (needsMigration) {
+            this.storeSettings(migrated).catch(error => {
+                console.warn('Failed to save migrated settings:', error);
+            });
+        }
+        
+        return migrated;
     }
     
     async storeSettings(settings) {
@@ -309,27 +351,117 @@ Please provide your feedback in a structured format with clear sections for diff
     }
     
     validatePrompt(prompt) {
+        const validationResult = this.comprehensivePromptValidation(prompt);
         
-        if (!prompt.trim()) {
-            this.showValidation('Prompt cannot be empty', 'error');
+        if (!validationResult.isValid) {
+            this.showValidation(validationResult.message, 'error');
             return false;
         }
         
-        // Check for required {{storyContent}} variable
-        if (!prompt.includes('{{storyContent}}')) {
-            this.showValidation('Warning: Prompt should include {{storyContent}} variable', 'warning');
-            return true; // Still valid, just a warning
-        }
-        
-        // Check for unclosed variables
-        const unclosedVars = prompt.match(/\{\{[^}]*$/g);
-        if (unclosedVars) {
-            this.showValidation('Error: Unclosed template variables found', 'error');
-            return false;
+        if (validationResult.warnings.length > 0) {
+            this.showValidation(validationResult.warnings[0], 'warning');
+            return true; // Still valid, just warnings
         }
         
         this.hideValidation();
         return true;
+    }
+    
+    comprehensivePromptValidation(prompt) {
+        const result = {
+            isValid: true,
+            warnings: [],
+            errors: [],
+            message: ''
+        };
+        
+        // Basic validation
+        if (!prompt || typeof prompt !== 'string') {
+            result.isValid = false;
+            result.message = 'Prompt must be a valid string';
+            return result;
+        }
+        
+        const trimmedPrompt = prompt.trim();
+        if (!trimmedPrompt) {
+            result.isValid = false;
+            result.message = 'Prompt cannot be empty';
+            return result;
+        }
+        
+        // Length validation
+        if (trimmedPrompt.length < 10) {
+            result.warnings.push('Prompt is very short - consider adding more detail');
+        }
+        
+        if (trimmedPrompt.length > 8000) {
+            result.warnings.push('Prompt is very long - may exceed API token limits');
+        }
+        
+        // Template variable validation
+        const openBraces = (prompt.match(/\{\{/g) || []).length;
+        const closeBraces = (prompt.match(/\}\}/g) || []).length;
+        
+        if (openBraces !== closeBraces) {
+            result.isValid = false;
+            result.message = 'Template variables have mismatched braces';
+            return result;
+        }
+        
+        // Check for malformed variables (single braces)
+        // First, temporarily replace valid double braces to avoid false positives
+        const tempPrompt = prompt.replace(/\{\{[^}]*\}\}/g, 'VALID_VAR');
+        const malformedVars = tempPrompt.match(/[{}]/g);
+        if (malformedVars) {
+            result.isValid = false;
+            result.message = 'Found malformed template variables - use {{variable}} format';
+            return result;
+        }
+        
+        // Extract and validate template variables
+        const variables = prompt.match(/\{\{([^}]+)\}\}/g) || [];
+        const variableNames = variables.map(v => v.slice(2, -2).trim());
+        
+        // Check for invalid variable names
+        const invalidVarNames = variableNames.filter(name => 
+            !name || !/^[a-zA-Z][a-zA-Z0-9_]*$/.test(name)
+        );
+        
+        if (invalidVarNames.length > 0) {
+            result.isValid = false;
+            result.message = `Invalid variable names: ${invalidVarNames.join(', ')}`;
+            return result;
+        }
+        
+        // Check for required storyContent variable
+        if (!prompt.includes('{{storyContent}}')) {
+            result.warnings.push('Consider including {{storyContent}} variable for story content');
+        }
+        
+        // Check for unknown variables
+        const knownVariables = ['storyContent', 'timestamp', 'provider', 'feedbackType'];
+        const unknownVars = variableNames.filter(name => !knownVariables.includes(name));
+        
+        if (unknownVars.length > 0) {
+            result.warnings.push(`Unknown variables will be left as-is: ${unknownVars.join(', ')}`);
+        }
+        
+        // Check for potentially problematic content
+        const suspiciousPatterns = [
+            { pattern: /javascript:/i, message: 'Contains potentially unsafe JavaScript content' },
+            { pattern: /<script/i, message: 'Contains potentially unsafe script tags' },
+            { pattern: /eval\s*\(/i, message: 'Contains potentially unsafe eval calls' }
+        ];
+        
+        for (const { pattern, message } of suspiciousPatterns) {
+            if (pattern.test(prompt)) {
+                result.isValid = false;
+                result.message = message;
+                return result;
+            }
+        }
+        
+        return result;
     }
     
     showValidation(message, type) {
@@ -440,6 +572,323 @@ Acceptance Criteria:
     async autoSavePrompt() {
         this.saveCurrentPrompt();
         await this.autoSave();
+    }
+    
+    // Enhanced Prompt Storage Methods
+    async saveCustomPrompt(provider, prompt) {
+        try {
+            if (!this.validatePrompt(prompt)) {
+                throw new Error('Invalid prompt template');
+            }
+            
+            const settings = await this.getStoredSettings();
+            if (!settings.customPrompts) {
+                settings.customPrompts = {};
+            }
+            
+            // Create backup before changing
+            this.createPromptBackup(provider, settings.customPrompts[provider]);
+            
+            settings.customPrompts[provider] = prompt;
+            await this.storeSettings(settings);
+            
+            return { success: true, message: 'Prompt saved successfully' };
+        } catch (error) {
+            console.error('Failed to save custom prompt:', error);
+            return { success: false, error: error.message };
+        }
+    }
+    
+    async getCustomPrompt(provider) {
+        try {
+            const settings = await this.getStoredSettings();
+            const customPrompt = settings.customPrompts?.[provider];
+            
+            if (customPrompt) {
+                return {
+                    success: true,
+                    prompt: customPrompt,
+                    isCustom: true
+                };
+            } else {
+                // Return default prompt as fallback
+                return {
+                    success: true,
+                    prompt: this.defaultPrompts[provider],
+                    isCustom: false
+                };
+            }
+        } catch (error) {
+            console.error('Failed to retrieve custom prompt:', error);
+            return {
+                success: false,
+                error: error.message,
+                prompt: this.defaultPrompts[provider] || '',
+                isCustom: false
+            };
+        }
+    }
+    
+    async bulkSavePrompts(promptsObject) {
+        try {
+            const results = {};
+            
+            for (const [provider, prompt] of Object.entries(promptsObject)) {
+                if (!this.validatePrompt(prompt)) {
+                    results[provider] = { success: false, error: 'Invalid prompt template' };
+                    continue;
+                }
+                results[provider] = { success: true };
+            }
+            
+            // Only save if all prompts are valid
+            const allValid = Object.values(results).every(r => r.success);
+            if (!allValid) {
+                return { success: false, results, error: 'Some prompts failed validation' };
+            }
+            
+            const settings = await this.getStoredSettings();
+            if (!settings.customPrompts) {
+                settings.customPrompts = {};
+            }
+            
+            // Create backups for all existing prompts
+            for (const provider of Object.keys(promptsObject)) {
+                this.createPromptBackup(provider, settings.customPrompts[provider]);
+            }
+            
+            // Save all prompts
+            Object.assign(settings.customPrompts, promptsObject);
+            await this.storeSettings(settings);
+            
+            return { success: true, results, message: 'All prompts saved successfully' };
+        } catch (error) {
+            console.error('Failed to bulk save prompts:', error);
+            return { success: false, error: error.message };
+        }
+    }
+    
+    createPromptBackup(provider, currentPrompt) {
+        if (!currentPrompt) return;
+        
+        const backup = {
+            provider,
+            prompt: currentPrompt,
+            timestamp: new Date().toISOString(),
+            version: '1.0'
+        };
+        
+        // Keep only last 5 backups per provider
+        if (!this.promptBackups) {
+            this.promptBackups = [];
+        }
+        
+        // Remove old backups for this provider (keep only 4, so we can add 1 more)
+        this.promptBackups = this.promptBackups
+            .filter(b => b.provider !== provider)
+            .concat(this.promptBackups.filter(b => b.provider === provider).slice(-4));
+        
+        this.promptBackups.push(backup);
+    }
+    
+    async getPromptBackups(provider = null) {
+        try {
+            const settings = await this.getStoredSettings();
+            const backups = settings.promptBackups || [];
+            
+            if (provider) {
+                return backups.filter(b => b.provider === provider);
+            }
+            
+            return backups;
+        } catch (error) {
+            console.error('Failed to retrieve prompt backups:', error);
+            return [];
+        }
+    }
+    
+    async restorePromptFromBackup(provider, timestamp) {
+        try {
+            const backups = await this.getPromptBackups(provider);
+            const backup = backups.find(b => b.timestamp === timestamp);
+            
+            if (!backup) {
+                throw new Error('Backup not found');
+            }
+            
+            const result = await this.saveCustomPrompt(provider, backup.prompt);
+            if (result.success) {
+                return { success: true, message: 'Prompt restored from backup' };
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (error) {
+            console.error('Failed to restore prompt from backup:', error);
+            return { success: false, error: error.message };
+        }
+    }
+    
+    // Import/Export Functionality
+    async exportPrompts() {
+        try {
+            const settings = await this.getStoredSettings();
+            const exportData = {
+                version: '1.0',
+                timestamp: new Date().toISOString(),
+                customPrompts: settings.customPrompts || {},
+                metadata: {
+                    totalPrompts: Object.keys(settings.customPrompts || {}).length,
+                    exportedBy: 'Story Reviewer Extension'
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+                type: 'application/json'
+            });
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `story-reviewer-prompts-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            this.showStatusMessage('Prompts exported successfully!', 'success');
+        } catch (error) {
+            console.error('Export failed:', error);
+            this.showStatusMessage('Failed to export prompts: ' + error.message, 'error');
+        }
+    }
+    
+    triggerImport() {
+        document.getElementById('importFile').click();
+    }
+    
+    async handleImportFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        try {
+            const text = await this.readFileAsText(file);
+            const importData = JSON.parse(text);
+            
+            // Validate import data
+            const validationResult = this.validateImportData(importData);
+            if (!validationResult.isValid) {
+                throw new Error(validationResult.message);
+            }
+            
+            // Show confirmation dialog
+            const promptCount = Object.keys(importData.customPrompts || {}).length;
+            const confirmMessage = `Import ${promptCount} prompt(s)? This will overwrite existing prompts for the same providers.`;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            // Perform import
+            await this.performImport(importData);
+            
+            this.showStatusMessage(`Successfully imported ${promptCount} prompt(s)!`, 'success');
+            
+            // Refresh UI to show imported prompts
+            this.loadCurrentPrompt();
+            
+        } catch (error) {
+            console.error('Import failed:', error);
+            this.showStatusMessage('Import failed: ' + error.message, 'error');
+        } finally {
+            // Clear the file input
+            event.target.value = '';
+        }
+    }
+    
+    readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result);
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsText(file);
+        });
+    }
+    
+    validateImportData(data) {
+        const result = {
+            isValid: true,
+            message: ''
+        };
+        
+        // Check basic structure
+        if (!data || typeof data !== 'object') {
+            result.isValid = false;
+            result.message = 'Invalid file format';
+            return result;
+        }
+        
+        // Check for required fields
+        if (!data.customPrompts || typeof data.customPrompts !== 'object') {
+            result.isValid = false;
+            result.message = 'No custom prompts found in file';
+            return result;
+        }
+        
+        // Check version compatibility
+        if (data.version && !this.isVersionCompatible(data.version)) {
+            result.isValid = false;
+            result.message = `Incompatible file version: ${data.version}`;
+            return result;
+        }
+        
+        // Validate each prompt
+        for (const [provider, prompt] of Object.entries(data.customPrompts)) {
+            if (typeof prompt !== 'string' || !prompt.trim()) {
+                result.isValid = false;
+                result.message = `Invalid prompt for provider: ${provider}`;
+                return result;
+            }
+            
+            // Use comprehensive validation
+            const promptValidation = this.comprehensivePromptValidation(prompt);
+            if (!promptValidation.isValid) {
+                result.isValid = false;
+                result.message = `Invalid prompt for ${provider}: ${promptValidation.message}`;
+                return result;
+            }
+        }
+        
+        return result;
+    }
+    
+    isVersionCompatible(version) {
+        // Simple version compatibility check
+        const [major] = version.split('.');
+        return major === '1';
+    }
+    
+    async performImport(importData) {
+        const settings = await this.getStoredSettings();
+        
+        // Create backups for existing prompts before overwriting
+        for (const provider of Object.keys(importData.customPrompts)) {
+            if (settings.customPrompts && settings.customPrompts[provider]) {
+                this.createPromptBackup(provider, settings.customPrompts[provider]);
+            }
+        }
+        
+        // Merge imported prompts
+        if (!settings.customPrompts) {
+            settings.customPrompts = {};
+        }
+        
+        Object.assign(settings.customPrompts, importData.customPrompts);
+        
+        // Save updated settings
+        await this.storeSettings(settings);
+        
+        // Update local copy
+        this.customPrompts = settings.customPrompts;
     }
 }
 

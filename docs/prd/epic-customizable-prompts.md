@@ -20,11 +20,11 @@ Enable users to customize AI feedback prompts to get more targeted and relevant 
 
 ## Stories
 
-1. **Story 1: Prompt Management UI** - Add prompt customization interface to the options page with default templates, edit capabilities, and preview functionality
+1. ✅ **Story 2.1: Prompt Management UI** - Add prompt customization interface to the options page with default templates, edit capabilities, and preview functionality *(Completed 2025-08-04)*
 
-2. **Story 2: Prompt Storage & Retrieval** - Implement secure storage of custom prompts using existing extension storage API and integrate with current settings system
+2. ✅ **Story 2.2: Prompt Storage & Retrieval** - Implement secure storage of custom prompts using existing extension storage API and integrate with current settings system *(Completed 2025-08-04)*
 
-3. **Story 3: Dynamic Prompt Integration** - Modify background script API calls to use custom prompts instead of hardcoded ones, with fallback to defaults
+3. ✅ **Story 2.3: Dynamic Prompt Integration** - Modify background script API calls to use custom prompts instead of hardcoded ones, with fallback to defaults *(Completed 2025-08-04)*
 
 ## Risk Mitigation
 

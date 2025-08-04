@@ -44,6 +44,7 @@ describe('Feedback Window Tests', () => {
       <button id="retryBtn">Try Again</button>
       <button id="checkSettingsBtn">Check Settings</button>
       <button id="openSettingsBtn">Configure API Key</button>
+      <button id="toggleDebugBtn">Debug</button>
       <button id="copyAllBtn">Copy All</button>
       <button id="exportBtn">Export</button>
       
@@ -54,6 +55,12 @@ describe('Feedback Window Tests', () => {
       
       <span id="errorMessage">Error message</span>
       <div id="originalContent" class="content-box"></div>
+      <div id="debugInfo" class="debug-info" style="display: none;">
+        <div id="debugPromptType">Loading...</div>
+        <div id="debugProvider">Loading...</div>
+        <div id="debugTimestamp">Loading...</div>
+        <div id="debugPromptPreview">Loading...</div>
+      </div>
       <div id="feedbackContent" class="feedback-content"></div>
       <span id="timestampInfo">Last updated: Never</span>
       <span id="providerInfo">Provider: Not configured</span>

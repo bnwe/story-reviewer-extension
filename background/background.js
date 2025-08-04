@@ -89,7 +89,10 @@ async function sendToLLM(content, settings) {
     const apiUrl = getApiUrl(settings.apiProvider, settings.customEndpoint);
     const headers = getApiHeaders(settings.apiProvider, settings.apiKey);
     
-    const payload = getFeedbackPayload(settings.apiProvider, content);
+    // Get effective prompt (custom or default)
+    const effectivePrompt = await getEffectivePrompt(settings.apiProvider);
+    const isCustomPrompt = await isUsingCustomPrompt(settings.apiProvider, effectivePrompt);
+    const payload = getFeedbackPayload(settings.apiProvider, content, effectivePrompt);
     
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -107,7 +110,14 @@ async function sendToLLM(content, settings) {
     
     return { 
       success: true, 
-      feedback: feedback 
+      feedback: feedback,
+      promptInfo: {
+        provider: settings.apiProvider,
+        isCustom: isCustomPrompt,
+        promptPreview: effectivePrompt.substring(0, 150) + (effectivePrompt.length > 150 ? '...' : ''),
+        timestamp: new Date().toISOString(),
+        hasVariables: effectivePrompt.includes('{{')
+      }
     };
     
   } catch (error) {
@@ -117,11 +127,151 @@ async function sendToLLM(content, settings) {
                           error.name === 'TypeError' ||
                           error.name === 'NetworkError';
     
+    // Try to get prompt info even on error for debugging
+    let promptInfo = null;
+    try {
+      const effectivePrompt = await getEffectivePrompt(settings.apiProvider);
+      const isCustomPrompt = await isUsingCustomPrompt(settings.apiProvider, effectivePrompt);
+      promptInfo = {
+        provider: settings.apiProvider,
+        isCustom: isCustomPrompt,
+        promptPreview: effectivePrompt.substring(0, 150) + (effectivePrompt.length > 150 ? '...' : ''),
+        timestamp: new Date().toISOString(),
+        hasVariables: effectivePrompt.includes('{{'),
+        error: true
+      };
+    } catch (promptError) {
+      console.warn('Could not get prompt info for error response:', promptError);
+    }
+    
     return { 
       success: false, 
-      error: isNetworkError ? 'Network error - check your internet connection' : error.message
+      error: isNetworkError ? 'Network error - check your internet connection' : error.message,
+      promptInfo: promptInfo
     };
   }
+}
+
+// Get effective prompt (custom or default) with fallback mechanism
+async function getEffectivePrompt(provider) {
+  try {
+    // Get stored settings including custom prompts
+    const settings = await getStoredPrompts();
+    
+    // Try to get custom prompt for the provider
+    const customPrompt = settings.customPrompts?.[provider];
+    if (customPrompt && validatePromptTemplate(customPrompt)) {
+      return customPrompt;
+    }
+    
+    // Fall back to default prompt for the provider
+    const defaultPrompt = getDefaultPrompt(provider);
+    if (defaultPrompt) {
+      return defaultPrompt;
+    }
+    
+    // Emergency fallback - generic prompt
+    return getEmergencyPrompt();
+    
+  } catch (error) {
+    console.warn('Failed to load custom prompt, using default:', error);
+    return getDefaultPrompt(provider) || getEmergencyPrompt();
+  }
+}
+
+// Get stored prompts from browser storage
+function getStoredPrompts() {
+  return new Promise((resolve) => {
+    browserAPI.storage.sync.get(['customPrompts'], (result) => {
+      if (browserAPI.runtime.lastError) {
+        resolve({ customPrompts: {} });
+      } else {
+        resolve(result);
+      }
+    });
+  });
+}
+
+// Validate prompt template for basic syntax
+function validatePromptTemplate(prompt) {
+  if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
+    return false;
+  }
+  
+  // Check for unclosed template variables
+  const openBraces = (prompt.match(/\{\{/g) || []).length;
+  const closeBraces = (prompt.match(/\}\}/g) || []).length;
+  
+  return openBraces === closeBraces;
+}
+
+// Get default prompts for each provider
+function getDefaultPrompt(provider) {
+  const defaultPrompts = {
+    openai: `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
+
+User Story Content:
+{{storyContent}}
+
+Please provide your feedback in a structured format with clear sections for different aspects of the story.`,
+    anthropic: `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
+
+User Story Content:
+{{storyContent}}
+
+Please provide your feedback in a structured format with clear sections for different aspects of the story.`,
+    custom: `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
+
+User Story Content:
+{{storyContent}}
+
+Please provide your feedback in a structured format with clear sections for different aspects of the story.`
+  };
+  
+  return defaultPrompts[provider];
+}
+
+// Emergency fallback prompt (last resort)
+function getEmergencyPrompt() {
+  return `Please review the following user story and provide feedback:
+
+{{storyContent}}
+
+Provide suggestions for improvement.`;
+}
+
+// Check if we're using a custom prompt vs default
+async function isUsingCustomPrompt(provider, effectivePrompt) {
+  try {
+    const defaultPrompt = getDefaultPrompt(provider);
+    return effectivePrompt !== defaultPrompt && effectivePrompt !== getEmergencyPrompt();
+  } catch (error) {
+    return false;
+  }
+}
+
+// Variable substitution engine
+function substituteVariables(template, variables) {
+  let result = template;
+  
+  // Standard variables
+  const standardVars = {
+    storyContent: variables.storyContent || '',
+    timestamp: new Date().toISOString(),
+    provider: variables.provider || 'unknown',
+    feedbackType: 'General Review'
+  };
+  
+  // Merge with any additional variables
+  const allVars = { ...standardVars, ...variables };
+  
+  // Replace variables in template
+  for (const [key, value] of Object.entries(allVars)) {
+    const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+    result = result.replace(regex, String(value));
+  }
+  
+  return result;
 }
 
 // Helper functions for API integration
@@ -195,7 +345,7 @@ function getTestPayload(provider) {
   }
 }
 
-function getFeedbackPayload(provider, content) {
+function getFeedbackPayload(provider, content, promptTemplate) {
   // Convert content to string if it's an object
   let contentString = '';
   if (typeof content === 'object' && content !== null) {
@@ -207,19 +357,18 @@ function getFeedbackPayload(provider, content) {
     contentString = String(content);
   }
 
-  const prompt = `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
-
-User Story Content:
-${contentString}
-
-Please provide your feedback in a structured format with clear sections for different aspects of the story.`;
+  // Substitute variables in the prompt template
+  const finalPrompt = substituteVariables(promptTemplate, {
+    storyContent: contentString,
+    provider: provider
+  });
 
   switch (provider) {
     case 'openai':
       return {
         model: 'gpt-4',
         messages: [
-          { role: 'user', content: prompt }
+          { role: 'user', content: finalPrompt }
         ],
         max_tokens: 2000,
         temperature: 0.7
@@ -229,13 +378,13 @@ Please provide your feedback in a structured format with clear sections for diff
         model: 'claude-3-sonnet-20240229',
         max_tokens: 2000,
         messages: [
-          { role: 'user', content: prompt }
+          { role: 'user', content: finalPrompt }
         ]
       };
     case 'custom':
       return {
         messages: [
-          { role: 'user', content: prompt }
+          { role: 'user', content: finalPrompt }
         ],
         max_tokens: 2000
       };
