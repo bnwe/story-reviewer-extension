@@ -63,11 +63,11 @@ A browser extension that extracts user story content from Azure DevOps work item
 ## Usage
 
 1. Navigate to any Azure DevOps work item page
-2. The extension will automatically detect work items and add an "Extract Story" button
-3. Click "Extract Story" to extract the content
-4. Click "Get Feedback" to receive AI-powered suggestions for improvement
-5. Review the feedback in the popup window
-6. Copy improved content back to your work item
+2. The extension will automatically detect work items and add a "Get Feedback" button
+3. Click "Get Feedback" to extract content and receive AI-powered suggestions for improvement
+4. Review the feedback in the dedicated feedback window
+5. Use "Copy Feedback" to copy suggestions to clipboard
+6. View "LLM details" to see technical information about the AI analysis
 
 ### Supported Work Item Types
 

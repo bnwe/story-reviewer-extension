@@ -306,40 +306,6 @@ describe('Feedback Window Tests', () => {
     });
   });
 
-  describe('Export Functionality', () => {
-    test('should export feedback as markdown file', async () => {
-      const feedbackManager = new FeedbackManager();
-      feedbackManager.currentSettings = { apiProvider: 'openai' };
-      
-      document.getElementById('originalContent').textContent = 'Original story content';
-      document.getElementById('feedbackContent').textContent = 'AI feedback content';
-
-      // Mock document.createElement and appendChild/removeChild
-      const mockAnchor = {
-        href: '',
-        download: '',
-        click: jest.fn()
-      };
-      const originalCreateElement = document.createElement;
-      document.createElement = jest.fn((tagName) => {
-        if (tagName === 'a') return mockAnchor;
-        return originalCreateElement.call(document, tagName);
-      });
-
-      document.body.appendChild = jest.fn();
-      document.body.removeChild = jest.fn();
-
-      await feedbackManager.exportFeedback();
-
-      expect(mockAnchor.download).toMatch(/story-feedback-\d+\.md/);
-      expect(mockAnchor.click).toHaveBeenCalled();
-      expect(global.URL.createObjectURL).toHaveBeenCalled();
-      expect(global.URL.revokeObjectURL).toHaveBeenCalled();
-
-      // Restore original createElement
-      document.createElement = originalCreateElement;
-    });
-  });
 
   describe('State Management', () => {
     test('should show loading state', () => {

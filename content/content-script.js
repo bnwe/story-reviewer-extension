@@ -64,18 +64,17 @@ class AzureDevOpsStoryExtractor {
 
   cleanup() {
     // Remove existing buttons
-    const existingButtons = document.querySelectorAll('#story-extractor-btn, #story-feedback-btn');
+    const existingButtons = document.querySelectorAll('#story-feedback-btn');
     existingButtons.forEach(button => button.remove());
     
     // Remove button containers
     const buttonContainers = document.querySelectorAll('div[style*="inline-flex"]');
     buttonContainers.forEach(container => {
-      if (container.querySelector('#story-extractor-btn') || container.querySelector('#story-feedback-btn')) {
+      if (container.querySelector('#story-feedback-btn')) {
         container.remove();
       }
     });
     
-    this.extractButton = null;
     this.feedbackButton = null;
     this.isInitialized = false;
     this.isCreatingButton = false;
@@ -120,7 +119,7 @@ class AzureDevOpsStoryExtractor {
     // Wait for search header to be available with retry logic
     this.waitForSearchHeader().then(searchHeader => {
       // Double-check we still need to create the button
-      if (document.querySelector('#story-extractor-btn')) {
+      if (document.querySelector('#story-feedback-btn')) {
         this.isCreatingButton = false;
         return;
       }
@@ -171,11 +170,12 @@ class AzureDevOpsStoryExtractor {
       margin-right: 0.75rem;
     `;
 
-    // Create extraction button
-    const extractButton = document.createElement('button');
-    extractButton.id = 'story-extractor-btn';
-    extractButton.textContent = 'Extract Story';
-    extractButton.style.cssText = `
+
+    // Create feedback button
+    const feedbackButton = document.createElement('button');
+    feedbackButton.id = 'story-feedback-btn';
+    feedbackButton.textContent = 'Get Feedback';
+    feedbackButton.style.cssText = `
       padding: 0.5rem 0.75rem;
       background: #2563eb;
       color: white;
@@ -196,68 +196,32 @@ class AzureDevOpsStoryExtractor {
       -webkit-font-smoothing: antialiased;
     `;
 
-    // Create feedback button
-    const feedbackButton = document.createElement('button');
-    feedbackButton.id = 'story-feedback-btn';
-    feedbackButton.textContent = 'Get Feedback';
-    feedbackButton.style.cssText = `
-      padding: 0.5rem 0.75rem;
-      background: #10b981;
-      color: white;
-      border: 1px solid #10b981;
-      border-radius: 0.375rem;
-      cursor: pointer;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      font-size: 0.875rem;
-      font-weight: 500;
-      line-height: 1;
-      height: 32px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      white-space: nowrap;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      user-select: none;
-      -webkit-font-smoothing: antialiased;
-    `;
-
     // Button event listeners
-    extractButton.addEventListener('click', () => this.extractStoryContent());
-    extractButton.addEventListener('mouseenter', () => {
-      extractButton.style.background = '#1d4ed8';
-      extractButton.style.borderColor = '#1d4ed8';
-    });
-    extractButton.addEventListener('mouseleave', () => {
-      extractButton.style.background = '#2563eb';
-      extractButton.style.borderColor = '#2563eb';
-    });
 
     feedbackButton.addEventListener('click', () => this.openFeedbackWindow());
     feedbackButton.addEventListener('mouseenter', () => {
-      feedbackButton.style.background = '#059669';
-      feedbackButton.style.borderColor = '#059669';
+      feedbackButton.style.background = '#1d4ed8';
+      feedbackButton.style.borderColor = '#1d4ed8';
     });
     feedbackButton.addEventListener('mouseleave', () => {
-      feedbackButton.style.background = '#10b981';
-      feedbackButton.style.borderColor = '#10b981';
+      feedbackButton.style.background = '#2563eb';
+      feedbackButton.style.borderColor = '#2563eb';
     });
 
-    // Add buttons to container
-    buttonContainer.appendChild(extractButton);
+    // Add button to container
     buttonContainer.appendChild(feedbackButton);
 
     // Insert container as first child of search header
     searchHeader.insertBefore(buttonContainer, searchHeader.firstChild);
-    this.extractButton = extractButton;
     this.feedbackButton = feedbackButton;
   }
 
   createFixedExtractButton() {
     // Fallback method for fixed positioning when search header not found
-    const extractButton = document.createElement('button');
-    extractButton.id = 'story-extractor-btn';
-    extractButton.textContent = 'Extract Story Content';
-    extractButton.style.cssText = `
+    const feedbackButton = document.createElement('button');
+    feedbackButton.id = 'story-feedback-btn';
+    feedbackButton.textContent = 'Get Feedback';
+    feedbackButton.style.cssText = `
       position: fixed;
       top: 1.25rem;
       right: 1.25rem;
@@ -278,22 +242,22 @@ class AzureDevOpsStoryExtractor {
       -webkit-font-smoothing: antialiased;
     `;
 
-    extractButton.addEventListener('click', () => this.extractStoryContent());
-    extractButton.addEventListener('mouseenter', () => {
-      extractButton.style.background = '#1d4ed8';
-      extractButton.style.borderColor = '#1d4ed8';
-      extractButton.style.transform = 'translateY(-1px)';
-      extractButton.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)';
+    feedbackButton.addEventListener('click', () => this.openFeedbackWindow());
+    feedbackButton.addEventListener('mouseenter', () => {
+      feedbackButton.style.background = '#1d4ed8';
+      feedbackButton.style.borderColor = '#1d4ed8';
+      feedbackButton.style.transform = 'translateY(-1px)';
+      feedbackButton.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)';
     });
-    extractButton.addEventListener('mouseleave', () => {
-      extractButton.style.background = '#2563eb';
-      extractButton.style.borderColor = '#2563eb';
-      extractButton.style.transform = 'translateY(0)';
-      extractButton.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+    feedbackButton.addEventListener('mouseleave', () => {
+      feedbackButton.style.background = '#2563eb';
+      feedbackButton.style.borderColor = '#2563eb';
+      feedbackButton.style.transform = 'translateY(0)';
+      feedbackButton.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
     });
 
-    document.body.appendChild(extractButton);
-    this.extractButton = extractButton;
+    document.body.appendChild(feedbackButton);
+    this.feedbackButton = feedbackButton;
   }
 
   openFeedbackWindow() {

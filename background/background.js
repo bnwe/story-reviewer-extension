@@ -114,7 +114,7 @@ async function sendToLLM(content, settings) {
       promptInfo: {
         provider: settings.apiProvider,
         isCustom: isCustomPrompt,
-        promptPreview: effectivePrompt.substring(0, 150) + (effectivePrompt.length > 150 ? '...' : ''),
+        promptPreview: effectivePrompt,
         timestamp: new Date().toISOString(),
         hasVariables: effectivePrompt.includes('{{')
       }
@@ -135,7 +135,7 @@ async function sendToLLM(content, settings) {
       promptInfo = {
         provider: settings.apiProvider,
         isCustom: isCustomPrompt,
-        promptPreview: effectivePrompt.substring(0, 150) + (effectivePrompt.length > 150 ? '...' : ''),
+        promptPreview: effectivePrompt,
         timestamp: new Date().toISOString(),
         hasVariables: effectivePrompt.includes('{{'),
         error: true

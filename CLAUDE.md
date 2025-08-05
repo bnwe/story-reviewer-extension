@@ -27,7 +27,7 @@ This is a **Firefox browser extension** that extracts user story content from Az
 1. **Content Scripts** (`content/`)
    - `content-script.js` - Main content script with `AzureDevOpsStoryExtractor` class
    - `extraction-utils.js` - Utility functions for enhanced content extraction
-   - Runs on Azure DevOps pages to inject extraction buttons and extract work item content
+   - Runs on Azure DevOps pages to inject feedback button and extract work item content
 
 2. **Background Script** (`background/background.js`)
    - Handles API communication with OpenAI, Anthropic, or custom endpoints
@@ -63,11 +63,11 @@ The extension requires access to:
 ### Content Extraction Flow
 
 1. Content script detects Azure DevOps work item pages
-2. Injects "Extract Story" and "Get Feedback" buttons into page header
-3. Extracts title, description, and acceptance criteria from DOM
+2. Injects "Get Feedback" button into page header
+3. User clicks "Get Feedback" which automatically extracts title, description, and acceptance criteria from DOM
 4. Validates extracted content and sends to background script
 5. Background script calls configured AI provider with custom prompt
-6. Feedback displayed in popup window or dedicated feedback page
+6. Feedback displayed in dedicated feedback window with options to copy feedback and view LLM details
 
 ### Development Notes
 

@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Story Reviewer - Feedback</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="feedback.css">
 </head>
 <body>
@@ -34,7 +35,7 @@
             <div id="loadingState" class="state loading-state">
                 <div class="loading-spinner"></div>
                 <h2>Analyzing your user story...</h2>
-                <p>Please wait while we generate feedback for your story.</p>
+                <p>Please wait while feedback for your story is generated.</p>
             </div>
             
             <!-- Error state -->
@@ -81,27 +82,13 @@
                     <div class="feedback-header">
                         <h2>AI Feedback</h2>
                         <div class="feedback-actions">
-                            <button id="toggleDebugBtn" class="btn btn-tertiary" title="Toggle debug info">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <path d="m21 21-4.35-4.35"></path>
-                                </svg>
-                                Debug
+                            <button id="toggleDebugBtn" class="btn btn-tertiary" title="Toggle LLM details">
+                                <span class="material-icons">info</span>
+                                LLM details
                             </button>
                             <button id="copyAllBtn" class="btn btn-secondary">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                                Copy All
-                            </button>
-                            <button id="exportBtn" class="btn btn-secondary">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                Export
+                                <span class="material-icons">content_copy</span>
+                                Copy Feedback
                             </button>
                         </div>
                     </div>
