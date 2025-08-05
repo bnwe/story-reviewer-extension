@@ -36,15 +36,29 @@
     "persistent": false
   },
   
+  "icons": {
+    "16": "icon.png",
+    "32": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+
   "browser_action": {
     "default_title": "Story Reviewer",
-    "default_popup": "popup/popup.html"
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "32": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
   },
   
   "options_page": "options/options.html",
   
   "web_accessible_resources": [
     "content/*",
-    "feedback/*"
+    "feedback/*",
+    "icon.png"
   ]
 }
