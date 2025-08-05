@@ -98,7 +98,7 @@ describe('Options Page Tests', () => {
         apiProvider: 'openai',
         apiKey: '',
         customEndpoint: '',
-        customPrompts: {},
+        customPrompt: '',
         promptVersion: '1.0',
         promptBackups: []
       });
@@ -205,7 +205,7 @@ describe('Options Page Tests', () => {
           apiProvider: 'openai',
           apiKey: 'test-key',
           customEndpoint: '',
-          customPrompts: expect.any(Object)
+          customPrompt: ''
         }
       }, expect.any(Function));
       
@@ -249,7 +249,7 @@ describe('Options Page Tests', () => {
         apiProvider: 'openai',
         apiKey: 'new-key',
         customEndpoint: '',
-        customPrompts: expect.any(Object)
+        customPrompt: ''
       }, expect.any(Function));
     });
   });
@@ -268,7 +268,7 @@ describe('Options Page Tests', () => {
         apiProvider: 'anthropic',
         apiKey: 'test-key',
         customEndpoint: 'https://api.example.com',
-        customPrompts: expect.any(Object)
+        customPrompt: ''
       });
     });
 

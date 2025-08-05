@@ -90,7 +90,7 @@ async function sendToLLM(content, settings) {
     const headers = getApiHeaders(settings.apiProvider, settings.apiKey);
     
     // Get effective prompt (custom or default)
-    const effectivePrompt = await getEffectivePrompt(settings.apiProvider);
+    const effectivePrompt = await getEffectivePrompt();
     const isCustomPrompt = await isUsingCustomPrompt(effectivePrompt);
     const payload = getFeedbackPayload(settings.apiProvider, content, effectivePrompt);
     
@@ -130,7 +130,7 @@ async function sendToLLM(content, settings) {
     // Try to get prompt info even on error for debugging
     let promptInfo = null;
     try {
-      const effectivePrompt = await getEffectivePrompt(settings.apiProvider);
+      const effectivePrompt = await getEffectivePrompt();
       const isCustomPrompt = await isUsingCustomPrompt(effectivePrompt);
       promptInfo = {
         provider: settings.apiProvider,
@@ -153,13 +153,13 @@ async function sendToLLM(content, settings) {
 }
 
 // Get effective prompt (custom or default) with fallback mechanism
-async function getEffectivePrompt(provider) {
+async function getEffectivePrompt() {
   try {
-    // Get stored settings including custom prompts
+    // Get stored settings including custom prompt
     const settings = await getStoredPrompts();
     
-    // Try to get custom prompt for the provider
-    const customPrompt = settings.customPrompts?.[provider];
+    // Try to get the unified custom prompt
+    const customPrompt = settings.customPrompt;
     if (customPrompt && validatePromptTemplate(customPrompt)) {
       return customPrompt;
     }
@@ -182,9 +182,9 @@ async function getEffectivePrompt(provider) {
 // Get stored prompts from browser storage
 function getStoredPrompts() {
   return new Promise((resolve) => {
-    browserAPI.storage.sync.get(['customPrompts'], (result) => {
+    browserAPI.storage.sync.get(['customPrompt'], (result) => {
       if (browserAPI.runtime.lastError) {
-        resolve({ customPrompts: {} });
+        resolve({ customPrompt: null });
       } else {
         resolve(result);
       }

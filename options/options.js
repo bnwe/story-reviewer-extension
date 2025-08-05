@@ -4,7 +4,7 @@ class OptionsManager {
             apiProvider: 'openai',
             apiKey: '',
             customEndpoint: '',
-            customPrompts: {},
+            customPrompt: '',
             promptVersion: '1.0',
             promptBackups: []
         };
@@ -16,7 +16,6 @@ User Story Content:
 
 Please provide your feedback in a structured format with clear sections for different aspects of the story.`;
         
-        this.currentProvider = 'openai';
         this.init();
     }
     
@@ -33,7 +32,6 @@ Please provide your feedback in a structured format with clear sections for diff
         const testConnectionBtn = document.getElementById('testConnection');
         
         // Prompt management elements
-        const promptTabs = document.querySelectorAll('.prompt-tab');
         const customPromptTextarea = document.getElementById('customPrompt');
         const previewPromptBtn = document.getElementById('previewPrompt');
         const resetPromptBtn = document.getElementById('resetPrompt');
@@ -49,9 +47,6 @@ Please provide your feedback in a structured format with clear sections for diff
         testConnectionBtn.addEventListener('click', this.testConnection.bind(this));
         
         // Prompt management events
-        promptTabs.forEach(tab => {
-            tab.addEventListener('click', this.handlePromptTabChange.bind(this));
-        });
         customPromptTextarea.addEventListener('input', this.handlePromptInput.bind(this));
         previewPromptBtn.addEventListener('click', this.showPromptPreview.bind(this));
         resetPromptBtn.addEventListener('click', this.resetCurrentPrompt.bind(this));
@@ -71,7 +66,7 @@ Please provide your feedback in a structured format with clear sections for diff
         // Auto-save on input changes
         apiKeyInput.addEventListener('input', this.autoSave.bind(this));
         customEndpointInput.addEventListener('input', this.autoSave.bind(this));
-        customPromptTextarea.addEventListener('input', this.autoSavePrompt.bind(this));
+        customPromptTextarea.addEventListener('input', this.autoSave.bind(this));
         
         // Enhanced UI functionality
         this.bindEnhancedEvents();
@@ -87,8 +82,6 @@ Please provide your feedback in a structured format with clear sections for diff
             customEndpointGroup.style.display = 'none';
         }
         
-        // Sync with prompt tabs
-        this.switchToPromptTab(provider);
         
         this.autoSave();
     }
@@ -172,7 +165,7 @@ Please provide your feedback in a structured format with clear sections for diff
             apiProvider: document.getElementById('apiProvider').value,
             apiKey: document.getElementById('apiKey').value.trim(),
             customEndpoint: document.getElementById('customEndpoint').value.trim(),
-            customPrompts: this.getAllCustomPrompts()
+            customPrompt: document.getElementById('customPrompt').value.trim()
         };
     }
     
@@ -191,9 +184,8 @@ Please provide your feedback in a structured format with clear sections for diff
         document.getElementById('apiKey').value = settings.apiKey;
         document.getElementById('customEndpoint').value = settings.customEndpoint;
         
-        // Load custom prompts
-        this.currentProvider = settings.apiProvider;
-        this.loadPromptsIntoUI(settings.customPrompts || {});
+        // Load custom prompt
+        this.loadPromptIntoUI(settings.customPrompt || '');
         
         // Trigger provider change to show/hide custom endpoint
         this.handleProviderChange();
@@ -217,9 +209,24 @@ Please provide your feedback in a structured format with clear sections for diff
         const migrated = { ...settings };
         let needsMigration = false;
         
-        // Ensure customPrompts object exists
-        if (!migrated.customPrompts) {
-            migrated.customPrompts = {};
+        // Migrate from old customPrompts to new customPrompt
+        if (migrated.customPrompts && !migrated.customPrompt) {
+            // Take the first available custom prompt or use default
+            const providers = ['openai', 'anthropic', 'custom'];
+            for (const provider of providers) {
+                if (migrated.customPrompts[provider]) {
+                    migrated.customPrompt = migrated.customPrompts[provider];
+                    break;
+                }
+            }
+            // Clean up old structure
+            delete migrated.customPrompts;
+            needsMigration = true;
+        }
+        
+        // Ensure customPrompt exists
+        if (!migrated.customPrompt) {
+            migrated.customPrompt = '';
             needsMigration = true;
         }
         
@@ -284,27 +291,6 @@ Please provide your feedback in a structured format with clear sections for diff
     }
     
     // Prompt Management Methods
-    handlePromptTabChange(event) {
-        const provider = event.target.dataset.provider;
-        this.switchToPromptTab(provider);
-    }
-    
-    switchToPromptTab(provider) {
-        // Update active tab
-        document.querySelectorAll('.prompt-tab').forEach(tab => {
-            tab.classList.remove('active');
-        });
-        document.querySelector(`[data-provider="${provider}"]`).classList.add('active');
-        
-        // Save current prompt before switching
-        if (this.currentProvider) {
-            this.saveCurrentPrompt();
-        }
-        
-        // Switch to new provider
-        this.currentProvider = provider;
-        this.loadCurrentPrompt();
-    }
     
     handlePromptInput(event) {
         const charCount = event.target.value.length;
@@ -456,7 +442,7 @@ Acceptance Criteria:
 - Work is automatically saved every 5 minutes
 - User receives confirmation when save is complete`,
             timestamp: new Date().toISOString(),
-            provider: this.getProviderDisplayName(this.currentProvider),
+            provider: this.getProviderDisplayName(document.getElementById('apiProvider').value),
             feedbackType: 'General Review'
         };
         
@@ -498,61 +484,32 @@ Acceptance Criteria:
     }
     
     resetCurrentPrompt() {
-        if (confirm(`Reset ${this.getProviderDisplayName(this.currentProvider)} prompt to default?`)) {
+        if (confirm('Reset prompt template to default?')) {
             document.getElementById('customPrompt').value = this.defaultPrompt;
             this.handlePromptInput({ target: { value: this.defaultPrompt } });
-            this.autoSavePrompt();
+            this.autoSave();
         }
     }
     
-    saveCurrentPrompt() {
-        const promptValue = document.getElementById('customPrompt').value;
-        if (!this.customPrompts) {
-            this.customPrompts = {};
-        }
-        this.customPrompts[this.currentProvider] = promptValue;
-    }
-    
-    loadCurrentPrompt() {
-        const savedPrompt = this.customPrompts?.[this.currentProvider];
-        const promptValue = savedPrompt || this.defaultPrompt;
-        
+    loadPromptIntoUI(customPrompt) {
+        const promptValue = customPrompt || this.defaultPrompt;
         document.getElementById('customPrompt').value = promptValue;
         this.handlePromptInput({ target: { value: promptValue } });
     }
     
-    loadPromptsIntoUI(customPrompts) {
-        this.customPrompts = customPrompts;
-        this.loadCurrentPrompt();
-    }
-    
-    getAllCustomPrompts() {
-        // Save current prompt before getting all
-        this.saveCurrentPrompt();
-        return this.customPrompts || {};
-    }
-    
-    async autoSavePrompt() {
-        this.saveCurrentPrompt();
-        await this.autoSave();
-    }
-    
     // Enhanced Prompt Storage Methods
-    async saveCustomPrompt(provider, prompt) {
+    async saveCustomPrompt(prompt) {
         try {
             if (!this.validatePrompt(prompt)) {
                 throw new Error('Invalid prompt template');
             }
             
             const settings = await this.getStoredSettings();
-            if (!settings.customPrompts) {
-                settings.customPrompts = {};
-            }
             
             // Create backup before changing
-            this.createPromptBackup(provider, settings.customPrompts[provider]);
+            this.createPromptBackup('unified', settings.customPrompt);
             
-            settings.customPrompts[provider] = prompt;
+            settings.customPrompt = prompt;
             await this.storeSettings(settings);
             
             return { success: true, message: 'Prompt saved successfully' };
@@ -562,10 +519,10 @@ Acceptance Criteria:
         }
     }
     
-    async getCustomPrompt(provider) {
+    async getCustomPrompt() {
         try {
             const settings = await this.getStoredSettings();
-            const customPrompt = settings.customPrompts?.[provider];
+            const customPrompt = settings.customPrompt;
             
             if (customPrompt) {
                 return {
@@ -592,41 +549,24 @@ Acceptance Criteria:
         }
     }
     
-    async bulkSavePrompts(promptsObject) {
+    async savePrompt(prompt) {
         try {
-            const results = {};
-            
-            for (const [provider, prompt] of Object.entries(promptsObject)) {
-                if (!this.validatePrompt(prompt)) {
-                    results[provider] = { success: false, error: 'Invalid prompt template' };
-                    continue;
-                }
-                results[provider] = { success: true };
-            }
-            
-            // Only save if all prompts are valid
-            const allValid = Object.values(results).every(r => r.success);
-            if (!allValid) {
-                return { success: false, results, error: 'Some prompts failed validation' };
+            if (!this.validatePrompt(prompt)) {
+                return { success: false, error: 'Invalid prompt template' };
             }
             
             const settings = await this.getStoredSettings();
-            if (!settings.customPrompts) {
-                settings.customPrompts = {};
-            }
             
-            // Create backups for all existing prompts
-            for (const provider of Object.keys(promptsObject)) {
-                this.createPromptBackup(provider, settings.customPrompts[provider]);
-            }
+            // Create backup for existing prompt
+            this.createPromptBackup('unified', settings.customPrompt);
             
-            // Save all prompts
-            Object.assign(settings.customPrompts, promptsObject);
+            // Save the prompt
+            settings.customPrompt = prompt;
             await this.storeSettings(settings);
             
-            return { success: true, results, message: 'All prompts saved successfully' };
+            return { success: true, message: 'Prompt saved successfully' };
         } catch (error) {
-            console.error('Failed to bulk save prompts:', error);
+            console.error('Failed to save prompt:', error);
             return { success: false, error: error.message };
         }
     }
@@ -670,16 +610,16 @@ Acceptance Criteria:
         }
     }
     
-    async restorePromptFromBackup(provider, timestamp) {
+    async restorePromptFromBackup(timestamp) {
         try {
-            const backups = await this.getPromptBackups(provider);
+            const backups = await this.getPromptBackups();
             const backup = backups.find(b => b.timestamp === timestamp);
             
             if (!backup) {
                 throw new Error('Backup not found');
             }
             
-            const result = await this.saveCustomPrompt(provider, backup.prompt);
+            const result = await this.saveCustomPrompt(backup.prompt);
             if (result.success) {
                 return { success: true, message: 'Prompt restored from backup' };
             } else {
@@ -698,9 +638,9 @@ Acceptance Criteria:
             const exportData = {
                 version: '1.0',
                 timestamp: new Date().toISOString(),
-                customPrompts: settings.customPrompts || {},
+                customPrompt: settings.customPrompt || '',
                 metadata: {
-                    totalPrompts: Object.keys(settings.customPrompts || {}).length,
+                    hasCustomPrompt: !!(settings.customPrompt),
                     exportedBy: 'Story Reviewer Extension'
                 }
             };
@@ -744,20 +684,20 @@ Acceptance Criteria:
             }
             
             // Show confirmation dialog
-            const promptCount = Object.keys(importData.customPrompts || {}).length;
-            const confirmMessage = `Import ${promptCount} prompt(s)? This will overwrite existing prompts for the same providers.`;
+            const hasPrompt = !!(importData.customPrompt);
+            const confirmMessage = hasPrompt ? 'Import custom prompt? This will overwrite your existing prompt template.' : 'No valid prompt found to import.';
             
-            if (!confirm(confirmMessage)) {
+            if (!hasPrompt || !confirm(confirmMessage)) {
                 return;
             }
             
             // Perform import
             await this.performImport(importData);
             
-            this.showStatusMessage(`Successfully imported ${promptCount} prompt(s)!`, 'success');
+            this.showStatusMessage('Successfully imported prompt template!', 'success');
             
-            // Refresh UI to show imported prompts
-            this.loadCurrentPrompt();
+            // Refresh UI to show imported prompt
+            this.loadPromptIntoUI(importData.customPrompt);
             
         } catch (error) {
             console.error('Import failed:', error);
@@ -790,10 +730,10 @@ Acceptance Criteria:
             return result;
         }
         
-        // Check for required fields
-        if (!data.customPrompts || typeof data.customPrompts !== 'object') {
+        // Check for required fields  
+        if (!data.customPrompt && !data.customPrompts) {
             result.isValid = false;
-            result.message = 'No custom prompts found in file';
+            result.message = 'No custom prompt found in file';
             return result;
         }
         
@@ -804,19 +744,31 @@ Acceptance Criteria:
             return result;
         }
         
-        // Validate each prompt
-        for (const [provider, prompt] of Object.entries(data.customPrompts)) {
-            if (typeof prompt !== 'string' || !prompt.trim()) {
+        // Handle migration from old format
+        if (data.customPrompts && !data.customPrompt) {
+            // Use the first available prompt from old format
+            const providers = ['openai', 'anthropic', 'custom'];
+            for (const provider of providers) {
+                if (data.customPrompts[provider]) {
+                    data.customPrompt = data.customPrompts[provider];
+                    break;
+                }
+            }
+        }
+        
+        // Validate the prompt
+        if (data.customPrompt) {
+            if (typeof data.customPrompt !== 'string' || !data.customPrompt.trim()) {
                 result.isValid = false;
-                result.message = `Invalid prompt for provider: ${provider}`;
+                result.message = 'Invalid prompt template';
                 return result;
             }
             
             // Use comprehensive validation
-            const promptValidation = this.comprehensivePromptValidation(prompt);
+            const promptValidation = this.comprehensivePromptValidation(data.customPrompt);
             if (!promptValidation.isValid) {
                 result.isValid = false;
-                result.message = `Invalid prompt for ${provider}: ${promptValidation.message}`;
+                result.message = `Invalid prompt template: ${promptValidation.message}`;
                 return result;
             }
         }
@@ -833,25 +785,16 @@ Acceptance Criteria:
     async performImport(importData) {
         const settings = await this.getStoredSettings();
         
-        // Create backups for existing prompts before overwriting
-        for (const provider of Object.keys(importData.customPrompts)) {
-            if (settings.customPrompts && settings.customPrompts[provider]) {
-                this.createPromptBackup(provider, settings.customPrompts[provider]);
-            }
+        // Create backup for existing prompt before overwriting
+        if (settings.customPrompt) {
+            this.createPromptBackup('unified', settings.customPrompt);
         }
         
-        // Merge imported prompts
-        if (!settings.customPrompts) {
-            settings.customPrompts = {};
-        }
-        
-        Object.assign(settings.customPrompts, importData.customPrompts);
+        // Import the prompt
+        settings.customPrompt = importData.customPrompt || '';
         
         // Save updated settings
         await this.storeSettings(settings);
-        
-        // Update local copy
-        this.customPrompts = settings.customPrompts;
     }
     
     // Enhanced UI Methods

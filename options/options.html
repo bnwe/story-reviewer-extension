@@ -66,18 +66,12 @@
         
         <div class="section prompts-section">
             <div class="section-header">
-                <h2>📝 Custom Prompts</h2>
-                <div class="section-description">Customize AI prompts for each provider</div>
-            </div>
-            <div class="prompt-tabs">
-                <button class="prompt-tab active" data-provider="openai">OpenAI</button>
-                <button class="prompt-tab" data-provider="anthropic">Anthropic</button>
-                <button class="prompt-tab" data-provider="custom">Custom API</button>
+                <h2>📝 Custom Prompt Template</h2>
+                <div class="section-description">Customize the AI prompt template</div>
             </div>
             
             <div class="prompt-content">
                 <div class="form-group">
-                    <label for="customPrompt">Prompt Template:</label>
                     <textarea id="customPrompt" placeholder="Enter your custom prompt template. Use {{storyContent}} for story content, {{timestamp}} for current time, and {{provider}} for API provider name." rows="10"></textarea>
                     <div class="character-count">
                         <span id="promptCharCount">0</span> characters
