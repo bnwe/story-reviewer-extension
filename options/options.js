@@ -9,26 +9,12 @@ class OptionsManager {
             promptBackups: []
         };
         
-        this.defaultPrompts = {
-            openai: `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
+        this.defaultPrompt = `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
 
 User Story Content:
 {{storyContent}}
 
-Please provide your feedback in a structured format with clear sections for different aspects of the story.`,
-            anthropic: `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
-
-User Story Content:
-{{storyContent}}
-
-Please provide your feedback in a structured format with clear sections for different aspects of the story.`,
-            custom: `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
-
-User Story Content:
-{{storyContent}}
-
-Please provide your feedback in a structured format with clear sections for different aspects of the story.`
-        };
+Please provide your feedback in a structured format with clear sections for different aspects of the story.`;
         
         this.currentProvider = 'openai';
         this.init();
@@ -513,9 +499,8 @@ Acceptance Criteria:
     
     resetCurrentPrompt() {
         if (confirm(`Reset ${this.getProviderDisplayName(this.currentProvider)} prompt to default?`)) {
-            const defaultPrompt = this.defaultPrompts[this.currentProvider];
-            document.getElementById('customPrompt').value = defaultPrompt;
-            this.handlePromptInput({ target: { value: defaultPrompt } });
+            document.getElementById('customPrompt').value = this.defaultPrompt;
+            this.handlePromptInput({ target: { value: this.defaultPrompt } });
             this.autoSavePrompt();
         }
     }
@@ -530,7 +515,7 @@ Acceptance Criteria:
     
     loadCurrentPrompt() {
         const savedPrompt = this.customPrompts?.[this.currentProvider];
-        const promptValue = savedPrompt || this.defaultPrompts[this.currentProvider];
+        const promptValue = savedPrompt || this.defaultPrompt;
         
         document.getElementById('customPrompt').value = promptValue;
         this.handlePromptInput({ target: { value: promptValue } });
@@ -592,7 +577,7 @@ Acceptance Criteria:
                 // Return default prompt as fallback
                 return {
                     success: true,
-                    prompt: this.defaultPrompts[provider],
+                    prompt: this.defaultPrompt,
                     isCustom: false
                 };
             }
@@ -601,7 +586,7 @@ Acceptance Criteria:
             return {
                 success: false,
                 error: error.message,
-                prompt: this.defaultPrompts[provider] || '',
+                prompt: this.defaultPrompt,
                 isCustom: false
             };
         }

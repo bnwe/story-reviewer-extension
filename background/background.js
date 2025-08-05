@@ -91,7 +91,7 @@ async function sendToLLM(content, settings) {
     
     // Get effective prompt (custom or default)
     const effectivePrompt = await getEffectivePrompt(settings.apiProvider);
-    const isCustomPrompt = await isUsingCustomPrompt(settings.apiProvider, effectivePrompt);
+    const isCustomPrompt = await isUsingCustomPrompt(effectivePrompt);
     const payload = getFeedbackPayload(settings.apiProvider, content, effectivePrompt);
     
     const response = await fetch(apiUrl, {
@@ -131,7 +131,7 @@ async function sendToLLM(content, settings) {
     let promptInfo = null;
     try {
       const effectivePrompt = await getEffectivePrompt(settings.apiProvider);
-      const isCustomPrompt = await isUsingCustomPrompt(settings.apiProvider, effectivePrompt);
+      const isCustomPrompt = await isUsingCustomPrompt(effectivePrompt);
       promptInfo = {
         provider: settings.apiProvider,
         isCustom: isCustomPrompt,
@@ -164,8 +164,8 @@ async function getEffectivePrompt(provider) {
       return customPrompt;
     }
     
-    // Fall back to default prompt for the provider
-    const defaultPrompt = getDefaultPrompt(provider);
+    // Fall back to default prompt
+    const defaultPrompt = getDefaultPrompt();
     if (defaultPrompt) {
       return defaultPrompt;
     }
@@ -175,7 +175,7 @@ async function getEffectivePrompt(provider) {
     
   } catch (error) {
     console.warn('Failed to load custom prompt, using default:', error);
-    return getDefaultPrompt(provider) || getEmergencyPrompt();
+    return getDefaultPrompt() || getEmergencyPrompt();
   }
 }
 
@@ -205,30 +205,14 @@ function validatePromptTemplate(prompt) {
   return openBraces === closeBraces;
 }
 
-// Get default prompts for each provider
-function getDefaultPrompt(provider) {
-  const defaultPrompts = {
-    openai: `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
+// Get default prompt (same for all providers)
+function getDefaultPrompt() {
+  return `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
 
 User Story Content:
 {{storyContent}}
 
-Please provide your feedback in a structured format with clear sections for different aspects of the story.`,
-    anthropic: `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
-
-User Story Content:
-{{storyContent}}
-
-Please provide your feedback in a structured format with clear sections for different aspects of the story.`,
-    custom: `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
-
-User Story Content:
-{{storyContent}}
-
-Please provide your feedback in a structured format with clear sections for different aspects of the story.`
-  };
-  
-  return defaultPrompts[provider];
+Please provide your feedback in a structured format with clear sections for different aspects of the story.`;
 }
 
 // Emergency fallback prompt (last resort)
@@ -241,9 +225,9 @@ Provide suggestions for improvement.`;
 }
 
 // Check if we're using a custom prompt vs default
-async function isUsingCustomPrompt(provider, effectivePrompt) {
+async function isUsingCustomPrompt(effectivePrompt) {
   try {
-    const defaultPrompt = getDefaultPrompt(provider);
+    const defaultPrompt = getDefaultPrompt();
     return effectivePrompt !== defaultPrompt && effectivePrompt !== getEmergencyPrompt();
   } catch (error) {
     return false;
