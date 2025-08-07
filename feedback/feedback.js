@@ -579,9 +579,13 @@ class FeedbackManager {
     
     async copyHtmlToClipboard(htmlContent, element) {
         try {
-            // Try to copy as HTML using the Clipboard API
+            // Extract plain text version for plain text fields (like Azure DevOps title)
+            const plainText = this.extractPlainTextFromHtml(htmlContent);
+            
+            // Try to copy both HTML and plain text using the Clipboard API
             const clipboardItem = new ClipboardItem({
-                'text/html': new Blob([htmlContent], { type: 'text/html' })
+                'text/html': new Blob([htmlContent], { type: 'text/html' }),
+                'text/plain': new Blob([plainText], { type: 'text/plain' })
             });
             
             await navigator.clipboard.write([clipboardItem]);
@@ -589,9 +593,10 @@ class FeedbackManager {
             
         } catch (err) {
             console.warn('HTML clipboard write failed, trying fallback:', err);
-            // Fallback: try to copy as plain HTML text
+            // Fallback: try to copy as plain text first, then HTML
             try {
-                await navigator.clipboard.writeText(htmlContent);
+                const plainText = this.extractPlainTextFromHtml(htmlContent);
+                await navigator.clipboard.writeText(plainText);
                 this.showCopySuccess(element);
             } catch (fallbackErr) {
                 console.error('All clipboard methods failed:', fallbackErr);
@@ -600,9 +605,28 @@ class FeedbackManager {
         }
     }
     
+    extractPlainTextFromHtml(htmlContent) {
+        // Create a temporary element to parse HTML and extract text content
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
+        
+        // Get text content, which automatically strips HTML tags
+        let plainText = tempDiv.textContent || tempDiv.innerText || '';
+        
+        // Clean up extra whitespace and normalize line breaks
+        plainText = plainText
+            .replace(/\s+/g, ' ')  // Replace multiple spaces/tabs with single space
+            .replace(/\n\s*\n/g, '\n')  // Remove empty lines
+            .trim();
+        
+        return plainText;
+    }
+    
     fallbackHtmlCopy(htmlContent, element) {
+        // Use plain text for fallback copy to ensure compatibility with all fields
+        const plainText = this.extractPlainTextFromHtml(htmlContent);
         const textArea = document.createElement('textarea');
-        textArea.value = htmlContent;
+        textArea.value = plainText;
         textArea.style.position = 'fixed';
         textArea.style.left = '-999999px';
         textArea.style.top = '-999999px';
