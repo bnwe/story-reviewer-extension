@@ -3,7 +3,6 @@
 
 describe('Background Script Tests', () => {
   let mockFetch;
-  let backgroundScript;
 
   beforeEach(() => {
     // Mock global fetch
@@ -47,6 +46,9 @@ describe('Background Script Tests', () => {
       global.extractFeedbackFromResponse = extractFeedbackFromResponse;
       global.testApiConnection = testApiConnection;
       global.sendToLLM = sendToLLM;
+      global.getDefaultPrompt = getDefaultPrompt;
+      global.getEmergencyPrompt = getEmergencyPrompt;
+      global.substituteVariables = substituteVariables;
     `;
     
     eval(testableCode);
@@ -441,6 +443,60 @@ describe('Background Script Tests', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Network error - check your internet connection');
+    });
+  });
+
+  describe('Prompt Management', () => {
+    test('should return default prompt with HTML formatting instruction', () => {
+      const defaultPrompt = global.getDefaultPrompt();
+      
+      expect(defaultPrompt).toContain('HTML format');
+      expect(defaultPrompt).toContain('<h2>, <h3>, <p>, <ul>, <li>, <strong>, <em>');
+      expect(defaultPrompt).toContain('{{storyContent}}');
+      expect(defaultPrompt).toContain('improve readability and allow for better formatting');
+    });
+
+    test('should return emergency prompt as fallback', () => {
+      const emergencyPrompt = global.getEmergencyPrompt();
+      
+      expect(emergencyPrompt).toContain('{{storyContent}}');
+      expect(emergencyPrompt).toContain('feedback');
+    });
+
+    test('should substitute variables in template', () => {
+      const template = 'Review: {{storyContent}} - Provider: {{provider}}';
+      const variables = {
+        storyContent: 'Test story content',
+        provider: 'openai'
+      };
+
+      const result = global.substituteVariables(template, variables);
+
+      expect(result).toBe('Review: Test story content - Provider: openai');
+    });
+
+    test('should handle missing variables gracefully', () => {
+      const template = 'Review: {{storyContent}} - Missing: {{missing}}';
+      const variables = {
+        storyContent: 'Test content'
+      };
+
+      const result = global.substituteVariables(template, variables);
+
+      expect(result).toContain('Test content');
+      expect(result).toContain('{{missing}}'); // Should remain unchanged
+    });
+
+    test('should include standard variables automatically', () => {
+      const template = 'Story: {{storyContent}} - Time: {{timestamp}}';
+      const variables = {
+        storyContent: 'Test story'
+      };
+
+      const result = global.substituteVariables(template, variables);
+
+      expect(result).toContain('Test story');
+      expect(result).not.toContain('{{timestamp}}'); // Should be substituted with actual timestamp
     });
   });
 });

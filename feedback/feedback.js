@@ -187,13 +187,63 @@ class FeedbackManager {
     }
     
     formatFeedback(feedback) {
-        // Simple formatting for feedback text
-        return feedback
-            .replace(/\n\n/g, '</p><p>')
-            .replace(/\n/g, '<br>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/^\* /gm, '• ')
-            .replace(/^(\d+)\. /gm, '$1. ');
+        // Check if feedback contains HTML tags
+        if (this.isHtmlContent(feedback)) {
+            // Sanitize and return HTML content
+            return this.sanitizeHtml(feedback);
+        } else {
+            // Fallback to simple formatting for plain text
+            return feedback
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/^\* /gm, '• ')
+                .replace(/^(\d+)\. /gm, '$1. ');
+        }
+    }
+    
+    isHtmlContent(text) {
+        // Check if text contains HTML tags
+        const htmlTagRegex = /<\/?[a-z][\s\S]*>/i;
+        return htmlTagRegex.test(text);
+    }
+    
+    sanitizeHtml(html) {
+        // List of allowed HTML tags for security
+        const allowedTags = [
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            'p', 'br', 'div', 'span',
+            'strong', 'b', 'em', 'i', 'u',
+            'ul', 'ol', 'li',
+            'blockquote', 'code', 'pre',
+            'table', 'tr', 'td', 'th', 'thead', 'tbody'
+        ];
+        
+        // Create a temporary div to parse HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        
+        // Remove script and style tags for security
+        const scriptTags = tempDiv.querySelectorAll('script, style');
+        scriptTags.forEach(tag => tag.remove());
+        
+        // Remove event handlers and javascript: links
+        const allElements = tempDiv.querySelectorAll('*');
+        allElements.forEach(element => {
+            // Remove event attributes
+            Array.from(element.attributes).forEach(attr => {
+                if (attr.name.startsWith('on') || attr.value.includes('javascript:')) {
+                    element.removeAttribute(attr.name);
+                }
+            });
+            
+            // Remove non-allowed tags but keep content
+            if (!allowedTags.includes(element.tagName.toLowerCase())) {
+                element.replaceWith(...element.childNodes);
+            }
+        });
+        
+        return tempDiv.innerHTML;
     }
     
     escapeHtml(text) {

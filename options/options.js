@@ -14,7 +14,7 @@ class OptionsManager {
 User Story Content:
 {{storyContent}}
 
-Please provide your feedback in a structured format with clear sections for different aspects of the story.`;
+Please provide your feedback in HTML format with clear sections for different aspects of the story. Use proper HTML tags like <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em> to structure your response. This will improve readability and allow for better formatting.`;
         
         this.init();
     }

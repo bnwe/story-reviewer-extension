@@ -367,6 +367,51 @@ describe('Feedback Window Tests', () => {
       expect(formatted).toContain('1. Numbered item');
     });
 
+    test('should detect HTML content correctly', () => {
+      const feedbackManager = new FeedbackManager();
+
+      expect(feedbackManager.isHtmlContent('<p>HTML content</p>')).toBe(true);
+      expect(feedbackManager.isHtmlContent('<h2>Title</h2>')).toBe(true);
+      expect(feedbackManager.isHtmlContent('Plain text content')).toBe(false);
+      expect(feedbackManager.isHtmlContent('**Bold text**')).toBe(false);
+    });
+
+    test('should render HTML content when detected', () => {
+      const feedbackManager = new FeedbackManager();
+      const htmlFeedback = '<h2>Feedback Summary</h2><p>This is <strong>excellent</strong> feedback.</p><ul><li>Point 1</li><li>Point 2</li></ul>';
+
+      const formatted = feedbackManager.formatFeedback(htmlFeedback);
+
+      expect(formatted).toContain('<h2>Feedback Summary</h2>');
+      expect(formatted).toContain('<strong>excellent</strong>');
+      expect(formatted).toContain('<ul><li>Point 1</li><li>Point 2</li></ul>');
+    });
+
+    test('should sanitize HTML content for security', () => {
+      const feedbackManager = new FeedbackManager();
+      const maliciousHtml = '<p>Safe content</p><script>alert("xss")</script><div onclick="alert()">Clickable</div>';
+
+      const sanitized = feedbackManager.sanitizeHtml(maliciousHtml);
+
+      expect(sanitized).toContain('<p>Safe content</p>');
+      expect(sanitized).not.toContain('<script>');
+      expect(sanitized).not.toContain('onclick');
+      expect(sanitized).toContain('<div>Clickable</div>'); // Should keep content but remove onclick
+    });
+
+    test('should remove non-allowed HTML tags but keep content', () => {
+      const feedbackManager = new FeedbackManager();
+      const htmlWithForbiddenTags = '<p>Safe content</p><video>Video content</video><canvas>Canvas content</canvas>';
+
+      const sanitized = feedbackManager.sanitizeHtml(htmlWithForbiddenTags);
+
+      expect(sanitized).toContain('<p>Safe content</p>');
+      expect(sanitized).toContain('Video content'); // Content preserved
+      expect(sanitized).toContain('Canvas content'); // Content preserved
+      expect(sanitized).not.toContain('<video>'); // Tag removed
+      expect(sanitized).not.toContain('<canvas>'); // Tag removed
+    });
+
     test('should escape HTML in content', () => {
       const feedbackManager = new FeedbackManager();
       const content = '<script>alert("xss")</script>';

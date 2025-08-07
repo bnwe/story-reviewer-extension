@@ -197,7 +197,9 @@ The extension requires these permissions:
 
 - Improve response formatting
 - Support copy-pasting of snippets in the response
-- Support for Mistral
+- Support for Mistral and custom openAI compatible LLM
+- Support to select model and temperature
+- Offer more variables (e.g. implementation details)
 
 ## License
 
