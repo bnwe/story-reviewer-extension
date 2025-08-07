@@ -95,6 +95,14 @@ h1 {
     font-size: var(--font-size-2xl);
     font-weight: var(--font-weight-semibold);
     letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+h1 .material-icons {
+    font-size: 1.5em;
+    color: var(--color-accent);
 }
 
 h2 {
@@ -104,6 +112,14 @@ h2 {
     font-weight: var(--font-weight-semibold);
     border-bottom: 1px solid var(--color-border);
     padding-bottom: var(--space-2);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+h2 .material-icons {
+    font-size: 1.2em;
+    color: var(--color-accent);
 }
 
 h3 {
@@ -118,6 +134,14 @@ h4 {
     margin-bottom: var(--space-2);
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-semibold);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+h4 .material-icons {
+    font-size: 1em;
+    color: var(--color-accent);
 }
 
 .section {
@@ -154,6 +178,11 @@ h4 {
     display: flex;
     align-items: center;
     gap: var(--space-2);
+}
+
+.section-header h2 .material-icons {
+    font-size: 1.2em;
+    color: var(--color-accent);
 }
 
 .section-description {
@@ -607,6 +636,20 @@ textarea {
     padding: var(--space-3);
     font-size: var(--font-size-sm);
     color: var(--color-success);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.security-note .material-icons {
+    font-size: 1em;
+    color: var(--color-success);
+}
+
+/* General Material Icons styling */
+.material-icons {
+    font-size: 16px;
+    vertical-align: middle;
 }
 
 /* Validation Messages */

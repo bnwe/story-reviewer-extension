@@ -352,6 +352,27 @@ body {
     margin-bottom: var(--space-3);
 }
 
+/* Original story specific styling for expandable section */
+.original-story.expandable-section {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.original-story.expandable-section h2 {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-primary);
+}
+
+.original-story.expandable-section .content-box {
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
 .feedback-header {
     display: flex;
     justify-content: space-between;

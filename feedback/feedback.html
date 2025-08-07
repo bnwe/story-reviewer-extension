@@ -73,9 +73,14 @@
             
             <!-- Success state -->
             <div id="successState" class="state success-state" style="display: none;">
-                <div class="original-story">
-                    <h2>Original Story</h2>
-                    <div id="originalContent" class="content-box"></div>
+                <div class="original-story expandable-section">
+                    <div class="section-header" id="originalStorySectionHeader">
+                        <h2>Original Story</h2>
+                        <button id="toggleOriginalStoryBtn" class="btn btn-collapse">
+                            <span class="material-icons">expand_more</span>
+                        </button>
+                    </div>
+                    <div id="originalContent" class="content-box" style="display: none;"></div>
                 </div>
                 
                 <div class="feedback-section">

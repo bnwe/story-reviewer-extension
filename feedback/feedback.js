@@ -23,6 +23,8 @@ class FeedbackManager {
         document.getElementById('toggleResponseBtn').addEventListener('click', this.toggleResponseContent.bind(this));
         document.getElementById('promptSectionHeader').addEventListener('click', this.togglePromptContent.bind(this));
         document.getElementById('responseSectionHeader').addEventListener('click', this.toggleResponseContent.bind(this));
+        document.getElementById('toggleOriginalStoryBtn').addEventListener('click', this.toggleOriginalStoryContent.bind(this));
+        document.getElementById('originalStorySectionHeader').addEventListener('click', this.toggleOriginalStoryContent.bind(this));
     }
     
     async checkApiConfiguration() {
@@ -722,6 +724,20 @@ class FeedbackManager {
     toggleResponseContent() {
         const content = document.getElementById('rawResponseContent');
         const button = document.getElementById('toggleResponseBtn');
+        const icon = button.querySelector('.material-icons');
+        
+        if (content.style.display === 'none' || !content.style.display) {
+            content.style.display = 'block';
+            icon.textContent = 'expand_less';
+        } else {
+            content.style.display = 'none';
+            icon.textContent = 'expand_more';
+        }
+    }
+    
+    toggleOriginalStoryContent() {
+        const content = document.getElementById('originalContent');
+        const button = document.getElementById('toggleOriginalStoryBtn');
         const icon = button.querySelector('.material-icons');
         
         if (content.style.display === 'none' || !content.style.display) {

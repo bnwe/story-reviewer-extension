@@ -49,6 +49,7 @@ describe('Feedback Window Tests', () => {
       <button id="exportBtn">Export</button>
       <button id="togglePromptBtn"><span class="material-icons">expand_more</span>Toggle Prompt</button>
       <button id="toggleResponseBtn"><span class="material-icons">expand_more</span>Toggle Response</button>
+      <button id="toggleOriginalStoryBtn"><span class="material-icons">expand_more</span>Toggle Original Story</button>
       
       <div id="loadingState" class="state loading-state" style="display: flex;"></div>
       <div id="errorState" class="state error-state" style="display: none;"></div>
@@ -67,6 +68,7 @@ describe('Feedback Window Tests', () => {
         <div id="promptSectionHeader" class="section-header"></div>
         <div id="actualPromptContent" class="code-content" style="display: none;"></div>
       </div>
+      <div id="originalStorySectionHeader" class="section-header"></div>
       <div id="rawResponseSection" class="expandable-section">
         <div id="responseSectionHeader" class="section-header"></div>
         <div id="rawResponseContent" class="code-content" style="display: none;"></div>
@@ -520,6 +522,27 @@ describe('Feedback Window Tests', () => {
 
       expect(document.getElementById('actualPromptContent').textContent).toBe('Test prompt');
       expect(document.getElementById('rawResponseContent').textContent).toBe('Test response');
+    });
+
+    test('should toggle original story content visibility', () => {
+      const feedbackManager = new FeedbackManager();
+      const content = document.getElementById('originalContent');
+      const button = document.getElementById('toggleOriginalStoryBtn');
+      const icon = button.querySelector('.material-icons');
+      
+      // Initially, the original story should be collapsed (display: none)
+      expect(content.style.display).toBe('');
+      expect(icon.textContent).toBe('expand_more');
+      
+      // Toggle to show content
+      feedbackManager.toggleOriginalStoryContent();
+      expect(content.style.display).toBe('block');
+      expect(icon.textContent).toBe('expand_less');
+      
+      // Toggle to hide content again
+      feedbackManager.toggleOriginalStoryContent();
+      expect(content.style.display).toBe('none');
+      expect(icon.textContent).toBe('expand_more');
     });
   });
 });

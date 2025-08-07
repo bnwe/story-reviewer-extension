@@ -201,8 +201,6 @@ The extension requires these permissions:
 
 ## Planned Features
 
-- Make original story collabsiple
-- Make icons consistent
 - Show token usage
 - Offer more variables (e.g. implementation details)
 
