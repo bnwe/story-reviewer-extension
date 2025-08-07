@@ -198,7 +198,10 @@ class FeedbackManager {
     }
     
     formatFeedback(feedback) {
-        // First, process copyable tags before other formatting
+        // First, strip markdown code blocks if present
+        feedback = this.stripMarkdownCodeBlocks(feedback);
+        
+        // Then, process copyable tags before other formatting
         feedback = this.processCopyableTags(feedback);
         
         // Check if feedback contains HTML tags
@@ -216,6 +219,23 @@ class FeedbackManager {
         }
     }
     
+    stripMarkdownCodeBlocks(content) {
+        // Strip markdown code blocks (```language or ``` with optional language)
+        // This handles cases where LLMs wrap their HTML response in markdown code blocks
+        const codeBlockRegex = /^```(?:html|xml|markup)?\s*\n?([\s\S]*?)\n?```$/gm;
+        
+        // If the entire content is wrapped in a single code block, unwrap it
+        const singleBlockMatch = content.match(/^```(?:html|xml|markup)?\s*\n?([\s\S]*?)\n?```$/s);
+        if (singleBlockMatch) {
+            return singleBlockMatch[1].trim();
+        }
+        
+        // Otherwise, replace individual code blocks
+        return content.replace(codeBlockRegex, (match, codeContent) => {
+            return codeContent.trim();
+        });
+    }
+    
     processCopyableTags(content) {
         // Replace <copyable>...</copyable> tags with styled HTML elements
         const copyableRegex = /<copyable>([\s\S]*?)<\/copyable>/gi;
@@ -225,7 +245,7 @@ class FeedbackManager {
             const id = `copyable-${copyableIndex++}`;
             const cleanedHtmlContent = this.cleanHtmlForAzureDevOps(innerContent.trim());
             const escapedHtmlContent = this.escapeHtml(cleanedHtmlContent).replace(/"/g, '&quot;');
-            return `<span class="copyable-snippet" data-copyable-id="${id}" data-copy-html="${escapedHtmlContent}" title="Click to copy">${innerContent.trim()}</span>`;
+            return `<span class="copyable-snippet" data-copyable-id="${id}" data-copy-html="${escapedHtmlContent}" title="Click to copy">${cleanedHtmlContent}</span>`;
         });
     }
     
