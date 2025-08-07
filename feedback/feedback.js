@@ -32,7 +32,9 @@ class FeedbackManager {
             
             const providerInfo = document.getElementById('providerInfo');
             if (settings.apiKey && settings.apiProvider) {
-                providerInfo.textContent = `Provider: ${this.getProviderDisplayName(settings.apiProvider)}`;
+                const providerName = this.getProviderDisplayName(settings.apiProvider);
+                const modelInfo = settings.model ? ` (${settings.model})` : '';
+                providerInfo.textContent = `Provider: ${providerName}${modelInfo}`;
                 return true;
             } else {
                 providerInfo.textContent = 'Provider: Not configured';
@@ -433,6 +435,7 @@ class FeedbackManager {
             chrome.storage.sync.get({
                 apiProvider: 'openai',
                 apiKey: '',
+                model: '',
                 customEndpoint: ''
             }, (result) => {
                 if (chrome.runtime.lastError) {
@@ -496,6 +499,7 @@ class FeedbackManager {
         if (!promptInfo) {
             document.getElementById('debugPromptType').textContent = 'No prompt information available';
             document.getElementById('debugProvider').textContent = 'Unknown';
+            document.getElementById('debugModel').textContent = 'Unknown';
             document.getElementById('debugTimestamp').textContent = 'Unknown';
             return;
         }
@@ -508,12 +512,17 @@ class FeedbackManager {
         
         // Update provider
         const providerNames = {
-            'openai': 'OpenAI GPT',
-            'anthropic': 'Anthropic Claude',
+            'openai': 'OpenAI',
+            'anthropic': 'Anthropic',
+            'mistral': 'Mistral AI',
             'custom': 'Custom API'
         };
         document.getElementById('debugProvider').textContent = 
             providerNames[promptInfo.provider] || promptInfo.provider;
+        
+        // Update model
+        document.getElementById('debugModel').textContent = 
+            promptInfo.model || 'Unknown model';
         
         // Update timestamp
         const timestamp = new Date(promptInfo.timestamp);

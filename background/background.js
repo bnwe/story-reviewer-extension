@@ -47,7 +47,7 @@ async function testApiConnection(settings) {
     const headers = getApiHeaders(settings.apiProvider, settings.apiKey);
     
     // Simple test message
-    const testPayload = getTestPayload(settings.apiProvider);
+    const testPayload = getTestPayload(settings.apiProvider, settings.model);
     
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -86,6 +86,7 @@ async function testApiConnection(settings) {
 // Send content to LLM for feedback
 async function sendToLLM(content, settings) {
   let actualPrompt = null; // Declare at function scope
+  let actualModel = null; // Declare at function scope
   
   try {
     const apiUrl = getApiUrl(settings.apiProvider);
@@ -94,9 +95,10 @@ async function sendToLLM(content, settings) {
     // Get effective prompt (custom or default)
     const effectivePrompt = await getEffectivePrompt();
     const isCustomPrompt = await isUsingCustomPrompt(effectivePrompt);
-    const payloadData = getFeedbackPayload(settings.apiProvider, content, effectivePrompt);
+    const payloadData = getFeedbackPayload(settings.apiProvider, content, effectivePrompt, settings.model);
     const payload = payloadData.payload;
     actualPrompt = payloadData.actualPrompt;
+    actualModel = payloadData.actualModel;
     
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -118,6 +120,7 @@ async function sendToLLM(content, settings) {
       rawResponse: feedback, // Store raw response for display
       promptInfo: {
         provider: settings.apiProvider,
+        model: actualModel,
         isCustom: isCustomPrompt,
         promptPreview: effectivePrompt,
         actualPrompt: actualPrompt,
@@ -138,12 +141,14 @@ async function sendToLLM(content, settings) {
     try {
       const effectivePrompt = await getEffectivePrompt();
       const isCustomPrompt = await isUsingCustomPrompt(effectivePrompt);
-      // Try to get actual prompt if it wasn't generated before error
+      // Try to get actual prompt and model if it wasn't generated before error
       let errorActualPrompt = actualPrompt;
+      let errorActualModel = null;
       if (!errorActualPrompt) {
         try {
-          const payloadData = getFeedbackPayload(settings.apiProvider, content, effectivePrompt);
+          const payloadData = getFeedbackPayload(settings.apiProvider, content, effectivePrompt, settings.model);
           errorActualPrompt = payloadData.actualPrompt;
+          errorActualModel = payloadData.actualModel;
         } catch (payloadError) {
           console.warn('Could not generate actual prompt for error response:', payloadError);
         }
@@ -151,6 +156,7 @@ async function sendToLLM(content, settings) {
       
       promptInfo = {
         provider: settings.apiProvider,
+        model: errorActualModel || actualModel || settings.model,
         isCustom: isCustomPrompt,
         promptPreview: effectivePrompt,
         actualPrompt: errorActualPrompt,
@@ -328,11 +334,20 @@ function getApiHeaders(provider, apiKey) {
   }
 }
 
-function getTestPayload(provider) {
+function getTestPayload(provider, model = null) {
+  // Get default models if none provided
+  const defaultModels = {
+    openai: 'gpt-3.5-turbo',
+    anthropic: 'claude-3-haiku-20240307', 
+    mistral: 'mistral-tiny'
+  };
+  
+  const selectedModel = model || defaultModels[provider];
+  
   switch (provider) {
     case 'openai':
       return {
-        model: 'gpt-3.5-turbo',
+        model: selectedModel,
         messages: [
           { role: 'user', content: 'Test connection. Reply with "OK" if you receive this.' }
         ],
@@ -340,7 +355,7 @@ function getTestPayload(provider) {
       };
     case 'anthropic':
       return {
-        model: 'claude-3-haiku-20240307',
+        model: selectedModel,
         max_tokens: 10,
         messages: [
           { role: 'user', content: 'Test connection. Reply with "OK" if you receive this.' }
@@ -348,7 +363,7 @@ function getTestPayload(provider) {
       };
     case 'mistral':
       return {
-        model: 'mistral-tiny',
+        model: selectedModel,
         messages: [
           { role: 'user', content: 'Test connection. Reply with "OK" if you receive this.' }
         ],
@@ -359,7 +374,7 @@ function getTestPayload(provider) {
   }
 }
 
-function getFeedbackPayload(provider, content, promptTemplate) {
+function getFeedbackPayload(provider, content, promptTemplate, model = null) {
   // Convert content to string if it's an object
   let contentString = '';
   if (typeof content === 'object' && content !== null) {
@@ -377,11 +392,20 @@ function getFeedbackPayload(provider, content, promptTemplate) {
     provider: provider
   });
 
+  // Get default models if none provided
+  const defaultModels = {
+    openai: 'gpt-4',
+    anthropic: 'claude-3-sonnet-20240229',
+    mistral: 'mistral-medium'
+  };
+  
+  const selectedModel = model || defaultModels[provider];
+
   let payload;
   switch (provider) {
     case 'openai':
       payload = {
-        model: 'gpt-4',
+        model: selectedModel,
         messages: [
           { role: 'user', content: finalPrompt }
         ],
@@ -391,7 +415,7 @@ function getFeedbackPayload(provider, content, promptTemplate) {
       break;
     case 'anthropic':
       payload = {
-        model: 'claude-3-sonnet-20240229',
+        model: selectedModel,
         max_tokens: 2000,
         messages: [
           { role: 'user', content: finalPrompt }
@@ -400,7 +424,7 @@ function getFeedbackPayload(provider, content, promptTemplate) {
       break;
     case 'mistral':
       payload = {
-        model: 'mistral-medium',
+        model: selectedModel,
         messages: [
           { role: 'user', content: finalPrompt }
         ],
@@ -414,7 +438,8 @@ function getFeedbackPayload(provider, content, promptTemplate) {
 
   return {
     payload: payload,
-    actualPrompt: finalPrompt
+    actualPrompt: finalPrompt,
+    actualModel: selectedModel
   };
 }
 

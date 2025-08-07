@@ -95,6 +95,7 @@ describe('Options Page Tests', () => {
       expect(options.defaultSettings).toEqual({
         apiProvider: 'openai',
         apiKey: '',
+        model: '',
         customPrompt: '',
         promptVersion: '1.0',
         promptBackups: []
@@ -183,6 +184,7 @@ describe('Options Page Tests', () => {
         settings: {
           apiProvider: 'openai',
           apiKey: 'test-key',
+          model: '',
           customPrompt: ''
         }
       }, expect.any(Function));
@@ -226,6 +228,7 @@ describe('Options Page Tests', () => {
       expect(mockChrome.storage.sync.set).toHaveBeenCalledWith({
         apiProvider: 'openai',
         apiKey: 'new-key',
+        model: '',
         customPrompt: ''
       }, expect.any(Function));
     });
@@ -243,6 +246,7 @@ describe('Options Page Tests', () => {
       expect(settings).toEqual({
         apiProvider: 'anthropic',
         apiKey: 'test-key',
+        model: '',
         customPrompt: ''
       });
     });

@@ -200,7 +200,7 @@ The extension requires these permissions:
 
 ## Planned Features
 
-- Support to select model and temperature
+- Support to select temperature
 - Make original story collabsiple
 - Make icons consistent
 - Show token usage

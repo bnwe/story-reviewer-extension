@@ -3,9 +3,33 @@ class OptionsManager {
         this.defaultSettings = {
             apiProvider: 'openai',
             apiKey: '',
+            model: '',
             customPrompt: '',
             promptVersion: '1.0',
             promptBackups: []
+        };
+        
+        this.modelOptions = {
+            openai: [
+                { value: 'gpt-4', label: 'GPT-4 (Recommended)', description: 'Most capable model, best for complex analysis' },
+                { value: 'gpt-4-turbo', label: 'GPT-4 Turbo', description: 'Faster and more cost-effective than GPT-4' },
+                { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo', description: 'Fast and cost-effective for simpler tasks' },
+                { value: 'gpt-4o', label: 'GPT-4o', description: 'Latest OpenAI model with improved performance' },
+                { value: 'gpt-4o-mini', label: 'GPT-4o Mini', description: 'Smaller, faster version of GPT-4o' }
+            ],
+            anthropic: [
+                { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus', description: 'Most intelligent model, best for complex analysis' },
+                { value: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet (Recommended)', description: 'Balanced intelligence and speed' },
+                { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku', description: 'Fast and cost-effective for simpler tasks' },
+                { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet', description: 'Latest model with enhanced capabilities' },
+                { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku', description: 'Latest fast model' }
+            ],
+            mistral: [
+                { value: 'mistral-medium', label: 'Mistral Medium (Recommended)', description: 'Balanced performance for most tasks' },
+                { value: 'mistral-small', label: 'Mistral Small', description: 'Fast and cost-effective' },
+                { value: 'mistral-tiny', label: 'Mistral Tiny', description: 'Smallest and fastest model' },
+                { value: 'mistral-large', label: 'Mistral Large', description: 'Most capable Mistral model' }
+            ]
         };
         
         this.defaultPrompt = `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
@@ -37,6 +61,7 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
     bindEvents() {
         const apiProviderSelect = document.getElementById('apiProvider');
         const apiKeyInput = document.getElementById('apiKey');
+        const modelSelect = document.getElementById('modelSelect');
         const toggleApiKeyBtn = document.getElementById('toggleApiKey');
         const testConnectionBtn = document.getElementById('testConnection');
         
@@ -52,6 +77,9 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
         const importFileInput = document.getElementById('importFile');
         
         apiProviderSelect.addEventListener('change', this.handleProviderChange.bind(this));
+        if (modelSelect) {
+            modelSelect.addEventListener('change', this.autoSave.bind(this));
+        }
         toggleApiKeyBtn.addEventListener('click', this.toggleApiKeyVisibility.bind(this));
         testConnectionBtn.addEventListener('click', this.testConnection.bind(this));
         
@@ -81,7 +109,66 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
     }
     
     handleProviderChange() {
+        this.populateModelOptions();
         this.autoSave();
+    }
+    
+    populateModelOptions(selectedModel = null) {
+        const provider = document.getElementById('apiProvider').value;
+        const modelSelect = document.getElementById('modelSelect');
+        
+        // Exit early if element doesn't exist (e.g., in tests)
+        if (!modelSelect) return;
+        
+        // Clear existing options
+        modelSelect.innerHTML = '<option value="">Select a model...</option>';
+        
+        // Get models for current provider
+        const models = this.modelOptions[provider] || [];
+        
+        // Add model options
+        models.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model.value;
+            option.textContent = model.label;
+            option.dataset.description = model.description;
+            modelSelect.appendChild(option);
+        });
+        
+        // Set the specified model, or default if none provided and none currently selected
+        if (selectedModel) {
+            modelSelect.value = selectedModel;
+        } else {
+            const currentModel = modelSelect.value;
+            if (!currentModel && models.length > 0) {
+                // Find recommended model or use first one
+                const recommended = models.find(m => m.label.includes('Recommended'));
+                modelSelect.value = recommended ? recommended.value : models[0].value;
+            }
+        }
+        
+        // Update help text
+        this.updateModelHelp();
+        
+        // Add change listener to update help text
+        modelSelect.addEventListener('change', this.updateModelHelp.bind(this));
+    }
+    
+    updateModelHelp() {
+        const modelSelect = document.getElementById('modelSelect');
+        const modelHelp = document.getElementById('modelHelp');
+        
+        // Exit early if elements don't exist (e.g., in tests)
+        if (!modelSelect || !modelHelp) return;
+        
+        const selectedOption = modelSelect.options[modelSelect.selectedIndex];
+        
+        if (selectedOption && selectedOption.dataset.description) {
+            modelHelp.textContent = selectedOption.dataset.description;
+            modelHelp.style.display = 'block';
+        } else {
+            modelHelp.style.display = 'none';
+        }
     }
     
     toggleApiKeyVisibility() {
@@ -159,9 +246,11 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
     }
     
     getCurrentSettings() {
+        const modelSelect = document.getElementById('modelSelect');
         return {
             apiProvider: document.getElementById('apiProvider').value,
             apiKey: document.getElementById('apiKey').value.trim(),
+            model: modelSelect ? modelSelect.value : '',
             customPrompt: document.getElementById('customPrompt').value.trim()
         };
     }
@@ -183,8 +272,8 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
         // Load custom prompt
         this.loadPromptIntoUI(settings.customPrompt || '');
         
-        // Trigger provider change
-        this.handleProviderChange();
+        // Populate models with the saved model selection
+        this.populateModelOptions(settings.model);
     }
     
     async getStoredSettings() {
@@ -235,6 +324,12 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
         // Initialize promptBackups array if not present
         if (!migrated.promptBackups) {
             migrated.promptBackups = [];
+            needsMigration = true;
+        }
+        
+        // Ensure model field exists
+        if (!migrated.model) {
+            migrated.model = '';
             needsMigration = true;
         }
         

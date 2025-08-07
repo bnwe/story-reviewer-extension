@@ -60,6 +60,7 @@ describe('Feedback Window Tests', () => {
       <div id="debugInfo" class="debug-info" style="display: none;">
         <div id="debugPromptType">Loading...</div>
         <div id="debugProvider">Loading...</div>
+        <div id="debugModel">Loading...</div>
         <div id="debugTimestamp">Loading...</div>
       </div>
       <div id="actualPromptSection" class="expandable-section">
