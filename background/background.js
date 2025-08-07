@@ -230,7 +230,18 @@ function getDefaultPrompt() {
 User Story Content:
 {{storyContent}}
 
-Please provide your feedback in HTML format with clear sections for different aspects of the story. Use proper HTML tags like <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em> to structure your response. This will improve readability and allow for better formatting.`;
+Please provide your feedback in HTML format with clear sections for different aspects of the story. Use proper HTML tags like <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em> to structure your response. This will improve readability and allow for better formatting.
+
+When providing specific text suggestions that can be copied and pasted directly into the user story (such as additional acceptance criteria, improved descriptions, or refined user story text), wrap these copyable snippets in <copyable></copyable> tags. For example:
+- If suggesting a new acceptance criterion: <copyable>Given X when Y then Z</copyable>
+- If suggesting improved wording: <copyable>As a user, I want to...</copyable>
+- If suggesting additional details: <copyable>The system should validate...</copyable>
+
+Only use copyable tags for literal text that can be directly copied into Azure DevOps work items, not for explanatory text or analysis.
+
+Inside the copyable tags please use regular HTML formatting, so that formatting is transfered to Azure Devops as well. E.g. for lists use <ul> or <ol> tags etc.
+
+Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is presented option to cancel or continue</li><li>After canceling, the draft is discarded.</li></ol>`;
 }
 
 // Emergency fallback prompt (last resort)

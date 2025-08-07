@@ -169,6 +169,9 @@ class FeedbackManager {
         const feedbackDiv = document.getElementById('feedbackContent');
         feedbackDiv.innerHTML = this.formatFeedback(feedback);
         
+        // Attach copy event listeners to copyable snippets
+        this.attachCopyListeners();
+        
         // Populate debug sections
         this.populateDebugSections();
         
@@ -195,6 +198,9 @@ class FeedbackManager {
     }
     
     formatFeedback(feedback) {
+        // First, process copyable tags before other formatting
+        feedback = this.processCopyableTags(feedback);
+        
         // Check if feedback contains HTML tags
         if (this.isHtmlContent(feedback)) {
             // Sanitize and clean whitespace, then return HTML content
@@ -209,6 +215,19 @@ class FeedbackManager {
                 .replace(/^(\d+)\. /gm, '$1. ');
         }
     }
+    
+    processCopyableTags(content) {
+        // Replace <copyable>...</copyable> tags with styled HTML elements
+        const copyableRegex = /<copyable>([\s\S]*?)<\/copyable>/gi;
+        let copyableIndex = 0;
+        
+        return content.replace(copyableRegex, (match, innerContent) => {
+            const id = `copyable-${copyableIndex++}`;
+            const escapedContent = this.escapeHtml(innerContent.trim()).replace(/"/g, '&quot;');
+            return `<span class="copyable-snippet" data-copyable-id="${id}" data-copy-text="${escapedContent}" title="Click to copy">${innerContent.trim()}<span class="copy-btn" data-target="${id}">📋</span></span>`;
+        });
+    }
+    
     
     isHtmlContent(text) {
         // Check if text contains HTML tags
@@ -227,6 +246,10 @@ class FeedbackManager {
             'table', 'tr', 'td', 'th', 'thead', 'tbody'
         ];
         
+        const allowedAttributes = [
+            'class', 'data-copyable-id', 'data-copy-text', 'data-target', 'title'
+        ];
+        
         // Create a temporary div to parse HTML
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = html;
@@ -238,9 +261,11 @@ class FeedbackManager {
         // Remove event handlers and javascript: links
         const allElements = tempDiv.querySelectorAll('*');
         allElements.forEach(element => {
-            // Remove event attributes
+            // Remove unsafe event attributes and non-allowed attributes
             Array.from(element.attributes).forEach(attr => {
-                if (attr.name.startsWith('on') || attr.value.includes('javascript:')) {
+                if (attr.name.startsWith('on') || 
+                    attr.value.includes('javascript:') ||
+                    !allowedAttributes.includes(attr.name)) {
                     element.removeAttribute(attr.name);
                 }
             });
@@ -466,6 +491,95 @@ class FeedbackManager {
             content.style.display = 'none';
             icon.textContent = 'expand_more';
         }
+    }
+    
+    // Copy functionality for snippets
+    attachCopyListeners() {
+        const copyableElements = document.querySelectorAll('.copyable-snippet');
+        copyableElements.forEach(element => {
+            // Add click listener to the whole snippet
+            element.addEventListener('click', (e) => {
+                e.preventDefault();
+                const copyText = element.getAttribute('data-copy-text');
+                this.copyToClipboard(copyText, element);
+            });
+            
+            // Add hover effects
+            element.addEventListener('mouseenter', () => {
+                element.classList.add('hover');
+            });
+            
+            element.addEventListener('mouseleave', () => {
+                element.classList.remove('hover');
+            });
+        });
+    }
+    
+    async copyToClipboard(text, element) {
+        try {
+            await navigator.clipboard.writeText(text);
+            
+            // Show visual feedback
+            this.showCopySuccess(element);
+            
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            // Fallback for older browsers
+            this.fallbackCopyToClipboard(text, element);
+        }
+    }
+    
+    fallbackCopyToClipboard(text, element) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                this.showCopySuccess(element);
+            } else {
+                this.showCopyError(element);
+            }
+        } catch (err) {
+            console.error('Fallback copy failed:', err);
+            this.showCopyError(element);
+        } finally {
+            document.body.removeChild(textArea);
+        }
+    }
+    
+    showCopySuccess(element) {
+        const copyBtn = element.querySelector('.copy-btn');
+        const originalText = copyBtn.textContent;
+        
+        copyBtn.textContent = '✓';
+        copyBtn.style.color = '#28a745';
+        element.classList.add('copied');
+        
+        setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.style.color = '';
+            element.classList.remove('copied');
+        }, 2000);
+    }
+    
+    showCopyError(element) {
+        const copyBtn = element.querySelector('.copy-btn');
+        const originalText = copyBtn.textContent;
+        
+        copyBtn.textContent = '✗';
+        copyBtn.style.color = '#dc3545';
+        
+        setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.style.color = '';
+        }, 2000);
     }
     
     toggleResponseContent() {

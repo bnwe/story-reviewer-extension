@@ -36,6 +36,13 @@
 
 ### Story 3: Copy to clipboard of snippets in the output
 
+Goal of the story: snippets from the LLM's response, that can be copy pasted literaly into the story, will show a copy button on hover for copying to the clipboard
+
+- The prompt to the LLM should tell it to create literal suggestions for improvement, where approriate. This means that it might e.g. suggest an additional Acceptance criterion. This should then be surrounded by a special xml tag, which can then be parsed by the browser extension.
+- The parsing should then do the following:
+  - Replace the special tags by proper html tags that lightly color the copyable text snippet
+  - Show a small copy button on hovering this piece of text that allows the user to copy to clipboard
+
 ## Compatibility Requirements
 
 ### Browser Compatibility
