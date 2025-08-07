@@ -28,9 +28,13 @@
 - Update the default prompt to prompt for an HTML output
 - The LLM's response is shown formatted in the feedback dialog
 
-### Story 2: Copy to clipboard of snippets in the output
+### Story 2: Show full prompt instead of prompt preview
+- in the feedback dialog the prompt preview is removed, since it has no value for the user
+- instead there is a button "Show Prompt" that shows the exact prompt that was sent to the LLM (not the template, but the actual prompt that was sent in the request)
+- there is another button "Show Response" that shows the actual response of the LLM (showing the html tags not rendered)
+- The two buttons show the respective text by expanding to below. Collapsing is also possible.
 
-### Story 3: Show full prompt instead of prompt preview
+### Story 3: Copy to clipboard of snippets in the output
 
 ## Compatibility Requirements
 

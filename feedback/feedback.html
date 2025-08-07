@@ -96,7 +96,7 @@
                     <!-- Debug information section -->
                     <div id="debugInfo" class="debug-info" style="display: none;">
                         <div class="debug-header">
-                            <h3>Prompt Debug Information</h3>
+                            <h3>LLM Debug Information</h3>
                         </div>
                         <div class="debug-content">
                             <div class="debug-item">
@@ -111,10 +111,26 @@
                                 <label>Generated At:</label>
                                 <span id="debugTimestamp">Loading...</span>
                             </div>
-                            <div class="debug-item">
-                                <label>Prompt Preview:</label>
-                                <div id="debugPromptPreview" class="prompt-preview">Loading...</div>
+                        </div>
+                        
+                        <div id="actualPromptSection" class="expandable-section">
+                            <div class="section-header" id="promptSectionHeader">
+                                <h4>Actual Prompt Sent to LLM</h4>
+                                <button id="togglePromptBtn" class="btn btn-collapse">
+                                    <span class="material-icons">expand_more</span>
+                                </button>
                             </div>
+                            <div id="actualPromptContent" class="code-content" style="display: none;"></div>
+                        </div>
+                        
+                        <div id="rawResponseSection" class="expandable-section">
+                            <div class="section-header" id="responseSectionHeader">
+                                <h4>Raw LLM Response</h4>
+                                <button id="toggleResponseBtn" class="btn btn-collapse">
+                                    <span class="material-icons">expand_more</span>
+                                </button>
+                            </div>
+                            <div id="rawResponseContent" class="code-content" style="display: none;"></div>
                         </div>
                     </div>
                     

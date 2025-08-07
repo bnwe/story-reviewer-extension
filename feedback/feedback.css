@@ -597,6 +597,105 @@ body {
     background: var(--color-slate-400);
 }
 
+/* Debug Actions */
+.debug-actions {
+    padding: var(--space-3);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+    display: flex;
+    gap: var(--space-2);
+    justify-content: center;
+}
+
+.debug-actions .btn {
+    font-size: var(--font-size-xs);
+    padding: var(--space-1) var(--space-2);
+}
+
+/* Expandable Sections */
+.expandable-section {
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3);
+    background: var(--color-slate-50);
+    border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+}
+
+.section-header:hover {
+    background: var(--color-slate-100);
+}
+
+.section-header h4 {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+}
+
+.btn-collapse {
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: var(--space-1);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-collapse:hover {
+    background: var(--color-slate-200);
+    color: var(--color-text-primary);
+}
+
+.btn-collapse .material-icons {
+    font-size: 20px;
+}
+
+.code-content {
+    background: var(--color-surface);
+    border: none;
+    padding: var(--space-4);
+    font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-relaxed);
+    color: var(--color-text-primary);
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    word-break: break-word;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-slate-300) transparent;
+}
+
+.code-content::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.code-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.code-content::-webkit-scrollbar-thumb {
+    background: var(--color-slate-300);
+    border-radius: var(--radius-sm);
+}
+
+.code-content::-webkit-scrollbar-thumb:hover {
+    background: var(--color-slate-400);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .header {

@@ -47,6 +47,8 @@ describe('Feedback Window Tests', () => {
       <button id="toggleDebugBtn">Debug</button>
       <button id="copyAllBtn">Copy All</button>
       <button id="exportBtn">Export</button>
+      <button id="togglePromptBtn"><span class="material-icons">expand_more</span>Toggle Prompt</button>
+      <button id="toggleResponseBtn"><span class="material-icons">expand_more</span>Toggle Response</button>
       
       <div id="loadingState" class="state loading-state" style="display: flex;"></div>
       <div id="errorState" class="state error-state" style="display: none;"></div>
@@ -59,7 +61,14 @@ describe('Feedback Window Tests', () => {
         <div id="debugPromptType">Loading...</div>
         <div id="debugProvider">Loading...</div>
         <div id="debugTimestamp">Loading...</div>
-        <div id="debugPromptPreview">Loading...</div>
+      </div>
+      <div id="actualPromptSection" class="expandable-section">
+        <div id="promptSectionHeader" class="section-header"></div>
+        <div id="actualPromptContent" class="code-content" style="display: none;"></div>
+      </div>
+      <div id="rawResponseSection" class="expandable-section">
+        <div id="responseSectionHeader" class="section-header"></div>
+        <div id="rawResponseContent" class="code-content" style="display: none;"></div>
       </div>
       <div id="feedbackContent" class="feedback-content"></div>
       <span id="timestampInfo">Last updated: Never</span>
@@ -430,6 +439,86 @@ describe('Feedback Window Tests', () => {
       expect(feedbackManager.getProviderDisplayName('anthropic')).toBe('Anthropic (Claude)');
       expect(feedbackManager.getProviderDisplayName('custom')).toBe('Custom API');
       expect(feedbackManager.getProviderDisplayName('unknown')).toBe('unknown');
+    });
+  });
+
+  describe('Collapsible Sections', () => {
+    test('should toggle prompt content visibility', () => {
+      const feedbackManager = new FeedbackManager();
+      const mockPromptInfo = {
+        actualPrompt: 'Test actual prompt content'
+      };
+      feedbackManager.currentPromptInfo = mockPromptInfo;
+
+      // Initially hidden
+      expect(document.getElementById('actualPromptContent').style.display).toBe('none');
+
+      // Show content
+      feedbackManager.togglePromptContent();
+      expect(document.getElementById('actualPromptContent').style.display).toBe('block');
+      expect(document.getElementById('togglePromptBtn').querySelector('.material-icons').textContent).toBe('expand_less');
+
+      // Hide content
+      feedbackManager.togglePromptContent();
+      expect(document.getElementById('actualPromptContent').style.display).toBe('none');
+      expect(document.getElementById('togglePromptBtn').querySelector('.material-icons').textContent).toBe('expand_more');
+    });
+
+    test('should toggle response content visibility', () => {
+      const feedbackManager = new FeedbackManager();
+      
+      // Initially hidden
+      expect(document.getElementById('rawResponseContent').style.display).toBe('none');
+
+      // Show content
+      feedbackManager.toggleResponseContent();
+      expect(document.getElementById('rawResponseContent').style.display).toBe('block');
+      expect(document.getElementById('toggleResponseBtn').querySelector('.material-icons').textContent).toBe('expand_less');
+
+      // Hide content
+      feedbackManager.toggleResponseContent();
+      expect(document.getElementById('rawResponseContent').style.display).toBe('none');
+      expect(document.getElementById('toggleResponseBtn').querySelector('.material-icons').textContent).toBe('expand_more');
+    });
+
+    test('should populate debug sections when showing feedback', () => {
+      const feedbackManager = new FeedbackManager();
+      const originalContent = { title: 'Test Story' };
+      const feedback = '<h2>Test Feedback</h2>';
+      const rawResponse = '<h2>Raw Response</h2><p>HTML content</p>';
+      const promptInfo = { actualPrompt: 'Test prompt content' };
+
+      feedbackManager.showFeedback(originalContent, feedback, promptInfo, rawResponse);
+
+      expect(feedbackManager.currentRawResponse).toBe(rawResponse);
+      expect(feedbackManager.currentPromptInfo).toBe(promptInfo);
+      expect(document.getElementById('actualPromptContent').textContent).toBe('Test prompt content');
+      expect(document.getElementById('rawResponseContent').textContent).toBe(rawResponse);
+    });
+
+    test('should handle missing data when populating debug sections', () => {
+      const feedbackManager = new FeedbackManager();
+      const originalContent = { title: 'Test Story' };
+      const feedback = '<h2>Test Feedback</h2>';
+
+      feedbackManager.showFeedback(originalContent, feedback, null, null);
+
+      expect(document.getElementById('actualPromptContent').textContent).toBe('No actual prompt data available');
+      expect(document.getElementById('rawResponseContent').textContent).toBe('No raw response data available');
+    });
+
+    test('should populate sections correctly with populateDebugSections method', () => {
+      const feedbackManager = new FeedbackManager();
+      const mockPromptInfo = { actualPrompt: 'Test prompt' };
+      const mockRawResponse = 'Test response';
+      
+      feedbackManager.currentPromptInfo = mockPromptInfo;
+      feedbackManager.currentRawResponse = mockRawResponse;
+      
+      feedbackManager.populateDebugSections();
+
+      expect(document.getElementById('actualPromptContent').textContent).toBe('Test prompt');
+      expect(document.getElementById('rawResponseContent').textContent).toBe('Test response');
     });
   });
 });

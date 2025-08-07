@@ -144,23 +144,25 @@ describe('Background Script Tests', () => {
     test('should generate correct feedback payload for OpenAI', () => {
       const content = { title: 'Test Story', description: 'Test description' };
       const promptTemplate = 'Please review: {{storyContent}}';
-      const payload = getFeedbackPayload('openai', content, promptTemplate);
+      const result = getFeedbackPayload('openai', content, promptTemplate);
       
-      expect(payload.model).toBe('gpt-4');
-      expect(payload.messages[0].content).toContain('Test Story');
-      expect(payload.messages[0].content).toContain('Test description');
-      expect(payload.max_tokens).toBe(2000);
-      expect(payload.temperature).toBe(0.7);
+      expect(result.payload.model).toBe('gpt-4');
+      expect(result.payload.messages[0].content).toContain('Test Story');
+      expect(result.actualPrompt).toContain('Test Story');
+      expect(result.payload.messages[0].content).toContain('Test description');
+      expect(result.payload.max_tokens).toBe(2000);
+      expect(result.payload.temperature).toBe(0.7);
     });
 
     test('should generate correct feedback payload for Anthropic', () => {
       const content = { title: 'Test Story', description: 'Test description' };
       const promptTemplate = 'Please review: {{storyContent}}';
-      const payload = getFeedbackPayload('anthropic', content, promptTemplate);
+      const result = getFeedbackPayload('anthropic', content, promptTemplate);
       
-      expect(payload.model).toBe('claude-3-sonnet-20240229');
-      expect(payload.messages[0].content).toContain('Test Story');
-      expect(payload.max_tokens).toBe(2000);
+      expect(result.payload.model).toBe('claude-3-sonnet-20240229');
+      expect(result.payload.messages[0].content).toContain('Test Story');
+      expect(result.payload.max_tokens).toBe(2000);
+      expect(result.actualPrompt).toContain('Test Story');
     });
 
     test('should include structured content in prompt', () => {
@@ -170,11 +172,12 @@ describe('Background Script Tests', () => {
         acceptanceCriteria: 'AC1: Criteria'
       };
       const promptTemplate = 'Please review: {{storyContent}}';
-      const payload = getFeedbackPayload('openai', content, promptTemplate);
+      const result = getFeedbackPayload('openai', content, promptTemplate);
       
-      expect(payload.messages[0].content).toContain('User Story Title');
-      expect(payload.messages[0].content).toContain('Story description');
-      expect(payload.messages[0].content).toContain('AC1: Criteria');
+      expect(result.payload.messages[0].content).toContain('User Story Title');
+      expect(result.payload.messages[0].content).toContain('Story description');
+      expect(result.payload.messages[0].content).toContain('AC1: Criteria');
+      expect(result.actualPrompt).toContain('User Story Title');
     });
   });
 

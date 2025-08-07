@@ -85,6 +85,8 @@ async function testApiConnection(settings) {
 
 // Send content to LLM for feedback
 async function sendToLLM(content, settings) {
+  let actualPrompt = null; // Declare at function scope
+  
   try {
     const apiUrl = getApiUrl(settings.apiProvider, settings.customEndpoint);
     const headers = getApiHeaders(settings.apiProvider, settings.apiKey);
@@ -92,7 +94,9 @@ async function sendToLLM(content, settings) {
     // Get effective prompt (custom or default)
     const effectivePrompt = await getEffectivePrompt();
     const isCustomPrompt = await isUsingCustomPrompt(effectivePrompt);
-    const payload = getFeedbackPayload(settings.apiProvider, content, effectivePrompt);
+    const payloadData = getFeedbackPayload(settings.apiProvider, content, effectivePrompt);
+    const payload = payloadData.payload;
+    actualPrompt = payloadData.actualPrompt;
     
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -111,10 +115,12 @@ async function sendToLLM(content, settings) {
     return { 
       success: true, 
       feedback: feedback,
+      rawResponse: feedback, // Store raw response for display
       promptInfo: {
         provider: settings.apiProvider,
         isCustom: isCustomPrompt,
         promptPreview: effectivePrompt,
+        actualPrompt: actualPrompt,
         timestamp: new Date().toISOString(),
         hasVariables: effectivePrompt.includes('{{')
       }
@@ -132,10 +138,22 @@ async function sendToLLM(content, settings) {
     try {
       const effectivePrompt = await getEffectivePrompt();
       const isCustomPrompt = await isUsingCustomPrompt(effectivePrompt);
+      // Try to get actual prompt if it wasn't generated before error
+      let errorActualPrompt = actualPrompt;
+      if (!errorActualPrompt) {
+        try {
+          const payloadData = getFeedbackPayload(settings.apiProvider, content, effectivePrompt);
+          errorActualPrompt = payloadData.actualPrompt;
+        } catch (payloadError) {
+          console.warn('Could not generate actual prompt for error response:', payloadError);
+        }
+      }
+      
       promptInfo = {
         provider: settings.apiProvider,
         isCustom: isCustomPrompt,
         promptPreview: effectivePrompt,
+        actualPrompt: errorActualPrompt,
         timestamp: new Date().toISOString(),
         hasVariables: effectivePrompt.includes('{{'),
         error: true
@@ -347,9 +365,10 @@ function getFeedbackPayload(provider, content, promptTemplate) {
     provider: provider
   });
 
+  let payload;
   switch (provider) {
     case 'openai':
-      return {
+      payload = {
         model: 'gpt-4',
         messages: [
           { role: 'user', content: finalPrompt }
@@ -357,24 +376,32 @@ function getFeedbackPayload(provider, content, promptTemplate) {
         max_tokens: 2000,
         temperature: 0.7
       };
+      break;
     case 'anthropic':
-      return {
+      payload = {
         model: 'claude-3-sonnet-20240229',
         max_tokens: 2000,
         messages: [
           { role: 'user', content: finalPrompt }
         ]
       };
+      break;
     case 'custom':
-      return {
+      payload = {
         messages: [
           { role: 'user', content: finalPrompt }
         ],
         max_tokens: 2000
       };
+      break;
     default:
       throw new Error('Unsupported API provider');
   }
+
+  return {
+    payload: payload,
+    actualPrompt: finalPrompt
+  };
 }
 
 function validateApiResponse(provider, response) {

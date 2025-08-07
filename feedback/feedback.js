@@ -19,6 +19,10 @@ class FeedbackManager {
         document.getElementById('openSettingsBtn').addEventListener('click', this.openSettings.bind(this));
         document.getElementById('copyAllBtn').addEventListener('click', this.copyAllFeedback.bind(this));
         document.getElementById('toggleDebugBtn').addEventListener('click', this.toggleDebugInfo.bind(this));
+        document.getElementById('togglePromptBtn').addEventListener('click', this.togglePromptContent.bind(this));
+        document.getElementById('toggleResponseBtn').addEventListener('click', this.toggleResponseContent.bind(this));
+        document.getElementById('promptSectionHeader').addEventListener('click', this.togglePromptContent.bind(this));
+        document.getElementById('responseSectionHeader').addEventListener('click', this.toggleResponseContent.bind(this));
     }
     
     async checkApiConfiguration() {
@@ -84,7 +88,7 @@ class FeedbackManager {
             const response = await this.sendToLLM(this.currentContent, this.currentSettings);
             
             if (response.success) {
-                this.showFeedback(this.currentContent, response.feedback, response.promptInfo);
+                this.showFeedback(this.currentContent, response.feedback, response.promptInfo, response.rawResponse);
             } else {
                 this.showError(response.error || 'Failed to generate feedback', response.promptInfo);
             }
@@ -150,11 +154,12 @@ class FeedbackManager {
         document.getElementById('noApiKeyState').style.display = 'flex';
     }
     
-    showFeedback(originalContent, feedback, promptInfo = null) {
+    showFeedback(originalContent, feedback, promptInfo = null, rawResponse = null) {
         this.hideAllStates();
         
-        // Store prompt info for debug display
+        // Store prompt info and raw response for debug display
         this.currentPromptInfo = promptInfo;
+        this.currentRawResponse = rawResponse;
         
         // Display original content
         const originalDiv = document.getElementById('originalContent');
@@ -163,6 +168,9 @@ class FeedbackManager {
         // Display feedback
         const feedbackDiv = document.getElementById('feedbackContent');
         feedbackDiv.innerHTML = this.formatFeedback(feedback);
+        
+        // Populate debug sections
+        this.populateDebugSections();
         
         document.getElementById('successState').style.display = 'block';
     }
@@ -361,7 +369,6 @@ class FeedbackManager {
             document.getElementById('debugPromptType').textContent = 'No prompt information available';
             document.getElementById('debugProvider').textContent = 'Unknown';
             document.getElementById('debugTimestamp').textContent = 'Unknown';
-            document.getElementById('debugPromptPreview').textContent = 'No preview available';
             return;
         }
         
@@ -384,10 +391,54 @@ class FeedbackManager {
         const timestamp = new Date(promptInfo.timestamp);
         document.getElementById('debugTimestamp').textContent = 
             timestamp.toLocaleString();
+    }
+    
+    // Debug section population
+    populateDebugSections() {
+        // Populate prompt section
+        const promptContent = document.getElementById('actualPromptContent');
+        if (this.currentPromptInfo && this.currentPromptInfo.actualPrompt) {
+            promptContent.textContent = this.currentPromptInfo.actualPrompt;
+        } else {
+            promptContent.textContent = 'No actual prompt data available';
+        }
         
-        // Update prompt preview
-        document.getElementById('debugPromptPreview').textContent = 
-            promptInfo.promptPreview || 'No preview available';
+        // Populate response section
+        const responseContent = document.getElementById('rawResponseContent');
+        if (this.currentRawResponse) {
+            responseContent.textContent = this.currentRawResponse;
+        } else {
+            responseContent.textContent = 'No raw response data available';
+        }
+    }
+    
+    // Collapsible section methods
+    togglePromptContent() {
+        const content = document.getElementById('actualPromptContent');
+        const button = document.getElementById('togglePromptBtn');
+        const icon = button.querySelector('.material-icons');
+        
+        if (content.style.display === 'none' || !content.style.display) {
+            content.style.display = 'block';
+            icon.textContent = 'expand_less';
+        } else {
+            content.style.display = 'none';
+            icon.textContent = 'expand_more';
+        }
+    }
+    
+    toggleResponseContent() {
+        const content = document.getElementById('rawResponseContent');
+        const button = document.getElementById('toggleResponseBtn');
+        const icon = button.querySelector('.material-icons');
+        
+        if (content.style.display === 'none' || !content.style.display) {
+            content.style.display = 'block';
+            icon.textContent = 'expand_less';
+        } else {
+            content.style.display = 'none';
+            icon.textContent = 'expand_more';
+        }
     }
 }
 
