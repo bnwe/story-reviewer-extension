@@ -96,7 +96,8 @@ describe('Background Script Tests', () => {
       expect(headers).toEqual({
         'Content-Type': 'application/json',
         'x-api-key': 'test-key',
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
       });
     });
 

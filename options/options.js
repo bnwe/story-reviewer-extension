@@ -18,8 +18,8 @@ class OptionsManager {
                 { value: 'gpt-4o', label: 'GPT‑4o (Omni)', description: 'Multimodal (text, image, audio) flagship' }
             ],
             anthropic: [
-                { value: 'claude-opus-latest', label: 'Claude Opus 4.1', description: 'Top-tier performer: advanced coding, reasoning, extended thinking' },
-                { value: 'claude-sonnet-4-latest', label: 'Claude Sonnet 4 (Recommended)', description: 'Balanced high-performance model with strong instruction following' },
+                { value: 'claude-opus-4-1-20250805', label: 'Claude Opus 4.1', description: 'Top-tier performer: advanced coding, reasoning, extended thinking' },
+                { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4 (Recommended)', description: 'Balanced high-performance model with strong instruction following' },
                 { value: 'claude-3-5-haiku-latest', label: 'Claude 3.5 Haiku', description: 'Super‑fast, cost-efficient option for rapid responses' }
             ],
             mistral: [

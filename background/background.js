@@ -324,7 +324,8 @@ function getApiHeaders(provider, apiKey) {
       return {
         ...baseHeaders,
         'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
       };
     case 'mistral':
       return {
@@ -396,9 +397,9 @@ function getFeedbackPayload(provider, content, promptTemplate, model = null, tem
 
   // Get default models if none provided
   const defaultModels = {
-    openai: 'gpt-4',
-    anthropic: 'claude-3-sonnet-20240229',
-    mistral: 'mistral-medium'
+    openai: 'gpt-4.1',
+    anthropic: 'claude-3-5-haiku-latest',
+    mistral: 'mistral-medium-latest'
   };
   
   const selectedModel = model || defaultModels[provider];
