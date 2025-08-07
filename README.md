@@ -5,11 +5,15 @@ A browser extension that extracts user story content from Azure DevOps work item
 ## Features
 
 - **Smart Content Extraction**: Automatically extracts user stories, acceptance criteria, and metadata from Azure DevOps work items
-- **AI-Powered Feedback**: Get intelligent suggestions to improve story quality using OpenAI, Anthropic Claude, or custom AI endpoints
+- **AI-Powered Feedback**: Get intelligent suggestions to improve story quality using OpenAI, Anthropic Claude, or Mistral AI
 - **Rich Text Support**: Handles various Azure DevOps text editors including Monaco editor and rich text fields
 - **Validation**: Built-in validation for user story format and completeness
 - **Cross-Browser Support**: Works with Firefox and Chrome-based browsers
 - **Secure**: API keys stored locally, no data sent to third parties except chosen AI providers
+
+## Copyable Snippets
+
+The extension provides intelligent **copyable snippets** for feedback that contains actionable text you can directly paste into Azure DevOps work items. It supports both plain text and html for pasting back.
 
 ## Installation
 
@@ -56,7 +60,7 @@ A browser extension that extracts user story content from Azure DevOps work item
 3. Configure your AI provider:
    - **OpenAI**: Enter your OpenAI API key
    - **Anthropic**: Enter your Anthropic API key  
-   - **Custom**: Enter your custom endpoint URL and API key
+   - **Mistral**: Enter your Mistral API key
 4. Test the connection to ensure everything works
 5. Settings are automatically saved as you make changes
 
@@ -66,8 +70,9 @@ A browser extension that extracts user story content from Azure DevOps work item
 2. The extension will automatically detect work items and add a "Get Feedback" button
 3. Click "Get Feedback" to extract content and receive AI-powered suggestions for improvement
 4. Review the feedback in the dedicated feedback window
-5. Use "Copy Feedback" to copy suggestions to clipboard
-6. View "LLM details" to see technical information about the AI analysis
+5. Click individual **copyable snippets** (green highlighted text) to copy specific suggestions
+6. Use "Copy Feedback" to copy all feedback to clipboard
+7. View "LLM details" to see technical information about the AI analysis
 
 ### Supported Work Item Types
 
@@ -161,7 +166,7 @@ The extension supports multiple AI providers:
 |----------|-------------|----------|
 | OpenAI | `https://api.openai.com/v1/chat/completions` | API Key |
 | Anthropic | `https://api.anthropic.com/v1/messages` | API Key |
-| Custom | Your endpoint | API Key + URL |
+| Mistral | `https://api.mistral.ai/v1/chat/completions` | API Key |
 
 ### Permissions
 
@@ -195,8 +200,10 @@ The extension requires these permissions:
 
 ## Planned Features
 
-- Support for Mistral and custom openAI compatible LLM
 - Support to select model and temperature
+- Make original story collabsiple
+- Make icons consistent
+- Show token usage
 - Offer more variables (e.g. implementation details)
 
 ## License
