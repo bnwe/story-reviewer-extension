@@ -223,11 +223,53 @@ class FeedbackManager {
         
         return content.replace(copyableRegex, (match, innerContent) => {
             const id = `copyable-${copyableIndex++}`;
-            const escapedContent = this.escapeHtml(innerContent.trim()).replace(/"/g, '&quot;');
-            return `<span class="copyable-snippet" data-copyable-id="${id}" data-copy-text="${escapedContent}" title="Click to copy">${innerContent.trim()}<span class="copy-btn" data-target="${id}">📋</span></span>`;
+            const cleanedHtmlContent = this.cleanHtmlForAzureDevOps(innerContent.trim());
+            const escapedHtmlContent = this.escapeHtml(cleanedHtmlContent).replace(/"/g, '&quot;');
+            return `<span class="copyable-snippet" data-copyable-id="${id}" data-copy-html="${escapedHtmlContent}" title="Click to copy">${innerContent.trim()}</span>`;
         });
     }
     
+    cleanHtmlForAzureDevOps(htmlContent) {
+        // Clean and optimize HTML content for Azure DevOps rich text fields
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
+        
+        // Remove any unsupported tags and attributes
+        this.sanitizeForAzureDevOps(tempDiv);
+        
+        // Return cleaned HTML
+        return tempDiv.innerHTML;
+    }
+    
+    sanitizeForAzureDevOps(element) {
+        // Azure DevOps rich text fields support these HTML tags
+        const azureDevOpsSupportedTags = [
+            'p', 'br', 'div', 'span',
+            'strong', 'b', 'em', 'i', 'u',
+            'ul', 'ol', 'li',
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            'blockquote'
+        ];
+        
+        const allElements = element.querySelectorAll('*');
+        allElements.forEach(el => {
+            const tagName = el.tagName.toLowerCase();
+            
+            // Remove unsupported tags but keep content
+            if (!azureDevOpsSupportedTags.includes(tagName)) {
+                el.replaceWith(...el.childNodes);
+                return;
+            }
+            
+            // Remove all attributes except basic ones
+            const allowedAttributes = ['class'];
+            Array.from(el.attributes).forEach(attr => {
+                if (!allowedAttributes.includes(attr.name.toLowerCase())) {
+                    el.removeAttribute(attr.name);
+                }
+            });
+        });
+    }
     
     isHtmlContent(text) {
         // Check if text contains HTML tags
@@ -247,7 +289,7 @@ class FeedbackManager {
         ];
         
         const allowedAttributes = [
-            'class', 'data-copyable-id', 'data-copy-text', 'data-target', 'title'
+            'class', 'data-copyable-id', 'data-copy-html', 'title'
         ];
         
         // Create a temporary div to parse HTML
@@ -497,11 +539,11 @@ class FeedbackManager {
     attachCopyListeners() {
         const copyableElements = document.querySelectorAll('.copyable-snippet');
         copyableElements.forEach(element => {
-            // Add click listener to the whole snippet
+            // Add click listener to copy HTML
             element.addEventListener('click', (e) => {
                 e.preventDefault();
-                const copyText = element.getAttribute('data-copy-text');
-                this.copyToClipboard(copyText, element);
+                const copyHtml = element.getAttribute('data-copy-html');
+                this.copyHtmlToClipboard(copyHtml, element);
             });
             
             // Add hover effects
@@ -515,23 +557,32 @@ class FeedbackManager {
         });
     }
     
-    async copyToClipboard(text, element) {
+    async copyHtmlToClipboard(htmlContent, element) {
         try {
-            await navigator.clipboard.writeText(text);
+            // Try to copy as HTML using the Clipboard API
+            const clipboardItem = new ClipboardItem({
+                'text/html': new Blob([htmlContent], { type: 'text/html' })
+            });
             
-            // Show visual feedback
+            await navigator.clipboard.write([clipboardItem]);
             this.showCopySuccess(element);
             
         } catch (err) {
-            console.error('Failed to copy text: ', err);
-            // Fallback for older browsers
-            this.fallbackCopyToClipboard(text, element);
+            console.warn('HTML clipboard write failed, trying fallback:', err);
+            // Fallback: try to copy as plain HTML text
+            try {
+                await navigator.clipboard.writeText(htmlContent);
+                this.showCopySuccess(element);
+            } catch (fallbackErr) {
+                console.error('All clipboard methods failed:', fallbackErr);
+                this.fallbackHtmlCopy(htmlContent, element);
+            }
         }
     }
     
-    fallbackCopyToClipboard(text, element) {
+    fallbackHtmlCopy(htmlContent, element) {
         const textArea = document.createElement('textarea');
-        textArea.value = text;
+        textArea.value = htmlContent;
         textArea.style.position = 'fixed';
         textArea.style.left = '-999999px';
         textArea.style.top = '-999999px';
@@ -544,42 +595,69 @@ class FeedbackManager {
             if (successful) {
                 this.showCopySuccess(element);
             } else {
-                this.showCopyError(element);
+                this.showCopyError();
             }
         } catch (err) {
-            console.error('Fallback copy failed:', err);
-            this.showCopyError(element);
+            console.error('Fallback HTML copy failed:', err);
+            this.showCopyError();
         } finally {
             document.body.removeChild(textArea);
         }
     }
     
     showCopySuccess(element) {
-        const copyBtn = element.querySelector('.copy-btn');
-        const originalText = copyBtn.textContent;
-        
-        copyBtn.textContent = '✓';
-        copyBtn.style.color = '#28a745';
+        // Add visual feedback to the element
         element.classList.add('copied');
         
+        // Show toast notification
+        this.showToast('Copied to clipboard!', 'success');
+        
+        // Remove visual feedback after animation
         setTimeout(() => {
-            copyBtn.textContent = originalText;
-            copyBtn.style.color = '';
             element.classList.remove('copied');
         }, 2000);
     }
     
-    showCopyError(element) {
-        const copyBtn = element.querySelector('.copy-btn');
-        const originalText = copyBtn.textContent;
+    showCopyError() {
+        // Show error toast notification
+        this.showToast('Failed to copy', 'error');
+    }
+    
+    showToast(message, type = 'success') {
+        // Remove any existing toast
+        const existingToast = document.querySelector('.copy-toast');
+        if (existingToast) {
+            existingToast.remove();
+        }
         
-        copyBtn.textContent = '✗';
-        copyBtn.style.color = '#dc3545';
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `copy-toast copy-toast-${type}`;
+        toast.textContent = message;
         
+        // Position toast in top-right corner
+        toast.style.position = 'fixed';
+        toast.style.top = '20px';
+        toast.style.right = '20px';
+        toast.style.zIndex = '10000';
+        
+        // Add to document
+        document.body.appendChild(toast);
+        
+        // Animate in
         setTimeout(() => {
-            copyBtn.textContent = originalText;
-            copyBtn.style.color = '';
-        }, 2000);
+            toast.classList.add('show');
+        }, 10);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 300);
+        }, 3000);
     }
     
     toggleResponseContent() {

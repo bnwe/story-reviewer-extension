@@ -848,54 +848,31 @@ body {
 .copyable-snippet {
     display: inline-block;
     position: relative;
-    background-color: var(--color-slate-100);
-    border: 1px solid var(--color-slate-300);
-    border-radius: var(--border-radius-md);
+    background-color: #f0f9f0;
+    border: none;
+    border-radius: var(--radius-md);
     padding: var(--space-2) var(--space-3);
     margin: var(--space-1) 0;
     font-family: ui-monospace, SFMono-Regular, 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     font-size: var(--font-size-sm);
-    color: var(--color-slate-700);
+    color: #166534;
     cursor: pointer;
     user-select: none;
-    transition: all var(--transition-duration-fast) var(--transition-timing);
+    transition: all var(--transition-fast);
     line-height: 1.5;
 }
 
 .copyable-snippet:hover,
 .copyable-snippet.hover {
-    background-color: var(--color-blue-50);
-    border-color: var(--color-blue-300);
+    background-color: #dcf4dc;
     box-shadow: var(--shadow-sm);
-    transform: translateY(-1px);
 }
 
 .copyable-snippet.copied {
     background-color: var(--color-emerald-50);
-    border-color: var(--color-emerald-300);
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-.copy-btn {
-    display: inline-block;
-    margin-left: var(--space-2);
-    font-size: var(--font-size-sm);
-    color: var(--color-slate-500);
-    transition: all var(--transition-duration-fast) var(--transition-timing);
-    vertical-align: middle;
-    opacity: 0.7;
-}
-
-.copyable-snippet:hover .copy-btn,
-.copyable-snippet.hover .copy-btn {
-    opacity: 1;
-    color: var(--color-blue-600);
-}
-
-.copyable-snippet.copied .copy-btn {
-    color: var(--color-emerald-600);
-    opacity: 1;
-}
 
 /* Ensure copyable snippets work well within different contexts */
 p .copyable-snippet,
@@ -903,37 +880,51 @@ li .copyable-snippet {
     margin: 0 var(--space-1);
 }
 
+/* Toast Notification Styling */
+.copy-toast {
+    background-color: var(--color-success);
+    color: white;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-md);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s var(--transition-timing);
+    pointer-events: none;
+    max-width: 250px;
+    word-wrap: break-word;
+}
+
+.copy-toast.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.copy-toast-error {
+    background-color: var(--color-error);
+}
+
+.copy-toast-success {
+    background-color: var(--color-success);
+}
+
 /* Dark theme support for copyable snippets */
 @media (prefers-color-scheme: dark) {
     .copyable-snippet {
-        background-color: var(--color-slate-800);
-        border-color: var(--color-slate-600);
-        color: var(--color-slate-200);
+        background-color: #0f2f0f;
+        color: #bbf7bb;
     }
     
     .copyable-snippet:hover,
     .copyable-snippet.hover {
-        background-color: var(--color-slate-700);
-        border-color: var(--color-blue-400);
+        background-color: #1a4d1a;
     }
     
     .copyable-snippet.copied {
         background-color: var(--color-emerald-900);
-        border-color: var(--color-emerald-400);
         box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-    }
-    
-    .copy-btn {
-        color: var(--color-slate-400);
-    }
-    
-    .copyable-snippet:hover .copy-btn,
-    .copyable-snippet.hover .copy-btn {
-        color: var(--color-blue-400);
-    }
-    
-    .copyable-snippet.copied .copy-btn {
-        color: var(--color-emerald-400);
     }
 }
 
@@ -947,23 +938,27 @@ li .copyable-snippet {
         word-break: break-word;
     }
     
-    .copy-btn {
+    .copy-toast {
+        top: 10px;
+        right: 10px;
         font-size: var(--font-size-xs);
-        margin-left: var(--space-1);
+        padding: var(--space-1) var(--space-3);
+        max-width: 200px;
     }
 }
 
 /* High contrast support for copyable snippets */
 @media (prefers-contrast: high) {
     .copyable-snippet {
-        border: 2px solid var(--color-slate-800);
+        border: 2px solid #166534;
         background-color: var(--color-surface);
+        color: #166534;
     }
     
     .copyable-snippet:hover,
     .copyable-snippet.hover {
-        border-color: var(--color-blue-700);
-        background-color: var(--color-blue-50);
+        border-color: #14532d;
+        background-color: #f0f9f0;
     }
     
     .copyable-snippet.copied {
