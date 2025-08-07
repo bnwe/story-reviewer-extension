@@ -436,7 +436,8 @@ class FeedbackManager {
                 apiProvider: 'openai',
                 apiKey: '',
                 model: '',
-                customEndpoint: ''
+                customEndpoint: '',
+                temperature: 0.7
             }, (result) => {
                 if (chrome.runtime.lastError) {
                     reject(new Error(chrome.runtime.lastError.message));
@@ -500,6 +501,7 @@ class FeedbackManager {
             document.getElementById('debugPromptType').textContent = 'No prompt information available';
             document.getElementById('debugProvider').textContent = 'Unknown';
             document.getElementById('debugModel').textContent = 'Unknown';
+            document.getElementById('debugTemperature').textContent = 'Unknown';
             document.getElementById('debugTimestamp').textContent = 'Unknown';
             return;
         }
@@ -523,6 +525,10 @@ class FeedbackManager {
         // Update model
         document.getElementById('debugModel').textContent = 
             promptInfo.model || 'Unknown model';
+        
+        // Update temperature
+        document.getElementById('debugTemperature').textContent = 
+            typeof promptInfo.temperature === 'number' ? promptInfo.temperature.toString() : 'Unknown';
         
         // Update timestamp
         const timestamp = new Date(promptInfo.timestamp);

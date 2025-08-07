@@ -62,6 +62,12 @@
             </div>
             
             <div class="form-group">
+                <label for="temperature">Temperature:</label>
+                <input type="number" id="temperature" min="0" max="2" step="0.1" value="0.7" placeholder="0.7">
+                <div class="field-help">Controls randomness: 0.0 = focused, 2.0 = creative (default: 0.7)</div>
+            </div>
+            
+            <div class="form-group">
                 <button type="button" id="testConnection" class="test-btn">Test Connection</button>
                 <span id="connectionStatus" class="status"></span>
             </div>

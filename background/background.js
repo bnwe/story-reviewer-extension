@@ -95,7 +95,7 @@ async function sendToLLM(content, settings) {
     // Get effective prompt (custom or default)
     const effectivePrompt = await getEffectivePrompt();
     const isCustomPrompt = await isUsingCustomPrompt(effectivePrompt);
-    const payloadData = getFeedbackPayload(settings.apiProvider, content, effectivePrompt, settings.model);
+    const payloadData = getFeedbackPayload(settings.apiProvider, content, effectivePrompt, settings.model, settings.temperature);
     const payload = payloadData.payload;
     actualPrompt = payloadData.actualPrompt;
     actualModel = payloadData.actualModel;
@@ -121,6 +121,7 @@ async function sendToLLM(content, settings) {
       promptInfo: {
         provider: settings.apiProvider,
         model: actualModel,
+        temperature: settings.temperature || 0.7,
         isCustom: isCustomPrompt,
         promptPreview: effectivePrompt,
         actualPrompt: actualPrompt,
@@ -146,7 +147,7 @@ async function sendToLLM(content, settings) {
       let errorActualModel = null;
       if (!errorActualPrompt) {
         try {
-          const payloadData = getFeedbackPayload(settings.apiProvider, content, effectivePrompt, settings.model);
+          const payloadData = getFeedbackPayload(settings.apiProvider, content, effectivePrompt, settings.model, settings.temperature);
           errorActualPrompt = payloadData.actualPrompt;
           errorActualModel = payloadData.actualModel;
         } catch (payloadError) {
@@ -157,6 +158,7 @@ async function sendToLLM(content, settings) {
       promptInfo = {
         provider: settings.apiProvider,
         model: errorActualModel || actualModel || settings.model,
+        temperature: settings.temperature || 0.7,
         isCustom: isCustomPrompt,
         promptPreview: effectivePrompt,
         actualPrompt: errorActualPrompt,
@@ -374,7 +376,7 @@ function getTestPayload(provider, model = null) {
   }
 }
 
-function getFeedbackPayload(provider, content, promptTemplate, model = null) {
+function getFeedbackPayload(provider, content, promptTemplate, model = null, temperature = 0.7) {
   // Convert content to string if it's an object
   let contentString = '';
   if (typeof content === 'object' && content !== null) {
@@ -401,6 +403,9 @@ function getFeedbackPayload(provider, content, promptTemplate, model = null) {
   
   const selectedModel = model || defaultModels[provider];
 
+  // Ensure temperature is a valid number
+  const validTemperature = typeof temperature === 'number' && !isNaN(temperature) ? temperature : 0.7;
+
   let payload;
   switch (provider) {
     case 'openai':
@@ -410,16 +415,19 @@ function getFeedbackPayload(provider, content, promptTemplate, model = null) {
           { role: 'user', content: finalPrompt }
         ],
         max_tokens: 2000,
-        temperature: 0.7
+        temperature: validTemperature
       };
       break;
     case 'anthropic':
+      // Anthropic doesn't use temperature, uses 'temperature' parameter but it's optional
+      // We'll include it for consistency but Claude API may ignore it
       payload = {
         model: selectedModel,
         max_tokens: 2000,
         messages: [
           { role: 'user', content: finalPrompt }
-        ]
+        ],
+        temperature: validTemperature
       };
       break;
     case 'mistral':
@@ -429,7 +437,7 @@ function getFeedbackPayload(provider, content, promptTemplate, model = null) {
           { role: 'user', content: finalPrompt }
         ],
         max_tokens: 2000,
-        temperature: 0.7
+        temperature: validTemperature
       };
       break;
     default:

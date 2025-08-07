@@ -30,6 +30,9 @@ describe('Options Page Tests', () => {
         <option value="mistral">Mistral</option>
       </select>
       <input id="apiKey" type="password" />
+      <select id="modelSelect">
+        <option value="">Select a model...</option>
+      </select>
       <button id="toggleApiKey">Show</button>
       <button id="testConnection">Test Connection</button>
       <span id="connectionStatus" class="status"></span>
@@ -63,6 +66,7 @@ describe('Options Page Tests', () => {
           </div>
         </div>
       </div>
+      <input type="number" id="temperature" min="0" max="2" step="0.1" value="0.7" />
     `;
 
     // Load OptionsManager class by executing the file content
@@ -98,7 +102,8 @@ describe('Options Page Tests', () => {
         model: '',
         customPrompt: '',
         promptVersion: '1.0',
-        promptBackups: []
+        promptBackups: [],
+        temperature: 0.7
       });
     });
 
@@ -185,7 +190,8 @@ describe('Options Page Tests', () => {
           apiProvider: 'openai',
           apiKey: 'test-key',
           model: '',
-          customPrompt: ''
+          customPrompt: '',
+          temperature: 0.7
         }
       }, expect.any(Function));
       
@@ -229,7 +235,8 @@ describe('Options Page Tests', () => {
         apiProvider: 'openai',
         apiKey: 'new-key',
         model: '',
-        customPrompt: ''
+        customPrompt: '',
+        temperature: 0.7
       }, expect.any(Function));
     });
   });
@@ -247,7 +254,8 @@ describe('Options Page Tests', () => {
         apiProvider: 'anthropic',
         apiKey: 'test-key',
         model: '',
-        customPrompt: ''
+        customPrompt: '',
+        temperature: 0.7
       });
     });
 

@@ -455,11 +455,14 @@ textarea {
     text-align: right;
 }
 
-.model-help {
+.model-help, .field-help {
     font-size: var(--font-size-xs);
     color: var(--color-text-secondary);
     font-style: italic;
     padding: var(--space-2) 0;
+}
+
+.model-help {
     display: none;
 }
 
