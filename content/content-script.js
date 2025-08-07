@@ -521,4 +521,29 @@ class AzureDevOpsStoryExtractor {
 }
 
 // Initialize the story extractor when the script loads
-new AzureDevOpsStoryExtractor();
+const storyExtractor = new AzureDevOpsStoryExtractor();
+
+// Listen for messages from popup
+browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'openFeedbackWindow') {
+    try {
+      storyExtractor.openFeedbackWindow();
+      sendResponse({ success: true });
+    } catch (error) {
+      console.error('Failed to open feedback window:', error);
+      sendResponse({ success: false, error: error.message });
+    }
+    return true; // Will respond asynchronously
+  }
+  
+  if (request.action === 'extractContent') {
+    try {
+      storyExtractor.extractStoryContent();
+      sendResponse({ success: true });
+    } catch (error) {
+      console.error('Failed to extract content:', error);
+      sendResponse({ success: false, error: error.message });
+    }
+    return true; // Will respond asynchronously
+  }
+});
