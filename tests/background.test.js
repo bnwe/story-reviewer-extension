@@ -72,10 +72,9 @@ describe('Background Script Tests', () => {
       expect(url).toBe('https://api.anthropic.com/v1/messages');
     });
 
-    test('should return custom endpoint for custom provider', () => {
-      const customEndpoint = 'https://api.example.com/v1/chat';
-      const url = getApiUrl('custom', customEndpoint);
-      expect(url).toBe(customEndpoint);
+    test('should return correct URL for Mistral', () => {
+      const url = getApiUrl('mistral');
+      expect(url).toBe('https://api.mistral.ai/v1/chat/completions');
     });
 
     test('should throw error for unsupported provider', () => {
@@ -101,8 +100,8 @@ describe('Background Script Tests', () => {
       });
     });
 
-    test('should generate correct headers for custom provider', () => {
-      const headers = getApiHeaders('custom', 'test-key');
+    test('should generate correct headers for Mistral', () => {
+      const headers = getApiHeaders('mistral', 'test-key');
       expect(headers).toEqual({
         'Content-Type': 'application/json',
         'Authorization': 'Bearer test-key'
@@ -133,8 +132,9 @@ describe('Background Script Tests', () => {
       });
     });
 
-    test('should generate correct test payload for custom provider', () => {
-      const payload = getTestPayload('custom');
+    test('should generate correct test payload for Mistral', () => {
+      const payload = getTestPayload('mistral');
+      expect(payload.model).toBe('mistral-tiny');
       expect(payload.messages).toBeDefined();
       expect(payload.max_tokens).toBe(10);
     });
@@ -206,13 +206,13 @@ describe('Background Script Tests', () => {
       expect(validateApiResponse('anthropic', invalidResponse)).toBe(false);
     });
 
-    test('should validate custom provider response (OpenAI-compatible)', () => {
+    test('should validate Mistral provider response', () => {
       const validResponse = {
         choices: [
           { message: { content: 'Test response' } }
         ]
       };
-      expect(validateApiResponse('custom', validResponse)).toBe(true);
+      expect(validateApiResponse('mistral', validResponse)).toBe(true);
     });
   });
 
@@ -237,14 +237,14 @@ describe('Background Script Tests', () => {
       expect(feedback).toBe('This is excellent feedback!');
     });
 
-    test('should extract feedback from custom provider response', () => {
+    test('should extract feedback from Mistral provider response', () => {
       const response = {
         choices: [
-          { message: { content: 'Custom API feedback!' } }
+          { message: { content: 'Mistral AI feedback!' } }
         ]
       };
-      const feedback = extractFeedbackFromResponse('custom', response);
-      expect(feedback).toBe('Custom API feedback!');
+      const feedback = extractFeedbackFromResponse('mistral', response);
+      expect(feedback).toBe('Mistral AI feedback!');
     });
   });
 

@@ -43,7 +43,7 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // API connection testing function
 async function testApiConnection(settings) {
   try {
-    const apiUrl = getApiUrl(settings.apiProvider, settings.customEndpoint);
+    const apiUrl = getApiUrl(settings.apiProvider);
     const headers = getApiHeaders(settings.apiProvider, settings.apiKey);
     
     // Simple test message
@@ -88,7 +88,7 @@ async function sendToLLM(content, settings) {
   let actualPrompt = null; // Declare at function scope
   
   try {
-    const apiUrl = getApiUrl(settings.apiProvider, settings.customEndpoint);
+    const apiUrl = getApiUrl(settings.apiProvider);
     const headers = getApiHeaders(settings.apiProvider, settings.apiKey);
     
     // Get effective prompt (custom or default)
@@ -288,14 +288,14 @@ function substituteVariables(template, variables) {
 }
 
 // Helper functions for API integration
-function getApiUrl(provider, customEndpoint = '') {
+function getApiUrl(provider) {
   switch (provider) {
     case 'openai':
       return 'https://api.openai.com/v1/chat/completions';
     case 'anthropic':
       return 'https://api.anthropic.com/v1/messages';
-    case 'custom':
-      return customEndpoint;
+    case 'mistral':
+      return 'https://api.mistral.ai/v1/chat/completions';
     default:
       throw new Error('Unsupported API provider');
   }
@@ -318,7 +318,7 @@ function getApiHeaders(provider, apiKey) {
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01'
       };
-    case 'custom':
+    case 'mistral':
       return {
         ...baseHeaders,
         'Authorization': `Bearer ${apiKey}`
@@ -346,8 +346,9 @@ function getTestPayload(provider) {
           { role: 'user', content: 'Test connection. Reply with "OK" if you receive this.' }
         ]
       };
-    case 'custom':
+    case 'mistral':
       return {
+        model: 'mistral-tiny',
         messages: [
           { role: 'user', content: 'Test connection. Reply with "OK" if you receive this.' }
         ],
@@ -397,12 +398,14 @@ function getFeedbackPayload(provider, content, promptTemplate) {
         ]
       };
       break;
-    case 'custom':
+    case 'mistral':
       payload = {
+        model: 'mistral-medium',
         messages: [
           { role: 'user', content: finalPrompt }
         ],
-        max_tokens: 2000
+        max_tokens: 2000,
+        temperature: 0.7
       };
       break;
     default:
@@ -423,8 +426,8 @@ function validateApiResponse(provider, response) {
       return !!(response.choices && response.choices.length > 0);
     case 'anthropic':
       return !!(response.content && response.content.length > 0);
-    case 'custom':
-      return !!(response.choices && response.choices.length > 0); // Assume OpenAI-compatible
+    case 'mistral':
+      return !!(response.choices && response.choices.length > 0);
     default:
       return false;
   }
@@ -436,8 +439,8 @@ function extractFeedbackFromResponse(provider, response) {
       return response.choices[0].message.content;
     case 'anthropic':
       return response.content[0].text;
-    case 'custom':
-      return response.choices[0].message.content; // Assume OpenAI-compatible
+    case 'mistral':
+      return response.choices[0].message.content;
     default:
       throw new Error('Unsupported API provider');
   }

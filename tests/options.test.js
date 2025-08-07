@@ -27,11 +27,9 @@ describe('Options Page Tests', () => {
       <select id="apiProvider">
         <option value="openai">OpenAI</option>
         <option value="anthropic">Anthropic</option>
-        <option value="custom">Custom</option>
+        <option value="mistral">Mistral</option>
       </select>
       <input id="apiKey" type="password" />
-      <input id="customEndpoint" type="url" />
-      <div id="customEndpointGroup" style="display: none;"></div>
       <button id="toggleApiKey">Show</button>
       <button id="testConnection">Test Connection</button>
       <span id="connectionStatus" class="status"></span>
@@ -97,7 +95,6 @@ describe('Options Page Tests', () => {
       expect(options.defaultSettings).toEqual({
         apiProvider: 'openai',
         apiKey: '',
-        customEndpoint: '',
         customPrompt: '',
         promptVersion: '1.0',
         promptBackups: []
@@ -108,7 +105,6 @@ describe('Options Page Tests', () => {
       const savedSettings = {
         apiProvider: 'anthropic',
         apiKey: 'test-key',
-        customEndpoint: '',
         customPrompts: {},
         promptVersion: '1.0',
         promptBackups: []
@@ -127,26 +123,9 @@ describe('Options Page Tests', () => {
   });
 
   describe('Provider Selection', () => {
-    test('should show custom endpoint field when custom provider selected', () => {
+    test('should support mistral provider', () => {
       const options = new OptionsManager();
-      const providerSelect = document.getElementById('apiProvider');
-      const customEndpointGroup = document.getElementById('customEndpointGroup');
-
-      providerSelect.value = 'custom';
-      options.handleProviderChange();
-
-      expect(customEndpointGroup.style.display).toBe('flex');
-    });
-
-    test('should hide custom endpoint field for standard providers', () => {
-      const options = new OptionsManager();
-      const providerSelect = document.getElementById('apiProvider');
-      const customEndpointGroup = document.getElementById('customEndpointGroup');
-
-      providerSelect.value = 'openai';
-      options.handleProviderChange();
-
-      expect(customEndpointGroup.style.display).toBe('none');
+      expect(options.getProviderDisplayName('mistral')).toBe('Mistral AI');
     });
   });
 
@@ -204,7 +183,6 @@ describe('Options Page Tests', () => {
         settings: {
           apiProvider: 'openai',
           apiKey: 'test-key',
-          customEndpoint: '',
           customPrompt: ''
         }
       }, expect.any(Function));
@@ -248,7 +226,6 @@ describe('Options Page Tests', () => {
       expect(mockChrome.storage.sync.set).toHaveBeenCalledWith({
         apiProvider: 'openai',
         apiKey: 'new-key',
-        customEndpoint: '',
         customPrompt: ''
       }, expect.any(Function));
     });
@@ -260,14 +237,12 @@ describe('Options Page Tests', () => {
       
       document.getElementById('apiProvider').value = 'anthropic';
       document.getElementById('apiKey').value = 'test-key';
-      document.getElementById('customEndpoint').value = 'https://api.example.com';
       
       const settings = options.getCurrentSettings();
       
       expect(settings).toEqual({
         apiProvider: 'anthropic',
         apiKey: 'test-key',
-        customEndpoint: 'https://api.example.com',
         customPrompt: ''
       });
     });
@@ -277,7 +252,7 @@ describe('Options Page Tests', () => {
       
       expect(options.getProviderDisplayName('openai')).toBe('OpenAI');
       expect(options.getProviderDisplayName('anthropic')).toBe('Anthropic (Claude)');
-      expect(options.getProviderDisplayName('custom')).toBe('Custom API');
+      expect(options.getProviderDisplayName('mistral')).toBe('Mistral AI');
       expect(options.getProviderDisplayName('unknown')).toBe('unknown');
     });
   });

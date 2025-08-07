@@ -3,7 +3,6 @@ class OptionsManager {
         this.defaultSettings = {
             apiProvider: 'openai',
             apiKey: '',
-            customEndpoint: '',
             customPrompt: '',
             promptVersion: '1.0',
             promptBackups: []
@@ -38,7 +37,6 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
     bindEvents() {
         const apiProviderSelect = document.getElementById('apiProvider');
         const apiKeyInput = document.getElementById('apiKey');
-        const customEndpointInput = document.getElementById('customEndpoint');
         const toggleApiKeyBtn = document.getElementById('toggleApiKey');
         const testConnectionBtn = document.getElementById('testConnection');
         
@@ -76,7 +74,6 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
         
         // Auto-save on input changes
         apiKeyInput.addEventListener('input', this.autoSave.bind(this));
-        customEndpointInput.addEventListener('input', this.autoSave.bind(this));
         customPromptTextarea.addEventListener('input', this.autoSave.bind(this));
         
         // Enhanced UI functionality
@@ -84,16 +81,6 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
     }
     
     handleProviderChange() {
-        const provider = document.getElementById('apiProvider').value;
-        const customEndpointGroup = document.getElementById('customEndpointGroup');
-        
-        if (provider === 'custom') {
-            customEndpointGroup.style.display = 'flex';
-        } else {
-            customEndpointGroup.style.display = 'none';
-        }
-        
-        
         this.autoSave();
     }
     
@@ -175,7 +162,6 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
         return {
             apiProvider: document.getElementById('apiProvider').value,
             apiKey: document.getElementById('apiKey').value.trim(),
-            customEndpoint: document.getElementById('customEndpoint').value.trim(),
             customPrompt: document.getElementById('customPrompt').value.trim()
         };
     }
@@ -193,12 +179,11 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
     loadSettingsIntoUI(settings) {
         document.getElementById('apiProvider').value = settings.apiProvider;
         document.getElementById('apiKey').value = settings.apiKey;
-        document.getElementById('customEndpoint').value = settings.customEndpoint;
         
         // Load custom prompt
         this.loadPromptIntoUI(settings.customPrompt || '');
         
-        // Trigger provider change to show/hide custom endpoint
+        // Trigger provider change
         this.handleProviderChange();
     }
     
@@ -296,7 +281,7 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
         const names = {
             'openai': 'OpenAI',
             'anthropic': 'Anthropic (Claude)',
-            'custom': 'Custom API'
+            'mistral': 'Mistral AI'
         };
         return names[provider] || provider;
     }

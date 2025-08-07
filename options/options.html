@@ -30,7 +30,7 @@
                             <strong>Anthropic:</strong> <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a>
                         </div>
                         <div class="help-item">
-                            <strong>Custom API:</strong> Contact your API provider for endpoint URL and authentication details
+                            <strong>Mistral:</strong> <a href="https://console.mistral.ai/" target="_blank">console.mistral.ai</a>
                         </div>
                     </div>
                     <div class="security-note">
@@ -43,7 +43,7 @@
                 <select id="apiProvider">
                     <option value="openai">OpenAI</option>
                     <option value="anthropic">Anthropic (Claude)</option>
-                    <option value="custom">Custom API</option>
+                    <option value="mistral">Mistral AI</option>
                 </select>
             </div>
             
@@ -53,10 +53,6 @@
                 <button type="button" id="toggleApiKey" class="toggle-btn">Show</button>
             </div>
             
-            <div class="form-group" id="customEndpointGroup" style="display: none;">
-                <label for="customEndpoint">Custom API Endpoint:</label>
-                <input type="url" id="customEndpoint" placeholder="https://api.example.com/v1/chat/completions">
-            </div>
             
             <div class="form-group">
                 <button type="button" id="testConnection" class="test-btn">Test Connection</button>
