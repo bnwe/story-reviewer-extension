@@ -12,24 +12,20 @@ class OptionsManager {
         
         this.modelOptions = {
             openai: [
-                { value: 'gpt-4', label: 'GPT-4 (Recommended)', description: 'Most capable model, best for complex analysis' },
-                { value: 'gpt-4-turbo', label: 'GPT-4 Turbo', description: 'Faster and more cost-effective than GPT-4' },
-                { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo', description: 'Fast and cost-effective for simpler tasks' },
-                { value: 'gpt-4o', label: 'GPT-4o', description: 'Latest OpenAI model with improved performance' },
-                { value: 'gpt-4o-mini', label: 'GPT-4o Mini', description: 'Smaller, faster version of GPT-4o' }
+                { value: 'gpt-4.1', label: 'GPT‑4.1 (Recommended)', description: 'Flagship multimodal powerhouse with huge context' },
+                { value: 'gpt-4.1-mini', label: 'GPT‑4.1 mini', description: 'Balanced, lower-cost general-purpose option' },
+                { value: 'gpt-4.1-nano', label: 'GPT‑4.1 nano', description: 'Ultra-fast, inexpensive small variant' },
+                { value: 'gpt-4o', label: 'GPT‑4o (Omni)', description: 'Multimodal (text, image, audio) flagship' }
             ],
             anthropic: [
-                { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus', description: 'Most intelligent model, best for complex analysis' },
-                { value: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet (Recommended)', description: 'Balanced intelligence and speed' },
-                { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku', description: 'Fast and cost-effective for simpler tasks' },
-                { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet', description: 'Latest model with enhanced capabilities' },
-                { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku', description: 'Latest fast model' }
+                { value: 'claude-opus-latest', label: 'Claude Opus 4.1', description: 'Top-tier performer: advanced coding, reasoning, extended thinking' },
+                { value: 'claude-sonnet-4-latest', label: 'Claude Sonnet 4 (Recommended)', description: 'Balanced high-performance model with strong instruction following' },
+                { value: 'claude-3-5-haiku-latest', label: 'Claude 3.5 Haiku', description: 'Super‑fast, cost-efficient option for rapid responses' }
             ],
             mistral: [
-                { value: 'mistral-medium', label: 'Mistral Medium (Recommended)', description: 'Balanced performance for most tasks' },
-                { value: 'mistral-small', label: 'Mistral Small', description: 'Fast and cost-effective' },
-                { value: 'mistral-tiny', label: 'Mistral Tiny', description: 'Smallest and fastest model' },
-                { value: 'mistral-large', label: 'Mistral Large', description: 'Most capable Mistral model' }
+                { value: 'mistral-small-latest', label: 'Mistral Small', description: 'Powerful, efficient open-source small model' },
+                { value: 'mistral-medium-latest', label: 'Mistral Medium (Recommended)', description: 'State-of-the-art performance. Cost-efficient' },
+                { value: 'mistral-large-latest', label: 'Mistral Large', description: 'For complex tasks and sophisticated problems' }
             ]
         };
         
