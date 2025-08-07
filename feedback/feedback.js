@@ -197,8 +197,8 @@ class FeedbackManager {
     formatFeedback(feedback) {
         // Check if feedback contains HTML tags
         if (this.isHtmlContent(feedback)) {
-            // Sanitize and return HTML content
-            return this.sanitizeHtml(feedback);
+            // Sanitize and clean whitespace, then return HTML content
+            return this.cleanWhitespace(this.sanitizeHtml(feedback));
         } else {
             // Fallback to simple formatting for plain text
             return feedback
@@ -252,6 +252,47 @@ class FeedbackManager {
         });
         
         return tempDiv.innerHTML;
+    }
+    
+    cleanWhitespace(html) {
+        // Create a temporary div to parse HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        
+        // Remove whitespace-only text nodes and normalize spacing
+        this.removeWhitespaceNodes(tempDiv);
+        
+        return tempDiv.innerHTML;
+    }
+    
+    removeWhitespaceNodes(element) {
+        // Process all child nodes
+        const childNodes = Array.from(element.childNodes);
+        
+        childNodes.forEach(node => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                // Check if this is a whitespace-only text node
+                if (/^\s*$/.test(node.textContent)) {
+                    // Remove whitespace-only text nodes between block elements
+                    const prevSibling = node.previousSibling;
+                    const nextSibling = node.nextSibling;
+                    
+                    // Check if surrounded by block elements
+                    const blockElements = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'DIV', 'UL', 'OL', 'LI', 'BLOCKQUOTE'];
+                    
+                    if ((prevSibling && blockElements.includes(prevSibling.tagName)) ||
+                        (nextSibling && blockElements.includes(nextSibling.tagName))) {
+                        node.remove();
+                    }
+                } else {
+                    // Normalize whitespace in text nodes
+                    node.textContent = node.textContent.replace(/\s+/g, ' ');
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                // Recursively process child elements
+                this.removeWhitespaceNodes(node);
+            }
+        });
     }
     
     escapeHtml(text) {
