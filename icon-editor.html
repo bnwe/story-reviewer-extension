@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Icon Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .upload-section {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .file-input-wrapper {
+            display: inline-block;
+            position: relative;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .file-input-wrapper:hover {
+            background-color: #0056b3;
+        }
+        
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 1;
+        }
+        
+        .canvas-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        #imageCanvas {
+            border: 2px solid #ddd;
+            cursor: crosshair;
+            display: none;
+        }
+        
+        .selection-overlay {
+            position: absolute;
+            border: 2px dashed #007bff;
+            background: rgba(0, 123, 255, 0.1);
+            cursor: move;
+            display: none;
+        }
+        
+        .selection-handle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #007bff;
+            border: 1px solid white;
+            cursor: se-resize;
+        }
+        
+        .selection-handle.top-left {
+            top: -4px;
+            left: -4px;
+            cursor: nw-resize;
+        }
+        
+        .selection-handle.top-right {
+            top: -4px;
+            right: -4px;
+            cursor: ne-resize;
+        }
+        
+        .selection-handle.bottom-left {
+            bottom: -4px;
+            left: -4px;
+            cursor: sw-resize;
+        }
+        
+        .selection-handle.bottom-right {
+            bottom: -4px;
+            right: -4px;
+            cursor: se-resize;
+        }
+        
+        .canvas-container {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .controls {
+            margin-top: 20px;
+        }
+        
+        .btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #218838;
+        }
+        
+        .btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .info {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .rectangle-controls {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+        
+        .rectangle-controls h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .color-input {
+            margin: 10px;
+        }
+        
+        .color-input label {
+            display: inline-block;
+            width: 100px;
+            margin-right: 10px;
+        }
+        
+        .color-input input[type="color"] {
+            width: 40px;
+            height: 30px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .rectangle-overlay {
+            position: absolute;
+            border: 2px solid #28a745;
+            background: rgba(40, 167, 69, 0.3);
+            cursor: move;
+            display: none;
+        }
+        
+        .resize-handle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #007bff;
+            border: 1px solid white;
+            cursor: nw-resize;
+        }
+        
+        .resize-handle.bottom-right {
+            bottom: -4px;
+            right: -4px;
+            cursor: se-resize;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Icon Editor</h1>
+        
+        <div class="upload-section">
+            <div class="file-input-wrapper">
+                <input type="file" id="imageUpload" accept=".png" />
+                Upload PNG Image
+            </div>
+        </div>
+        
+        <div class="canvas-section">
+            <div class="canvas-container">
+                <canvas id="imageCanvas"></canvas>
+                <div id="selectionOverlay" class="selection-overlay">
+                    <div class="selection-handle top-left"></div>
+                    <div class="selection-handle top-right"></div>
+                    <div class="selection-handle bottom-left"></div>
+                    <div class="selection-handle bottom-right"></div>
+                </div>
+                <div id="rectangleOverlay" class="rectangle-overlay">
+                    <div class="resize-handle bottom-right"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="cropBtn" class="btn" disabled>Crop Image</button>
+            <button id="resetBtn" class="btn btn-secondary" disabled>Reset</button>
+            <button id="saveBtn" class="btn" disabled>Save Image</button>
+        </div>
+        
+        <div class="rectangle-controls">
+            <h3>Rectangle Shape</h3>
+            <button id="addRectBtn" class="btn" disabled>Add Rectangle</button>
+            <button id="removeRectBtn" class="btn btn-secondary" disabled>Remove Rectangle</button>
+            <div class="color-input">
+                <label for="rectColor">Color:</label>
+                <input type="color" id="rectColor" value="#ff0000">
+            </div>
+        </div>
+        
+        <div class="info">
+            <p><strong>Instructions:</strong></p>
+            <ol>
+                <li>Upload a PNG image using the button above</li>
+                <li>Click and drag on the image to create a square selection</li>
+                <li>Click "Crop Image" to crop to the selected area</li>
+                <li>Click "Add Rectangle" to add a colored rectangle shape behind the image</li>
+                <li>Drag the rectangle to reposition it, or drag the corner handle to resize</li>
+                <li>Click "Save Image" to download the edited image with rectangle layer</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        class IconEditor {
+            constructor() {
+                this.canvas = document.getElementById('imageCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.overlay = document.getElementById('selectionOverlay');
+                this.rectangleOverlay = document.getElementById('rectangleOverlay');
+                this.originalImage = null;
+                this.currentImage = null;
+                
+                this.isSelecting = false;
+                this.selectionStart = { x: 0, y: 0 };
+                this.selectionEnd = { x: 0, y: 0 };
+                this.selection = null;
+                
+                // Rectangle shape properties
+                this.rectangle = null;
+                this.isDraggingRect = false;
+                this.isResizingRect = false;
+                this.rectDragStart = { x: 0, y: 0 };
+                this.rectStartPos = { x: 0, y: 0 };
+                this.rectStartSize = { width: 0, height: 0 };
+                
+                // Selection manipulation properties
+                this.isDraggingSelection = false;
+                this.isResizingSelection = false;
+                this.selectionDragStart = { x: 0, y: 0 };
+                this.selectionStartPos = { left: 0, top: 0 };
+                this.selectionStartSize = { width: 0, height: 0 };
+                this.resizeHandle = null;
+                
+                this.initializeEventListeners();
+            }
+            
+            initializeEventListeners() {
+                const uploadInput = document.getElementById('imageUpload');
+                const cropBtn = document.getElementById('cropBtn');
+                const resetBtn = document.getElementById('resetBtn');
+                const saveBtn = document.getElementById('saveBtn');
+                const addRectBtn = document.getElementById('addRectBtn');
+                const removeRectBtn = document.getElementById('removeRectBtn');
+                const rectColor = document.getElementById('rectColor');
+                
+                uploadInput.addEventListener('change', (e) => this.handleImageUpload(e));
+                cropBtn.addEventListener('click', () => this.cropImage());
+                resetBtn.addEventListener('click', () => this.resetImage());
+                saveBtn.addEventListener('click', () => this.saveImage());
+                addRectBtn.addEventListener('click', () => this.addRectangle());
+                removeRectBtn.addEventListener('click', () => this.removeRectangle());
+                rectColor.addEventListener('change', (e) => this.updateRectangleColor(e.target.value));
+                
+                this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+                this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+                this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+                
+                // Rectangle overlay events
+                this.rectangleOverlay.addEventListener('mousedown', (e) => this.startRectangleDrag(e));
+                document.addEventListener('mousemove', (e) => this.handleDocumentMouseMove(e));
+                document.addEventListener('mouseup', (e) => this.handleDocumentMouseUp(e));
+                
+                // Rectangle resize handle events
+                const rectResizeHandle = this.rectangleOverlay.querySelector('.resize-handle');
+                rectResizeHandle.addEventListener('mousedown', (e) => this.startRectangleResize(e));
+                
+                // Selection overlay events
+                this.overlay.addEventListener('mousedown', (e) => this.startSelectionDrag(e));
+                
+                // Selection resize handle events
+                const selectionHandles = this.overlay.querySelectorAll('.selection-handle');
+                selectionHandles.forEach(handle => {
+                    handle.addEventListener('mousedown', (e) => this.startSelectionResize(e));
+                });
+            }
+            
+            handleImageUpload(event) {
+                const file = event.target.files[0];
+                if (!file || !file.type.match('image/png')) {
+                    alert('Please upload a PNG image file.');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.originalImage = img;
+                        this.currentImage = img;
+                        this.displayImage(img);
+                        this.enableControls();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            displayImage(img) {
+                const maxWidth = 800;
+                const maxHeight = 600;
+                
+                let { width, height } = this.calculateDisplaySize(img.width, img.height, maxWidth, maxHeight);
+                
+                this.canvas.width = width;
+                this.canvas.height = height;
+                this.canvas.style.display = 'block';
+                
+                this.redrawCanvas();
+                
+                this.updateCanvasContainer();
+            }
+            
+            calculateDisplaySize(imgWidth, imgHeight, maxWidth, maxHeight) {
+                let width = imgWidth;
+                let height = imgHeight;
+                
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                }
+                
+                if (height > maxHeight) {
+                    width = (width * maxHeight) / height;
+                    height = maxHeight;
+                }
+                
+                return { width: Math.round(width), height: Math.round(height) };
+            }
+            
+            updateCanvasContainer() {
+                const container = this.canvas.parentElement;
+                const rect = this.canvas.getBoundingClientRect();
+                container.style.width = this.canvas.width + 'px';
+                container.style.height = this.canvas.height + 'px';
+            }
+            
+            handleMouseDown(event) {
+                if (!this.currentImage) return;
+                
+                // Check if clicking on rectangle (handled by rectangle overlay events)
+                if (this.rectangle && this.isPointInRectangle(event)) {
+                    return;
+                }
+                
+                // Check if clicking on existing selection (handled by selection overlay events)
+                if (this.selection && this.isPointInSelection(event)) {
+                    return;
+                }
+                
+                // Start new selection
+                const rect = this.canvas.getBoundingClientRect();
+                this.selectionStart = {
+                    x: event.clientX - rect.left,
+                    y: event.clientY - rect.top
+                };
+                this.isSelecting = true;
+                this.overlay.style.display = 'block';
+            }
+            
+            handleMouseMove(event) {
+                if (!this.isSelecting || !this.currentImage) return;
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const currentX = event.clientX - rect.left;
+                const currentY = event.clientY - rect.top;
+                
+                // Calculate square selection with minimum size
+                const deltaX = currentX - this.selectionStart.x;
+                const deltaY = currentY - this.selectionStart.y;
+                const size = Math.max(Math.min(Math.abs(deltaX), Math.abs(deltaY)), 150); // Minimum 150px
+                
+                const endX = this.selectionStart.x + (deltaX >= 0 ? size : -size);
+                const endY = this.selectionStart.y + (deltaY >= 0 ? size : -size);
+                
+                this.selectionEnd = { x: endX, y: endY };
+                
+                this.updateSelectionOverlay();
+            }
+            
+            handleMouseUp(event) {
+                if (!this.isSelecting) return;
+                
+                this.isSelecting = false;
+                
+                if (this.hasValidSelection()) {
+                    document.getElementById('cropBtn').disabled = false;
+                } else {
+                    this.overlay.style.display = 'none';
+                    document.getElementById('cropBtn').disabled = true;
+                }
+            }
+            
+            isPointInRectangle(event) {
+                if (!this.rectangle) return false;
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                return x >= this.rectangle.left && x <= this.rectangle.left + this.rectangle.width &&
+                       y >= this.rectangle.top && y <= this.rectangle.top + this.rectangle.height;
+            }
+            
+            isPointInSelection(event) {
+                if (!this.selection) return false;
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                return x >= this.selection.left && x <= this.selection.left + this.selection.width &&
+                       y >= this.selection.top && y <= this.selection.top + this.selection.height;
+            }
+            
+            updateSelectionOverlay() {
+                if (this.selection) {
+                    // Update from existing selection object (used for drag/resize)
+                    this.overlay.style.left = this.selection.left + 'px';
+                    this.overlay.style.top = this.selection.top + 'px';
+                    this.overlay.style.width = this.selection.width + 'px';
+                    this.overlay.style.height = this.selection.height + 'px';
+                } else {
+                    // Create new selection from drag coordinates
+                    const left = Math.min(this.selectionStart.x, this.selectionEnd.x);
+                    const top = Math.min(this.selectionStart.y, this.selectionEnd.y);
+                    const width = Math.abs(this.selectionEnd.x - this.selectionStart.x);
+                    const height = Math.abs(this.selectionEnd.y - this.selectionStart.y);
+                    
+                    this.overlay.style.left = left + 'px';
+                    this.overlay.style.top = top + 'px';
+                    this.overlay.style.width = width + 'px';
+                    this.overlay.style.height = height + 'px';
+                    
+                    this.selection = { left, top, width, height };
+                }
+            }
+            
+            hasValidSelection() {
+                return this.selection && this.selection.width > 50 && this.selection.height > 50;
+            }
+            
+            cropImage() {
+                if (!this.hasValidSelection() || !this.currentImage) return;
+                
+                const scaleX = this.currentImage.width / this.canvas.width;
+                const scaleY = this.currentImage.height / this.canvas.height;
+                
+                const cropX = this.selection.left * scaleX;
+                const cropY = this.selection.top * scaleY;
+                const cropWidth = this.selection.width * scaleX;
+                const cropHeight = this.selection.height * scaleY;
+                
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = cropWidth;
+                tempCanvas.height = cropHeight;
+                
+                tempCtx.drawImage(
+                    this.currentImage,
+                    cropX, cropY, cropWidth, cropHeight,
+                    0, 0, cropWidth, cropHeight
+                );
+                
+                const croppedImg = new Image();
+                croppedImg.onload = () => {
+                    this.currentImage = croppedImg;
+                    this.displayImage(croppedImg);
+                    this.clearSelection();
+                };
+                croppedImg.src = tempCanvas.toDataURL('image/png');
+            }
+            
+            clearSelection() {
+                this.selection = null;
+                this.isSelecting = false;
+                this.isDraggingSelection = false;
+                this.isResizingSelection = false;
+                this.resizeHandle = null;
+                this.overlay.style.display = 'none';
+                document.getElementById('cropBtn').disabled = true;
+            }
+            
+            // Rectangle functionality
+            addRectangle() {
+                if (!this.currentImage) return;
+                
+                const centerX = this.canvas.width / 2 - 50;
+                const centerY = this.canvas.height / 2 - 50;
+                
+                this.rectangle = {
+                    left: centerX,
+                    top: centerY,
+                    width: 100,
+                    height: 100,
+                    color: document.getElementById('rectColor').value
+                };
+                
+                this.updateRectangleOverlay();
+                this.redrawCanvas();
+                document.getElementById('removeRectBtn').disabled = false;
+            }
+            
+            removeRectangle() {
+                this.rectangle = null;
+                this.rectangleOverlay.style.display = 'none';
+                this.redrawCanvas();
+                document.getElementById('removeRectBtn').disabled = true;
+            }
+            
+            updateRectangleColor(color) {
+                if (this.rectangle) {
+                    this.rectangle.color = color;
+                    this.redrawCanvas();
+                }
+            }
+            
+            updateRectangleOverlay() {
+                if (!this.rectangle) return;
+                
+                this.rectangleOverlay.style.left = this.rectangle.left + 'px';
+                this.rectangleOverlay.style.top = this.rectangle.top + 'px';
+                this.rectangleOverlay.style.width = this.rectangle.width + 'px';
+                this.rectangleOverlay.style.height = this.rectangle.height + 'px';
+                this.rectangleOverlay.style.display = 'block';
+            }
+            
+            startRectangleDrag(event) {
+                if (!this.rectangle) return;
+                
+                event.stopPropagation();
+                event.preventDefault();
+                
+                this.isDraggingRect = true;
+                this.rectDragStart = {
+                    x: event.clientX,
+                    y: event.clientY
+                };
+                this.rectStartPos = {
+                    left: this.rectangle.left,
+                    top: this.rectangle.top
+                };
+            }
+            
+            startRectangleResize(event) {
+                event.stopPropagation();
+                event.preventDefault();
+                
+                this.isResizingRect = true;
+                this.rectDragStart = {
+                    x: event.clientX,
+                    y: event.clientY
+                };
+                this.rectStartSize = {
+                    width: this.rectangle.width,
+                    height: this.rectangle.height
+                };
+            }
+            
+            handleDocumentMouseMove(event) {
+                if (this.isDraggingRect && this.rectangle) {
+                    const deltaX = event.clientX - this.rectDragStart.x;
+                    const deltaY = event.clientY - this.rectDragStart.y;
+                    
+                    this.rectangle.left = Math.max(0, Math.min(this.canvas.width - this.rectangle.width, 
+                        this.rectStartPos.left + deltaX));
+                    this.rectangle.top = Math.max(0, Math.min(this.canvas.height - this.rectangle.height, 
+                        this.rectStartPos.top + deltaY));
+                    
+                    this.updateRectangleOverlay();
+                    this.redrawCanvas();
+                } else if (this.isResizingRect && this.rectangle) {
+                    const deltaX = event.clientX - this.rectDragStart.x;
+                    const deltaY = event.clientY - this.rectDragStart.y;
+                    
+                    this.rectangle.width = Math.max(20, Math.min(this.canvas.width - this.rectangle.left, 
+                        this.rectStartSize.width + deltaX));
+                    this.rectangle.height = Math.max(20, Math.min(this.canvas.height - this.rectangle.top, 
+                        this.rectStartSize.height + deltaY));
+                    
+                    this.updateRectangleOverlay();
+                    this.redrawCanvas();
+                } else if (this.isDraggingSelection && this.selection) {
+                    const deltaX = event.clientX - this.selectionDragStart.x;
+                    const deltaY = event.clientY - this.selectionDragStart.y;
+                    
+                    this.selection.left = Math.max(0, Math.min(this.canvas.width - this.selection.width,
+                        this.selectionStartPos.left + deltaX));
+                    this.selection.top = Math.max(0, Math.min(this.canvas.height - this.selection.height,
+                        this.selectionStartPos.top + deltaY));
+                    
+                    this.updateSelectionOverlay();
+                } else if (this.isResizingSelection && this.selection) {
+                    this.handleSelectionResize(event);
+                }
+            }
+            
+            handleDocumentMouseUp(event) {
+                this.isDraggingRect = false;
+                this.isResizingRect = false;
+                this.isDraggingSelection = false;
+                this.isResizingSelection = false;
+                this.resizeHandle = null;
+            }
+            
+            redrawCanvas() {
+                if (!this.currentImage) return;
+                
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw rectangle first (behind image)
+                if (this.rectangle) {
+                    this.ctx.fillStyle = this.rectangle.color;
+                    this.ctx.fillRect(this.rectangle.left, this.rectangle.top, 
+                        this.rectangle.width, this.rectangle.height);
+                }
+                
+                // Draw image on top
+                this.ctx.drawImage(this.currentImage, 0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            // Selection manipulation methods
+            startSelectionDrag(event) {
+                if (!this.selection) return;
+                
+                event.stopPropagation();
+                event.preventDefault();
+                
+                this.isDraggingSelection = true;
+                this.selectionDragStart = {
+                    x: event.clientX,
+                    y: event.clientY
+                };
+                this.selectionStartPos = {
+                    left: this.selection.left,
+                    top: this.selection.top
+                };
+            }
+            
+            startSelectionResize(event) {
+                event.stopPropagation();
+                event.preventDefault();
+                
+                this.isResizingSelection = true;
+                this.resizeHandle = event.target.className.includes('top-left') ? 'top-left' :
+                                   event.target.className.includes('top-right') ? 'top-right' :
+                                   event.target.className.includes('bottom-left') ? 'bottom-left' :
+                                   'bottom-right';
+                
+                this.selectionDragStart = {
+                    x: event.clientX,
+                    y: event.clientY
+                };
+                this.selectionStartPos = {
+                    left: this.selection.left,
+                    top: this.selection.top
+                };
+                this.selectionStartSize = {
+                    width: this.selection.width,
+                    height: this.selection.height
+                };
+            }
+            
+            handleSelectionResize(event) {
+                const deltaX = event.clientX - this.selectionDragStart.x;
+                const deltaY = event.clientY - this.selectionDragStart.y;
+                
+                let newLeft = this.selectionStartPos.left;
+                let newTop = this.selectionStartPos.top;
+                let newSize;
+                
+                switch (this.resizeHandle) {
+                    case 'top-left':
+                        // Calculate the maximum delta to maintain square
+                        const maxDeltaTopLeft = Math.max(deltaX, deltaY);
+                        newLeft = Math.max(0, this.selectionStartPos.left + maxDeltaTopLeft);
+                        newTop = Math.max(0, this.selectionStartPos.top + maxDeltaTopLeft);
+                        newSize = Math.max(20, this.selectionStartSize.width - maxDeltaTopLeft);
+                        break;
+                        
+                    case 'top-right':
+                        const maxDeltaTopRight = Math.max(-deltaX, deltaY);
+                        newTop = Math.max(0, this.selectionStartPos.top + maxDeltaTopRight);
+                        newSize = Math.max(20, Math.min(
+                            this.canvas.width - newLeft,
+                            this.selectionStartSize.width - maxDeltaTopRight
+                        ));
+                        break;
+                        
+                    case 'bottom-left':
+                        const maxDeltaBottomLeft = Math.max(deltaX, -deltaY);
+                        newLeft = Math.max(0, this.selectionStartPos.left + maxDeltaBottomLeft);
+                        newSize = Math.max(20, this.selectionStartSize.width - maxDeltaBottomLeft);
+                        break;
+                        
+                    case 'bottom-right':
+                        // Use the smaller delta to maintain square ratio
+                        const sizeDelta = Math.min(deltaX, deltaY);
+                        newSize = Math.max(20, Math.min(
+                            this.canvas.width - this.selectionStartPos.left,
+                            this.canvas.height - this.selectionStartPos.top,
+                            this.selectionStartSize.width + sizeDelta
+                        ));
+                        break;
+                }
+                
+                // Ensure the selection stays within canvas bounds
+                newSize = Math.min(newSize, this.canvas.width - newLeft, this.canvas.height - newTop);
+                
+                this.selection = {
+                    left: newLeft,
+                    top: newTop,
+                    width: newSize,
+                    height: newSize
+                };
+                
+                this.updateSelectionOverlay();
+            }
+            
+            resetImage() {
+                if (!this.originalImage) return;
+                
+                this.currentImage = this.originalImage;
+                this.rectangle = null;
+                this.rectangleOverlay.style.display = 'none';
+                this.displayImage(this.originalImage);
+                this.clearSelection();
+                document.getElementById('removeRectBtn').disabled = true;
+            }
+            
+            saveImage() {
+                if (!this.currentImage) return;
+                
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = this.currentImage.width;
+                tempCanvas.height = this.currentImage.height;
+                
+                // Calculate scale factor from display to original size
+                const scaleX = this.currentImage.width / this.canvas.width;
+                const scaleY = this.currentImage.height / this.canvas.height;
+                
+                // Draw rectangle first (behind image) if it exists
+                if (this.rectangle) {
+                    tempCtx.fillStyle = this.rectangle.color;
+                    tempCtx.fillRect(
+                        this.rectangle.left * scaleX,
+                        this.rectangle.top * scaleY,
+                        this.rectangle.width * scaleX,
+                        this.rectangle.height * scaleY
+                    );
+                }
+                
+                // Draw image on top
+                tempCtx.drawImage(this.currentImage, 0, 0);
+                
+                tempCanvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'edited-icon.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 'image/png');
+            }
+            
+            enableControls() {
+                document.getElementById('resetBtn').disabled = false;
+                document.getElementById('saveBtn').disabled = false;
+                document.getElementById('addRectBtn').disabled = false;
+            }
+        }
+        
+        // Initialize the editor when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new IconEditor();
+        });
+    </script>
+</body>
+</html>
