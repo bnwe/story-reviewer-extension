@@ -25,6 +25,7 @@ class FeedbackManager {
         document.getElementById('responseSectionHeader').addEventListener('click', this.toggleResponseContent.bind(this));
         document.getElementById('toggleOriginalStoryBtn').addEventListener('click', this.toggleOriginalStoryContent.bind(this));
         document.getElementById('originalStorySectionHeader').addEventListener('click', this.toggleOriginalStoryContent.bind(this));
+        document.getElementById('showErrorDetailsBtn').addEventListener('click', this.toggleErrorDetails.bind(this));
     }
     
     async checkApiConfiguration() {
@@ -94,7 +95,7 @@ class FeedbackManager {
             if (response.success) {
                 this.showFeedback(this.currentContent, response.feedback, response.promptInfo, response.rawResponse, response.tokenUsage);
             } else {
-                this.showError(response.error || 'Failed to generate feedback', response.promptInfo);
+                this.showError(response.error || 'Failed to generate feedback', response.promptInfo, response.errorDetails);
             }
             
         } catch (error) {
@@ -144,13 +145,17 @@ class FeedbackManager {
         document.getElementById('loadingState').style.display = 'flex';
     }
     
-    showError(message, promptInfo = null) {
+    showError(message, promptInfo = null, errorDetails = null) {
         this.hideAllStates();
-        document.getElementById('errorMessage').textContent = message;
+        // Note: message parameter is no longer displayed in the UI, error details contain the information
         document.getElementById('errorState').style.display = 'flex';
         
-        // Store prompt info for potential debug display
+        // Store error information for detailed display
         this.currentPromptInfo = promptInfo;
+        this.currentErrorDetails = errorDetails;
+        
+        // Show error details if available
+        this.updateErrorDetails();
     }
     
     showNoApiKeyState() {
@@ -786,6 +791,100 @@ class FeedbackManager {
         } else {
             content.style.display = 'none';
             icon.textContent = 'expand_more';
+        }
+    }
+    
+    // Error details functionality
+    updateErrorDetails() {
+        const showDetailsBtn = document.getElementById('showErrorDetailsBtn');
+        const errorDetailsSection = document.getElementById('errorDetailsSection');
+        
+        if (this.currentErrorDetails) {
+            showDetailsBtn.style.display = 'inline-flex';
+            this.populateErrorDetails();
+        } else {
+            showDetailsBtn.style.display = 'none';
+            if (errorDetailsSection) {
+                errorDetailsSection.style.display = 'none';
+            }
+        }
+    }
+    
+    populateErrorDetails() {
+        if (!this.currentErrorDetails) return;
+        
+        const details = this.currentErrorDetails;
+        
+        // Update troubleshooting steps
+        const troubleshootingList = document.getElementById('troubleshootingSteps');
+        if (troubleshootingList && details.troubleshooting) {
+            troubleshootingList.innerHTML = '';
+            details.troubleshooting.forEach(step => {
+                const li = document.createElement('li');
+                li.textContent = step;
+                troubleshootingList.appendChild(li);
+            });
+        }
+        
+        // Update technical details
+        const technicalDetails = document.getElementById('technicalErrorDetails');
+        if (technicalDetails && details.requestData) {
+            const detailsHtml = `
+                <div class="detail-row">
+                    <span class="detail-label">Provider:</span>
+                    <span class="detail-value">${details.requestData.provider || 'Unknown'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Model:</span>
+                    <span class="detail-value">${details.requestData.model || 'Unknown'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">API Key Configured:</span>
+                    <span class="detail-value">${details.requestData.hasApiKey ? 'Yes' : 'No'}</span>
+                </div>
+                ${details.requestData.endpoint ? `
+                <div class="detail-row">
+                    <span class="detail-label">Endpoint:</span>
+                    <span class="detail-value">${details.requestData.endpoint}</span>
+                </div>
+                ` : ''}
+                ${details.requestData.promptLength ? `
+                <div class="detail-row">
+                    <span class="detail-label">Prompt Length:</span>
+                    <span class="detail-value">${details.requestData.promptLength} characters</span>
+                </div>
+                ` : ''}
+                <div class="detail-row">
+                    <span class="detail-label">Error Time:</span>
+                    <span class="detail-value">${new Date(details.timestamp).toLocaleString()}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Error Type:</span>
+                    <span class="detail-value">${details.isNetworkError ? 'Network Error' : 'API Error'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Original Error:</span>
+                    <span class="detail-value error-message">${this.escapeHtml(details.originalError)}</span>
+                </div>
+            `;
+            technicalDetails.innerHTML = detailsHtml;
+        }
+    }
+    
+    toggleErrorDetails() {
+        const errorDetailsSection = document.getElementById('errorDetailsSection');
+        const showDetailsBtn = document.getElementById('showErrorDetailsBtn');
+        const btnText = showDetailsBtn.querySelector('.btn-text');
+        const btnIcon = showDetailsBtn.querySelector('.material-icons');
+        
+        if (errorDetailsSection.style.display === 'none' || !errorDetailsSection.style.display) {
+            errorDetailsSection.style.display = 'block';
+            btnText.textContent = 'Hide Details';
+            btnIcon.textContent = 'expand_less';
+        } else {
+            errorDetailsSection.style.display = 'none';
+            btnText.textContent = 'Show Details';
+            btnIcon.textContent = 'expand_more';
         }
     }
 }

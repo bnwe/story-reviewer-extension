@@ -57,7 +57,9 @@ async function testApiConnection(settings) {
     
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
+      // Remove any potential API key information from error text
+      const sanitizedErrorText = sanitizeErrorMessage(errorText);
+      throw new Error(`HTTP ${response.status}: ${sanitizedErrorText}`);
     }
     
     const result = await response.json();
@@ -78,7 +80,19 @@ async function testApiConnection(settings) {
     
     return { 
       success: false, 
-      error: isNetworkError ? 'Network error - check your internet connection' : error.message
+      error: isNetworkError ? 'Network error - check your internet connection' : error.message,
+      errorDetails: {
+        originalError: error.message,
+        isNetworkError: isNetworkError,
+        timestamp: new Date().toISOString(),
+        requestData: {
+          provider: settings.apiProvider,
+          model: settings.model,
+          hasApiKey: !!settings.apiKey,
+          endpoint: getApiUrl(settings.apiProvider)
+        },
+        troubleshooting: getTroubleshootingSteps(error, isNetworkError)
+      }
     };
   }
 }
@@ -108,7 +122,9 @@ async function sendToLLM(content, settings) {
     
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
+      // Remove any potential API key information from error text
+      const sanitizedErrorText = sanitizeErrorMessage(errorText);
+      throw new Error(`HTTP ${response.status}: ${sanitizedErrorText}`);
     }
     
     const result = await response.json();
@@ -142,12 +158,12 @@ async function sendToLLM(content, settings) {
     
     // Try to get prompt info even on error for debugging
     let promptInfo = null;
+    let errorActualPrompt = actualPrompt;
+    let errorActualModel = actualModel;
     try {
       const effectivePrompt = await getEffectivePrompt();
       const isCustomPrompt = await isUsingCustomPrompt(effectivePrompt);
       // Try to get actual prompt and model if it wasn't generated before error
-      let errorActualPrompt = actualPrompt;
-      let errorActualModel = null;
       if (!errorActualPrompt) {
         try {
           const payloadData = getFeedbackPayload(settings.apiProvider, content, effectivePrompt, settings.model, settings.temperature, settings.maxTokens);
@@ -176,7 +192,19 @@ async function sendToLLM(content, settings) {
     return { 
       success: false, 
       error: isNetworkError ? 'Network error - check your internet connection' : error.message,
-      promptInfo: promptInfo
+      promptInfo: promptInfo,
+      errorDetails: {
+        originalError: error.message,
+        isNetworkError: isNetworkError,
+        timestamp: new Date().toISOString(),
+        requestData: {
+          provider: settings.apiProvider,
+          model: (errorActualModel || actualModel || settings.model),
+          hasApiKey: !!settings.apiKey,
+          promptLength: (errorActualPrompt ? errorActualPrompt.length : 0)
+        },
+        troubleshooting: getTroubleshootingSteps(error, isNetworkError)
+      }
     };
   }
 }
@@ -603,4 +631,101 @@ function extractTokenUsageFromResponse(provider, response) {
       error: error.message
     };
   }
+}
+
+// Get troubleshooting steps based on error type and settings
+function getTroubleshootingSteps(error, isNetworkError) {
+  const steps = [];
+  
+  if (isNetworkError) {
+    steps.push('Check your internet connection');
+    steps.push('Verify the extension has permission to access the API endpoint');
+    steps.push('Try disabling any VPN or proxy settings temporarily');
+    return steps;
+  }
+  
+  const errorMessage = error.message.toLowerCase();
+  
+  // API key related errors
+  if (errorMessage.includes('unauthorized') || errorMessage.includes('401') || 
+      errorMessage.includes('invalid api key') || errorMessage.includes('authentication')) {
+    steps.push('Verify your API key is correct and active');
+    steps.push('Check that your API key has the necessary permissions');
+    steps.push('Ensure the API key matches the selected provider');
+    return steps;
+  }
+  
+  // Rate limiting errors
+  if (errorMessage.includes('rate limit') || errorMessage.includes('429') ||
+      errorMessage.includes('quota') || errorMessage.includes('too many requests')) {
+    steps.push('You have exceeded the API rate limits');
+    steps.push('Wait a few minutes before trying again');
+    steps.push('Consider upgrading your API plan if this happens frequently');
+    return steps;
+  }
+  
+  // Payment/billing errors
+  if (errorMessage.includes('billing') || errorMessage.includes('payment') ||
+      errorMessage.includes('insufficient funds') || errorMessage.includes('402')) {
+    steps.push('Check your API account billing status');
+    steps.push('Verify you have available credits or valid payment method');
+    steps.push('Contact your API provider support if billing issues persist');
+    return steps;
+  }
+  
+  // Model not found errors
+  if (errorMessage.includes('model') && (errorMessage.includes('not found') ||
+      errorMessage.includes('invalid') || errorMessage.includes('404'))) {
+    steps.push('The specified model may not be available');
+    steps.push('Try using a different model (check your settings)');
+    steps.push('Verify the model name is spelled correctly');
+    return steps;
+  }
+  
+  // Request too large errors
+  if (errorMessage.includes('too large') || errorMessage.includes('413') ||
+      errorMessage.includes('context length') || errorMessage.includes('token limit')) {
+    steps.push('The user story content is too long for the model');
+    steps.push('Try reducing the max tokens setting');
+    steps.push('Consider using a model with larger context window');
+    return steps;
+  }
+  
+  // Server errors
+  if (errorMessage.includes('500') || errorMessage.includes('502') ||
+      errorMessage.includes('503') || errorMessage.includes('504') ||
+      errorMessage.includes('internal server error')) {
+    steps.push('The API service is experiencing issues');
+    steps.push('Wait a few minutes and try again');
+    steps.push('Check the API provider\'s status page for outages');
+    return steps;
+  }
+  
+  // Generic fallback
+  steps.push('Check your API settings in the extension options');
+  steps.push('Try testing the API connection in settings');
+  steps.push('Review the error details below for more information');
+  
+  return steps;
+}
+
+// Sanitize error messages to remove any potential API key information
+function sanitizeErrorMessage(errorText) {
+  if (!errorText || typeof errorText !== 'string') {
+    return errorText;
+  }
+  
+  // Remove any API key patterns that might appear in error messages
+  // This covers various common API key formats that might be exposed
+  const sanitized = errorText
+    // Remove strings that look like API keys (sk-, pk-, etc. followed by alphanumeric)
+    .replace(/\b(?:sk|pk|api_key|apikey|token)[-_]?[a-zA-Z0-9]{10,}\b/gi, '[API_KEY_REMOVED]')
+    // Remove Bearer tokens
+    .replace(/Bearer\s+[a-zA-Z0-9._-]{10,}/gi, 'Bearer [TOKEN_REMOVED]')
+    // Remove long base64-like strings that could be keys (20+ chars of alphanumeric/+/=)
+    .replace(/\b[a-zA-Z0-9+/=]{20,}\b/g, '[KEY_REMOVED]')
+    // Remove any remaining patterns that look like obfuscated keys (multiple asterisks)
+    .replace(/\*{3,}/g, '[KEY_REMOVED]');
+  
+  return sanitized;
 }

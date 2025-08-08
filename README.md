@@ -11,10 +11,11 @@ A browser extension that extracts user story content from Azure DevOps work item
 - **Validation**: Built-in validation for user story format and completeness
 - **Cross-Browser Support**: Works with Firefox and Chrome-based browsers
 - **Secure**: API keys stored locally, no data sent to third parties except chosen AI providers
+- The extension provides intelligent **copyable snippets** for feedback that contains actionable text you can directly paste into Azure DevOps work items. It supports both plain text and html for pasting back.
 
-## Copyable Snippets
+## A note on models
 
-The extension provides intelligent **copyable snippets** for feedback that contains actionable text you can directly paste into Azure DevOps work items. It supports both plain text and html for pasting back.
+Models gpt-4.1-nano and gpt-4.1-mini have a hard time following the formatting instructions of the prompt. gpt-4.1 gives flawless performance in this regard.
 
 ## Installation
 
@@ -201,7 +202,7 @@ The extension requires these permissions:
 
 ## Planned Features
 
-- Show more details on error
+- Add input for entering arbitrary model id
 
 ## License
 

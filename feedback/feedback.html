@@ -48,10 +48,32 @@
                     </svg>
                 </div>
                 <h2>Unable to Generate Feedback</h2>
-                <p id="errorMessage">An error occurred while generating feedback.</p>
                 <div class="error-actions">
                     <button id="retryBtn" class="btn btn-primary">Try Again</button>
                     <button id="checkSettingsBtn" class="btn btn-secondary">Check Settings</button>
+                    <button id="showErrorDetailsBtn" class="btn btn-tertiary" style="display: none;">
+                        <span class="material-icons">expand_more</span>
+                        <span class="btn-text">Show Details</span>
+                    </button>
+                </div>
+                
+                <!-- Error details section -->
+                <div id="errorDetailsSection" class="error-details-section" style="display: none;">
+                    <div class="error-details-content">
+                        <div class="troubleshooting-section">
+                            <h3>Troubleshooting Steps</h3>
+                            <ol id="troubleshootingSteps" class="troubleshooting-list">
+                                <!-- Steps will be populated by JavaScript -->
+                            </ol>
+                        </div>
+                        
+                        <div class="technical-details-section">
+                            <h3>Technical Details</h3>
+                            <div id="technicalErrorDetails" class="technical-details">
+                                <!-- Technical details will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             

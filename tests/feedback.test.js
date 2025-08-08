@@ -50,13 +50,13 @@ describe('Feedback Window Tests', () => {
       <button id="togglePromptBtn"><span class="material-icons">expand_more</span>Toggle Prompt</button>
       <button id="toggleResponseBtn"><span class="material-icons">expand_more</span>Toggle Response</button>
       <button id="toggleOriginalStoryBtn"><span class="material-icons">expand_more</span>Toggle Original Story</button>
+      <button id="showErrorDetailsBtn"><span class="material-icons">expand_more</span><span class="btn-text">Show Details</span></button>
       
       <div id="loadingState" class="state loading-state" style="display: flex;"></div>
       <div id="errorState" class="state error-state" style="display: none;"></div>
       <div id="noApiKeyState" class="state no-api-key-state" style="display: none;"></div>
       <div id="successState" class="state success-state" style="display: none;"></div>
       
-      <span id="errorMessage">Error message</span>
       <div id="originalContent" class="content-box"></div>
       <div id="debugInfo" class="debug-info" style="display: none;">
         <div id="debugPromptType">Loading...</div>
@@ -83,6 +83,10 @@ describe('Feedback Window Tests', () => {
       <div id="copyNotification" class="notification" style="display: none;">
         <span class="icon">✅</span>
         <span>Copied to clipboard!</span>
+      </div>
+      <div id="errorDetailsSection" style="display: none;">
+        <div id="troubleshootingSteps"></div>
+        <div id="technicalErrorDetails"></div>
       </div>
     `;
 
@@ -220,7 +224,6 @@ describe('Feedback Window Tests', () => {
       await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(document.getElementById('errorState').style.display).toBe('flex');
-      expect(document.getElementById('errorMessage').textContent).toContain('No story content found');
     });
   });
 
@@ -302,7 +305,6 @@ describe('Feedback Window Tests', () => {
       await feedbackManager.generateFeedback();
 
       expect(document.getElementById('errorState').style.display).toBe('flex');
-      expect(document.getElementById('errorMessage').textContent).toBe('Invalid API key');
     });
   });
 
@@ -350,7 +352,6 @@ describe('Feedback Window Tests', () => {
       feedbackManager.showError('Test error message');
 
       expect(document.getElementById('errorState').style.display).toBe('flex');
-      expect(document.getElementById('errorMessage').textContent).toBe('Test error message');
       expect(document.getElementById('loadingState').style.display).toBe('none');
     });
 
