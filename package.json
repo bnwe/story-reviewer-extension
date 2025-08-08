@@ -94,7 +94,15 @@
       "package-lock.json",
       "README.md",
       ".git/",
-      ".gitignore"
+      ".gitignore",
+      "docs/",
+      "web-bundles/",
+      "screenshots/",
+      "icon-editor.html",
+      "icon.html",
+      "shared/",
+      "CLAUDE.md",
+      "icon.png"
     ]
   }
 }

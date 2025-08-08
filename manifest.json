@@ -2,11 +2,12 @@
   "manifest_version": 2,
   "name": "Azure DevOps Story Reviewer",
   "version": "1.0.0",
-  "description": "Extract user story content from Azure DevOps for AI-powered feedback",
+  "description": "Provide AI-powered feedback on user stories directly integrated into Azure Devops",
   
-  "applications": {
+  "browser_specific_settings": {
     "gecko": {
-      "id": "azure-devops-story-reviewer@anthropic.com"
+      "id": "azure-devops-story-reviewer@extension.local",
+      "strict_min_version": "92.0"
     }
   },
   
@@ -17,8 +18,7 @@
     "https://*.visualstudio.com/*",
     "https://api.openai.com/*",
     "https://api.anthropic.com/*",
-    "https://api.mistral.ai/*",
-    "https://*/*"
+    "https://api.mistral.ai/*"
   ],
   
   "content_scripts": [
@@ -38,20 +38,20 @@
   },
   
   "icons": {
-    "16": "icon.png",
-    "32": "icon.png",
-    "48": "icon.png",
-    "128": "icon.png"
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
   },
 
   "browser_action": {
     "default_title": "Story Reviewer",
     "default_popup": "popup/popup.html",
     "default_icon": {
-      "16": "icon.png",
-      "32": "icon.png",
-      "48": "icon.png",
-      "128": "icon.png"
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
     }
   },
   
@@ -60,6 +60,6 @@
   "web_accessible_resources": [
     "content/*",
     "feedback/*",
-    "icon.png"
+    "icons/*"
   ]
 }
