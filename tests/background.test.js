@@ -1,6 +1,8 @@
 // Tests for background script functionality
 // Test API integration, message handling, and LLM communication
 
+/* global extractTokenUsageFromResponse */
+
 describe('Background Script Tests', () => {
   let mockFetch;
 
@@ -44,6 +46,7 @@ describe('Background Script Tests', () => {
       global.getFeedbackPayload = getFeedbackPayload;
       global.validateApiResponse = validateApiResponse;
       global.extractFeedbackFromResponse = extractFeedbackFromResponse;
+      global.extractTokenUsageFromResponse = extractTokenUsageFromResponse;
       global.testApiConnection = testApiConnection;
       global.sendToLLM = sendToLLM;
       global.getDefaultPrompt = getDefaultPrompt;
@@ -141,13 +144,184 @@ describe('Background Script Tests', () => {
     });
   });
 
+  describe('Token Usage Extraction', () => {
+    test('should extract OpenAI token usage correctly', () => {
+      const mockOpenAIResponse = {
+        choices: [{ message: { content: 'Test response' } }],
+        usage: {
+          prompt_tokens: 150,
+          completion_tokens: 75,
+          total_tokens: 225
+        }
+      };
+      
+      const tokenUsage = extractTokenUsageFromResponse('openai', mockOpenAIResponse);
+      
+      expect(tokenUsage).toEqual({
+        inputTokens: 150,
+        outputTokens: 75,
+        totalTokens: 225,
+        hasUsage: true
+      });
+    });
+
+    test('should extract Anthropic token usage correctly', () => {
+      const mockAnthropicResponse = {
+        content: [{ text: 'Test response' }],
+        usage: {
+          input_tokens: 120,
+          output_tokens: 80
+        }
+      };
+      
+      const tokenUsage = extractTokenUsageFromResponse('anthropic', mockAnthropicResponse);
+      
+      expect(tokenUsage).toEqual({
+        inputTokens: 120,
+        outputTokens: 80,
+        totalTokens: 200,
+        hasUsage: true
+      });
+    });
+
+    test('should extract Mistral token usage correctly', () => {
+      const mockMistralResponse = {
+        choices: [{ message: { content: 'Test response' } }],
+        usage: {
+          prompt_tokens: 200,
+          completion_tokens: 100,
+          total_tokens: 300
+        }
+      };
+      
+      const tokenUsage = extractTokenUsageFromResponse('mistral', mockMistralResponse);
+      
+      expect(tokenUsage).toEqual({
+        inputTokens: 200,
+        outputTokens: 100,
+        totalTokens: 300,
+        hasUsage: true
+      });
+    });
+
+    test('should handle custom API with OpenAI format', () => {
+      const mockCustomResponse = {
+        choices: [{ message: { content: 'Test response' } }],
+        usage: {
+          prompt_tokens: 180,
+          completion_tokens: 90,
+          total_tokens: 270
+        }
+      };
+      
+      const tokenUsage = extractTokenUsageFromResponse('custom', mockCustomResponse);
+      
+      expect(tokenUsage).toEqual({
+        inputTokens: 180,
+        outputTokens: 90,
+        totalTokens: 270,
+        hasUsage: true
+      });
+    });
+
+    test('should handle custom API with Anthropic format', () => {
+      const mockCustomResponse = {
+        content: [{ text: 'Test response' }],
+        usage: {
+          input_tokens: 160,
+          output_tokens: 85
+        }
+      };
+      
+      const tokenUsage = extractTokenUsageFromResponse('custom', mockCustomResponse);
+      
+      expect(tokenUsage).toEqual({
+        inputTokens: 160,
+        outputTokens: 85,
+        totalTokens: 245,
+        hasUsage: true
+      });
+    });
+
+    test('should handle missing usage information gracefully', () => {
+      const mockResponseWithoutUsage = {
+        choices: [{ message: { content: 'Test response' } }]
+      };
+      
+      const tokenUsage = extractTokenUsageFromResponse('openai', mockResponseWithoutUsage);
+      
+      expect(tokenUsage).toEqual({
+        inputTokens: null,
+        outputTokens: null,
+        totalTokens: null,
+        hasUsage: false
+      });
+    });
+
+    test('should handle malformed responses gracefully', () => {
+      const malformedResponse = null;
+      
+      const tokenUsage = extractTokenUsageFromResponse('openai', malformedResponse);
+      
+      expect(tokenUsage.inputTokens).toBe(null);
+      expect(tokenUsage.outputTokens).toBe(null);
+      expect(tokenUsage.totalTokens).toBe(null);
+      expect(tokenUsage.hasUsage).toBe(false);
+      expect(tokenUsage.error).toBeDefined(); // Error should be present
+    });
+
+    test('should handle custom API without total_tokens field', () => {
+      const mockCustomResponse = {
+        choices: [{ message: { content: 'Test response' } }],
+        usage: {
+          prompt_tokens: 100,
+          completion_tokens: 50
+          // total_tokens is missing
+        }
+      };
+      
+      const tokenUsage = extractTokenUsageFromResponse('custom', mockCustomResponse);
+      
+      expect(tokenUsage).toEqual({
+        inputTokens: 100,
+        outputTokens: 50,
+        totalTokens: 150, // Should be calculated
+        hasUsage: true
+      });
+    });
+
+    test('should return error information when extraction fails', () => {
+      // Mock console.warn to avoid test output
+      const originalWarn = console.warn;
+      console.warn = jest.fn();
+      
+      // Create a response that will cause an error in processing
+      const problematicResponse = {
+        usage: {
+          // Invalid structure that might cause an error
+          get prompt_tokens() {
+            throw new Error('Test error');
+          }
+        }
+      };
+      
+      const tokenUsage = extractTokenUsageFromResponse('openai', problematicResponse);
+      
+      expect(tokenUsage.hasUsage).toBe(false);
+      expect(tokenUsage.error).toBe('Test error');
+      
+      // Restore console.warn
+      console.warn = originalWarn;
+    });
+  });
+
   describe('Feedback Payload Generation', () => {
     test('should generate correct feedback payload for OpenAI', () => {
       const content = { title: 'Test Story', description: 'Test description' };
       const promptTemplate = 'Please review: {{storyContent}}';
       const result = getFeedbackPayload('openai', content, promptTemplate);
       
-      expect(result.payload.model).toBe('gpt-4');
+      expect(result.payload.model).toBe('gpt-4.1');
       expect(result.payload.messages[0].content).toContain('Test Story');
       expect(result.actualPrompt).toContain('Test Story');
       expect(result.payload.messages[0].content).toContain('Test description');
@@ -160,7 +334,7 @@ describe('Background Script Tests', () => {
       const promptTemplate = 'Please review: {{storyContent}}';
       const result = getFeedbackPayload('anthropic', content, promptTemplate);
       
-      expect(result.payload.model).toBe('claude-3-sonnet-20240229');
+      expect(result.payload.model).toBe('claude-3-5-haiku-latest');
       expect(result.payload.messages[0].content).toContain('Test Story');
       expect(result.payload.max_tokens).toBe(2000);
       expect(result.actualPrompt).toContain('Test Story');
@@ -456,7 +630,7 @@ describe('Background Script Tests', () => {
       
       expect(defaultPrompt).toContain('HTML format');
       expect(defaultPrompt).toContain('<h2>, <h3>, <p>, <ul>, <li>, <strong>, <em>');
-      expect(defaultPrompt).toContain('{{storyContent}}');
+      expect(defaultPrompt).toContain('{{formattedContent}}');
       expect(defaultPrompt).toContain('improve readability and allow for better formatting');
     });
 

@@ -201,8 +201,7 @@ The extension requires these permissions:
 
 ## Planned Features
 
-- Show token usage
-- Offer more variables (e.g. implementation details)
+- Show more details on error
 
 ## License
 

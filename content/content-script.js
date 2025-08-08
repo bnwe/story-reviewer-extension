@@ -429,6 +429,8 @@ class AzureDevOpsStoryExtractor {
     // Enhanced content with additional fields if ExtractionUtils is available
     if (typeof ExtractionUtils !== 'undefined') {
       const enhancedContent = ExtractionUtils.enhanceContentExtraction(content, document);
+      // Format the content for the template system
+      enhancedContent.formattedContent = ExtractionUtils.formatContentForTemplate(enhancedContent);
       return enhancedContent;
     }
 

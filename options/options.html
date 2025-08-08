@@ -82,7 +82,7 @@
             
             <div class="prompt-content">
                 <div class="form-group">
-                    <textarea id="customPrompt" placeholder="Enter your custom prompt template. Use {{storyContent}} for story content, {{timestamp}} for current time, and {{provider}} for API provider name." rows="10"></textarea>
+                    <textarea id="customPrompt" placeholder="Enter your custom prompt template. Use variables like {{formattedContent}} for complete work item details, {{implementationDetails}} for implementation notes, {{storyPoints}} for effort estimation, and many more. See the available variables below." rows="10"></textarea>
                     <div class="character-count">
                         <span id="promptCharCount">0</span> characters
                     </div>
@@ -96,23 +96,131 @@
                 <div class="prompt-variables">
                     <h4>Available Variables:</h4>
                     <div class="variable-help-text">Click any variable to copy to clipboard</div>
-                    <div class="variable-list">
-                        <button type="button" class="variable-tag" data-variable="{{storyContent}}">
-                            <span class="variable-name">{{storyContent}}</span>
-                            <span class="variable-desc">Story content</span>
-                        </button>
-                        <button type="button" class="variable-tag" data-variable="{{timestamp}}">
-                            <span class="variable-name">{{timestamp}}</span>
-                            <span class="variable-desc">Current time</span>
-                        </button>
-                        <button type="button" class="variable-tag" data-variable="{{provider}}">
-                            <span class="variable-name">{{provider}}</span>
-                            <span class="variable-desc">API provider</span>
-                        </button>
-                        <button type="button" class="variable-tag" data-variable="{{feedbackType}}">
-                            <span class="variable-name">{{feedbackType}}</span>
-                            <span class="variable-desc">Feedback type</span>
-                        </button>
+                    
+                    <div class="variable-section">
+                        <h5>Basic Content</h5>
+                        <div class="variable-list">
+                            <button type="button" class="variable-tag" data-variable="{{storyContent}}">
+                                <span class="variable-name">{{storyContent}}</span>
+                                <span class="variable-desc">Original story content</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{formattedContent}}">
+                                <span class="variable-name">{{formattedContent}}</span>
+                                <span class="variable-desc">Full formatted content</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{title}}">
+                                <span class="variable-name">{{title}}</span>
+                                <span class="variable-desc">Work item title</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{description}}">
+                                <span class="variable-name">{{description}}</span>
+                                <span class="variable-desc">Work item description</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{acceptanceCriteria}}">
+                                <span class="variable-name">{{acceptanceCriteria}}</span>
+                                <span class="variable-desc">Acceptance criteria</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{implementationDetails}}">
+                                <span class="variable-name">{{implementationDetails}}</span>
+                                <span class="variable-desc">Implementation details</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="variable-section">
+                        <h5>Work Item Properties</h5>
+                        <div class="variable-list">
+                            <button type="button" class="variable-tag" data-variable="{{workItemId}}">
+                                <span class="variable-name">{{workItemId}}</span>
+                                <span class="variable-desc">Work item ID</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{workItemType}}">
+                                <span class="variable-name">{{workItemType}}</span>
+                                <span class="variable-desc">Type (User Story, Bug, etc.)</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{state}}">
+                                <span class="variable-name">{{state}}</span>
+                                <span class="variable-desc">Current state</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{assignedTo}}">
+                                <span class="variable-name">{{assignedTo}}</span>
+                                <span class="variable-desc">Assigned to</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{priority}}">
+                                <span class="variable-name">{{priority}}</span>
+                                <span class="variable-desc">Priority level</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{storyPoints}}">
+                                <span class="variable-name">{{storyPoints}}</span>
+                                <span class="variable-desc">Story points</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="variable-section">
+                        <h5>Project Organization</h5>
+                        <div class="variable-list">
+                            <button type="button" class="variable-tag" data-variable="{{areaPath}}">
+                                <span class="variable-name">{{areaPath}}</span>
+                                <span class="variable-desc">Area path</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{iterationPath}}">
+                                <span class="variable-name">{{iterationPath}}</span>
+                                <span class="variable-desc">Iteration/Sprint</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{tags}}">
+                                <span class="variable-name">{{tags}}</span>
+                                <span class="variable-desc">Tags (comma-separated)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="variable-section">
+                        <h5>Time Tracking</h5>
+                        <div class="variable-list">
+                            <button type="button" class="variable-tag" data-variable="{{originalEstimate}}">
+                                <span class="variable-name">{{originalEstimate}}</span>
+                                <span class="variable-desc">Original estimate</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{remainingWork}}">
+                                <span class="variable-name">{{remainingWork}}</span>
+                                <span class="variable-desc">Remaining work</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{completedWork}}">
+                                <span class="variable-name">{{completedWork}}</span>
+                                <span class="variable-desc">Completed work</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="variable-section">
+                        <h5>System Information</h5>
+                        <div class="variable-list">
+                            <button type="button" class="variable-tag" data-variable="{{createdDate}}">
+                                <span class="variable-name">{{createdDate}}</span>
+                                <span class="variable-desc">Created date</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{modifiedDate}}">
+                                <span class="variable-name">{{modifiedDate}}</span>
+                                <span class="variable-desc">Last modified date</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{activity}}">
+                                <span class="variable-name">{{activity}}</span>
+                                <span class="variable-desc">Latest activity</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{timestamp}}">
+                                <span class="variable-name">{{timestamp}}</span>
+                                <span class="variable-desc">Current time</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{provider}}">
+                                <span class="variable-name">{{provider}}</span>
+                                <span class="variable-desc">API provider</span>
+                            </button>
+                            <button type="button" class="variable-tag" data-variable="{{feedbackType}}">
+                                <span class="variable-name">{{feedbackType}}</span>
+                                <span class="variable-desc">Feedback type</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 

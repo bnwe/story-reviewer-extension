@@ -113,11 +113,13 @@ async function sendToLLM(content, settings) {
     
     const result = await response.json();
     const feedback = extractFeedbackFromResponse(settings.apiProvider, result);
+    const tokenUsage = extractTokenUsageFromResponse(settings.apiProvider, result);
     
     return { 
       success: true, 
       feedback: feedback,
       rawResponse: feedback, // Store raw response for display
+      tokenUsage: tokenUsage, // Add token usage information
       promptInfo: {
         provider: settings.apiProvider,
         model: actualModel,
@@ -126,7 +128,8 @@ async function sendToLLM(content, settings) {
         promptPreview: effectivePrompt,
         actualPrompt: actualPrompt,
         timestamp: new Date().toISOString(),
-        hasVariables: effectivePrompt.includes('{{')
+        hasVariables: effectivePrompt.includes('{{'),
+        tokenUsage: tokenUsage // Also include in promptInfo for compatibility
       }
     };
     
@@ -233,21 +236,27 @@ function validatePromptTemplate(prompt) {
 
 // Get default prompt (same for all providers)
 function getDefaultPrompt() {
-  return `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
+  return `Please provide feedback on this Azure DevOps work item. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
 
-User Story Content:
-{{storyContent}}
+Work Item Details:
+{{formattedContent}}
 
-Please provide your feedback in HTML format with clear sections for different aspects of the story. Use proper HTML tags like <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em> to structure your response. This will improve readability and allow for better formatting.
+Please provide your feedback in HTML format with clear sections for different aspects of the work item. Use proper HTML tags like <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em> to structure your response. This will improve readability and allow for better formatting.
 
-When providing specific text suggestions that can be copied and pasted directly into the user story (such as additional acceptance criteria, improved descriptions, or refined user story text), wrap these copyable snippets in <copyable></copyable> tags. For example:
+Consider the following aspects in your review:
+- **Work Item Type**: {{workItemType}} - tailor your feedback appropriately
+- **Current State**: {{state}} - consider what's appropriate for this stage
+- **Effort Estimation**: {{storyPoints}} story points - assess if this aligns with complexity
+- **Priority**: {{priority}} - evaluate if this matches business importance
+
+When providing specific text suggestions that can be copied and pasted directly into the Azure DevOps work item (such as additional acceptance criteria, improved descriptions, or refined user story text), wrap these copyable snippets in <copyable></copyable> tags. For example:
 - If suggesting a new acceptance criterion: <copyable>Given X when Y then Z</copyable>
 - If suggesting improved wording: <copyable>As a user, I want to...</copyable>
 - If suggesting additional details: <copyable>The system should validate...</copyable>
 
 Only use copyable tags for literal text that can be directly copied into Azure DevOps work items, not for explanatory text or analysis.
 
-Inside the copyable tags please use regular HTML formatting, so that formatting is transfered to Azure Devops as well. E.g. for lists use <ul> or <ol> tags etc.
+Inside the copyable tags please use regular HTML formatting, so that formatting is transfered to Azure DevOps as well. E.g. for lists use <ul> or <ol> tags etc.
 
 Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is presented option to cancel or continue</li><li>After canceling, the draft is discarded.</li></ol>`;
 }
@@ -275,16 +284,43 @@ async function isUsingCustomPrompt(effectivePrompt) {
 function substituteVariables(template, variables) {
   let result = template;
   
+  // Extract content object if available
+  const content = variables.content || variables;
+  
   // Standard variables
   const standardVars = {
     storyContent: variables.storyContent || '',
+    formattedContent: content.formattedContent || variables.storyContent || '',
     timestamp: new Date().toISOString(),
     provider: variables.provider || 'unknown',
     feedbackType: 'General Review'
   };
   
-  // Merge with any additional variables
-  const allVars = { ...standardVars, ...variables };
+  // Azure DevOps specific variables
+  const azureDevOpsVars = {
+    workItemId: content.workItemId || '',
+    workItemType: content.workItemType || 'Unknown',
+    state: content.state || '',
+    assignedTo: content.assignedTo || '',
+    priority: content.priority || '',
+    storyPoints: content.storyPoints ? String(content.storyPoints) : '',
+    areaPath: content.areaPath || '',
+    iterationPath: content.iterationPath || '',
+    implementationDetails: content.implementationDetails || '',
+    createdDate: content.createdDate || '',
+    modifiedDate: content.modifiedDate || '',
+    originalEstimate: content.originalEstimate ? String(content.originalEstimate) + 'h' : '',
+    remainingWork: content.remainingWork ? String(content.remainingWork) + 'h' : '',
+    completedWork: content.completedWork ? String(content.completedWork) + 'h' : '',
+    activity: content.activity || '',
+    tags: content.tags && content.tags.length > 0 ? content.tags.join(', ') : '',
+    title: content.title || '',
+    description: content.description || '',
+    acceptanceCriteria: content.acceptanceCriteria || ''
+  };
+  
+  // Merge all variables
+  const allVars = { ...standardVars, ...azureDevOpsVars, ...variables };
   
   // Replace variables in template
   for (const [key, value] of Object.entries(allVars)) {
@@ -381,10 +417,15 @@ function getFeedbackPayload(provider, content, promptTemplate, model = null, tem
   // Convert content to string if it's an object
   let contentString = '';
   if (typeof content === 'object' && content !== null) {
-    if (content.title) contentString += `Title: ${content.title}\n`;
-    if (content.description) contentString += `Description: ${content.description}\n`;
-    if (content.acceptanceCriteria) contentString += `Acceptance Criteria: ${content.acceptanceCriteria}\n`;
-    if (!contentString) contentString = JSON.stringify(content, null, 2);
+    // Use the formatted content if available, otherwise build it
+    if (content.formattedContent) {
+      contentString = content.formattedContent;
+    } else {
+      if (content.title) contentString += `Title: ${content.title}\n`;
+      if (content.description) contentString += `Description: ${content.description}\n`;
+      if (content.acceptanceCriteria) contentString += `Acceptance Criteria: ${content.acceptanceCriteria}\n`;
+      if (!contentString) contentString = JSON.stringify(content, null, 2);
+    }
   } else {
     contentString = String(content);
   }
@@ -392,7 +433,8 @@ function getFeedbackPayload(provider, content, promptTemplate, model = null, tem
   // Substitute variables in the prompt template
   const finalPrompt = substituteVariables(promptTemplate, {
     storyContent: contentString,
-    provider: provider
+    provider: provider,
+    content: content
   });
 
   // Get default models if none provided
@@ -477,5 +519,86 @@ function extractFeedbackFromResponse(provider, response) {
       return response.choices[0].message.content;
     default:
       throw new Error('Unsupported API provider');
+  }
+}
+
+function extractTokenUsageFromResponse(provider, response) {
+  try {
+    switch (provider) {
+      case 'openai':
+        // OpenAI format: { usage: { prompt_tokens: X, completion_tokens: Y, total_tokens: Z } }
+        if (response.usage) {
+          return {
+            inputTokens: response.usage.prompt_tokens,
+            outputTokens: response.usage.completion_tokens,
+            totalTokens: response.usage.total_tokens,
+            hasUsage: true
+          };
+        }
+        break;
+      case 'anthropic':
+        // Anthropic format: { usage: { input_tokens: X, output_tokens: Y } }
+        if (response.usage) {
+          return {
+            inputTokens: response.usage.input_tokens,
+            outputTokens: response.usage.output_tokens,
+            totalTokens: response.usage.input_tokens + response.usage.output_tokens,
+            hasUsage: true
+          };
+        }
+        break;
+      case 'mistral':
+        // Mistral format: { usage: { prompt_tokens: X, completion_tokens: Y, total_tokens: Z } }
+        if (response.usage) {
+          return {
+            inputTokens: response.usage.prompt_tokens,
+            outputTokens: response.usage.completion_tokens,
+            totalTokens: response.usage.total_tokens,
+            hasUsage: true
+          };
+        }
+        break;
+      case 'custom':
+        // Try to detect common token usage formats for custom endpoints
+        if (response.usage) {
+          // Try OpenAI format first
+          if (response.usage.prompt_tokens !== undefined && response.usage.completion_tokens !== undefined) {
+            return {
+              inputTokens: response.usage.prompt_tokens,
+              outputTokens: response.usage.completion_tokens,
+              totalTokens: response.usage.total_tokens || (response.usage.prompt_tokens + response.usage.completion_tokens),
+              hasUsage: true
+            };
+          }
+          // Try Anthropic format
+          if (response.usage.input_tokens !== undefined && response.usage.output_tokens !== undefined) {
+            return {
+              inputTokens: response.usage.input_tokens,
+              outputTokens: response.usage.output_tokens,
+              totalTokens: response.usage.input_tokens + response.usage.output_tokens,
+              hasUsage: true
+            };
+          }
+        }
+        break;
+    }
+    
+    // No token usage found
+    return {
+      inputTokens: null,
+      outputTokens: null,
+      totalTokens: null,
+      hasUsage: false
+    };
+    
+  } catch (error) {
+    console.warn('Failed to extract token usage:', error);
+    return {
+      inputTokens: null,
+      outputTokens: null,
+      totalTokens: null,
+      hasUsage: false,
+      error: error.message
+    };
   }
 }

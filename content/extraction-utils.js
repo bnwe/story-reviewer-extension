@@ -110,13 +110,83 @@ class ExtractionUtils {
   static enhanceContentExtraction(baseContent, document) {
     const enhanced = { ...baseContent };
     
-    // Try to extract additional fields
-    enhanced.workItemId = this.extractWorkItemId(document);
-    enhanced.state = this.extractWorkItemState(document);
-    enhanced.assignedTo = this.extractAssignedTo(document);
-    enhanced.tags = this.extractTags(document);
+    try {
+      // Try to extract additional fields with error handling
+      enhanced.workItemId = this.safeExtract(() => this.extractWorkItemId(document));
+      enhanced.state = this.safeExtract(() => this.extractWorkItemState(document));
+      enhanced.assignedTo = this.safeExtract(() => this.extractAssignedTo(document));
+      enhanced.tags = this.safeExtract(() => this.extractTags(document), []);
+      enhanced.priority = this.safeExtract(() => this.extractPriority(document));
+      enhanced.storyPoints = this.safeExtract(() => this.extractStoryPoints(document));
+      enhanced.areaPath = this.safeExtract(() => this.extractAreaPath(document));
+      enhanced.iterationPath = this.safeExtract(() => this.extractIterationPath(document));
+      enhanced.implementationDetails = this.safeExtract(() => this.extractImplementationDetails(document));
+      enhanced.workItemType = this.safeExtract(() => this.detectWorkItemType(baseContent.url, baseContent.title), 'Unknown');
+      enhanced.createdDate = this.safeExtract(() => this.extractCreatedDate(document));
+      enhanced.modifiedDate = this.safeExtract(() => this.extractModifiedDate(document));
+      enhanced.originalEstimate = this.safeExtract(() => this.extractOriginalEstimate(document));
+      enhanced.remainingWork = this.safeExtract(() => this.extractRemainingWork(document));
+      enhanced.completedWork = this.safeExtract(() => this.extractCompletedWork(document));
+      enhanced.activity = this.safeExtract(() => this.extractLatestActivity(document));
+      
+      // Validate and clean up extracted data
+      enhanced.extractionStatus = this.validateExtractionResults(enhanced);
+      
+    } catch (error) {
+      console.warn('Error during content extraction enhancement:', error);
+      enhanced.extractionStatus = {
+        hasErrors: true,
+        errors: [error.message],
+        extractedFields: Object.keys(enhanced).filter(key => enhanced[key] !== null && enhanced[key] !== undefined)
+      };
+    }
     
     return enhanced;
+  }
+
+  static safeExtract(extractionFunction, defaultValue = null) {
+    try {
+      const result = extractionFunction();
+      return result !== null && result !== undefined ? result : defaultValue;
+    } catch (error) {
+      console.warn('Safe extraction failed:', error);
+      return defaultValue;
+    }
+  }
+
+  static validateExtractionResults(content) {
+    const status = {
+      hasErrors: false,
+      errors: [],
+      warnings: [],
+      extractedFields: [],
+      missingFields: []
+    };
+
+    const expectedFields = [
+      'workItemId', 'state', 'assignedTo', 'priority', 'workItemType',
+      'areaPath', 'iterationPath', 'implementationDetails'
+    ];
+
+    // Check which fields were successfully extracted
+    for (const field of expectedFields) {
+      if (content[field] !== null && content[field] !== undefined && content[field] !== '') {
+        status.extractedFields.push(field);
+      } else {
+        status.missingFields.push(field);
+      }
+    }
+
+    // Add warnings for missing critical fields
+    if (!content.workItemId) {
+      status.warnings.push('Work Item ID could not be extracted - this may indicate page structure changes');
+    }
+
+    if (!content.state) {
+      status.warnings.push('Work item state not found');
+    }
+
+    return status;
   }
 
   static extractWorkItemId(document) {
@@ -188,5 +258,316 @@ class ExtractionUtils {
     }
     
     return [];
+  }
+
+  static extractPriority(document) {
+    const prioritySelectors = [
+      '[aria-label*="Priority"] input',
+      '.work-item-form-priority input',
+      '.workitem-priority input',
+      '[data-testid="priority"] input'
+    ];
+    
+    for (const selector of prioritySelectors) {
+      const element = document.querySelector(selector);
+      if (element && element.value) {
+        return element.value.trim();
+      }
+    }
+    
+    return null;
+  }
+
+  static extractStoryPoints(document) {
+    const storyPointsSelectors = [
+      '[aria-label*="Story Points"] input',
+      '[aria-label*="Effort"] input',
+      '.work-item-form-storypoints input',
+      '.workitem-storypoints input',
+      '[data-testid="story-points"] input',
+      '[data-testid="effort"] input'
+    ];
+    
+    for (const selector of storyPointsSelectors) {
+      const element = document.querySelector(selector);
+      if (element && element.value) {
+        const points = parseFloat(element.value);
+        return isNaN(points) ? null : points;
+      }
+    }
+    
+    return null;
+  }
+
+  static extractAreaPath(document) {
+    const areaPathSelectors = [
+      '[aria-label*="Area Path"] input',
+      '[aria-label*="Area"] input',
+      '.work-item-form-area input',
+      '.workitem-area input'
+    ];
+    
+    for (const selector of areaPathSelectors) {
+      const element = document.querySelector(selector);
+      if (element && element.value) {
+        return element.value.trim();
+      }
+    }
+    
+    return null;
+  }
+
+  static extractIterationPath(document) {
+    const iterationSelectors = [
+      '[aria-label*="Iteration Path"] input',
+      '[aria-label*="Iteration"] input',
+      '[aria-label*="Sprint"] input',
+      '.work-item-form-iteration input',
+      '.workitem-iteration input'
+    ];
+    
+    for (const selector of iterationSelectors) {
+      const element = document.querySelector(selector);
+      if (element && element.value) {
+        return element.value.trim();
+      }
+    }
+    
+    return null;
+  }
+
+  static extractImplementationDetails(document) {
+    const implementationSelectors = [
+      '.rooster-editor[aria-label="Implementation Details"]',
+      '[aria-label="Implementation Details"].rooster-editor',
+      '.rooster-editor[aria-label*="Implementation"]',
+      '[aria-label*="Implementation"].rooster-editor',
+      '[data-testid="work-item-form-implementation"]',
+      '.work-item-form-implementation',
+      '.workitem-implementation',
+      '[aria-label*="Implementation Details"]',
+      '[aria-label*="Technical Details"]',
+      '[aria-label*="Development Notes"]'
+    ];
+
+    for (const selector of implementationSelectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        const content = this.extractRichTextContent(element);
+        // Filter out placeholder text
+        if (content && 
+            !content.includes('Click to add') && 
+            content !== '<div><br> </div>' &&
+            content.trim().length > 0) {
+          return content;
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  static extractCreatedDate(document) {
+    const dateSelectors = [
+      '[aria-label*="Created Date"] input',
+      '[aria-label*="Created"] input',
+      '.work-item-form-created input',
+      '.workitem-created input'
+    ];
+    
+    for (const selector of dateSelectors) {
+      const element = document.querySelector(selector);
+      if (element && element.value) {
+        return element.value.trim();
+      }
+    }
+    
+    return null;
+  }
+
+  static extractModifiedDate(document) {
+    const dateSelectors = [
+      '[aria-label*="Changed Date"] input',
+      '[aria-label*="Modified Date"] input',
+      '[aria-label*="Updated"] input',
+      '.work-item-form-changed input',
+      '.workitem-changed input'
+    ];
+    
+    for (const selector of dateSelectors) {
+      const element = document.querySelector(selector);
+      if (element && element.value) {
+        return element.value.trim();
+      }
+    }
+    
+    return null;
+  }
+
+  static extractOriginalEstimate(document) {
+    const estimateSelectors = [
+      '[aria-label*="Original Estimate"] input',
+      '[aria-label*="Estimated"] input',
+      '.work-item-form-original-estimate input',
+      '.workitem-original-estimate input'
+    ];
+    
+    for (const selector of estimateSelectors) {
+      const element = document.querySelector(selector);
+      if (element && element.value) {
+        const estimate = parseFloat(element.value);
+        return isNaN(estimate) ? null : estimate;
+      }
+    }
+    
+    return null;
+  }
+
+  static extractRemainingWork(document) {
+    const remainingSelectors = [
+      '[aria-label*="Remaining Work"] input',
+      '[aria-label*="Remaining"] input',
+      '.work-item-form-remaining input',
+      '.workitem-remaining input'
+    ];
+    
+    for (const selector of remainingSelectors) {
+      const element = document.querySelector(selector);
+      if (element && element.value) {
+        const remaining = parseFloat(element.value);
+        return isNaN(remaining) ? null : remaining;
+      }
+    }
+    
+    return null;
+  }
+
+  static extractCompletedWork(document) {
+    const completedSelectors = [
+      '[aria-label*="Completed Work"] input',
+      '[aria-label*="Completed"] input',
+      '.work-item-form-completed input',
+      '.workitem-completed input'
+    ];
+    
+    for (const selector of completedSelectors) {
+      const element = document.querySelector(selector);
+      if (element && element.value) {
+        const completed = parseFloat(element.value);
+        return isNaN(completed) ? null : completed;
+      }
+    }
+    
+    return null;
+  }
+
+  static extractLatestActivity(document) {
+    // Try to extract the most recent activity/comment from the discussion
+    const activitySelectors = [
+      '.work-item-form-discussion .discussion-thread .discussion-comment:last-child',
+      '.work-item-discussion .discussion-item:last-child',
+      '.discussion-thread .comment:last-child'
+    ];
+    
+    for (const selector of activitySelectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        const content = this.sanitizeContent(element.textContent || element.innerHTML);
+        if (content && content.length > 0 && content.length < 500) {
+          return content;
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  static formatContentForTemplate(content) {
+    if (!content) return '';
+    
+    const formattedContent = [];
+    
+    // Basic information
+    if (content.workItemId) {
+      formattedContent.push(`Work Item ID: ${content.workItemId}`);
+    }
+    
+    if (content.workItemType) {
+      formattedContent.push(`Type: ${content.workItemType}`);
+    }
+    
+    if (content.title) {
+      formattedContent.push(`Title: ${content.title}`);
+    }
+    
+    if (content.state) {
+      formattedContent.push(`State: ${content.state}`);
+    }
+    
+    if (content.assignedTo) {
+      formattedContent.push(`Assigned To: ${content.assignedTo}`);
+    }
+    
+    if (content.priority) {
+      formattedContent.push(`Priority: ${content.priority}`);
+    }
+    
+    if (content.storyPoints) {
+      formattedContent.push(`Story Points: ${content.storyPoints}`);
+    }
+    
+    // Area and iteration
+    if (content.areaPath) {
+      formattedContent.push(`Area Path: ${content.areaPath}`);
+    }
+    
+    if (content.iterationPath) {
+      formattedContent.push(`Iteration: ${content.iterationPath}`);
+    }
+    
+    // Time tracking
+    if (content.originalEstimate) {
+      formattedContent.push(`Original Estimate: ${content.originalEstimate}h`);
+    }
+    
+    if (content.remainingWork) {
+      formattedContent.push(`Remaining Work: ${content.remainingWork}h`);
+    }
+    
+    if (content.completedWork) {
+      formattedContent.push(`Completed Work: ${content.completedWork}h`);
+    }
+    
+    // Content sections
+    if (content.description) {
+      formattedContent.push('', 'Description:', content.description);
+    }
+    
+    if (content.acceptanceCriteria) {
+      formattedContent.push('', 'Acceptance Criteria:', content.acceptanceCriteria);
+    }
+    
+    if (content.implementationDetails) {
+      formattedContent.push('', 'Implementation Details:', content.implementationDetails);
+    }
+    
+    if (content.activity) {
+      formattedContent.push('', 'Latest Activity:', content.activity);
+    }
+    
+    // Tags and dates
+    if (content.tags && content.tags.length > 0) {
+      formattedContent.push('', `Tags: ${content.tags.join(', ')}`);
+    }
+    
+    if (content.createdDate) {
+      formattedContent.push('', `Created: ${content.createdDate}`);
+    }
+    
+    if (content.modifiedDate) {
+      formattedContent.push(`Modified: ${content.modifiedDate}`);
+    }
+    
+    return formattedContent.join('\n').trim();
   }
 }

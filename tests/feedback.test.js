@@ -62,7 +62,11 @@ describe('Feedback Window Tests', () => {
         <div id="debugPromptType">Loading...</div>
         <div id="debugProvider">Loading...</div>
         <div id="debugModel">Loading...</div>
+        <div id="debugTemperature">Loading...</div>
         <div id="debugTimestamp">Loading...</div>
+        <div id="debugInputTokens">Loading...</div>
+        <div id="debugOutputTokens">Loading...</div>
+        <div id="debugTotalTokens">Loading...</div>
       </div>
       <div id="actualPromptSection" class="expandable-section">
         <div id="promptSectionHeader" class="section-header"></div>
@@ -248,7 +252,19 @@ describe('Feedback Window Tests', () => {
       mockChrome.runtime.sendMessage.mockImplementation((message, callback) => {
         callback({
           success: true,
-          feedback: 'Excellent user story! Well structured and clear.'
+          feedback: 'Excellent user story! Well structured and clear.',
+          tokenUsage: {
+            inputTokens: 150,
+            outputTokens: 75,
+            totalTokens: 225,
+            hasUsage: true
+          },
+          promptInfo: {
+            provider: 'openai',
+            model: 'gpt-4',
+            temperature: 0.7,
+            timestamp: new Date().toISOString()
+          }
         });
       });
 
@@ -543,6 +559,155 @@ describe('Feedback Window Tests', () => {
       feedbackManager.toggleOriginalStoryContent();
       expect(content.style.display).toBe('none');
       expect(icon.textContent).toBe('expand_more');
+    });
+  });
+
+  describe('Token Usage Display', () => {
+    test('should display token usage information when available', () => {
+      const feedbackManager = new FeedbackManager();
+      const mockTokenUsage = {
+        inputTokens: 250,
+        outputTokens: 150,
+        totalTokens: 400,
+        hasUsage: true
+      };
+      
+      feedbackManager.currentTokenUsage = mockTokenUsage;
+      feedbackManager.updateTokenUsageInfo(mockTokenUsage);
+      
+      expect(document.getElementById('debugInputTokens').textContent).toBe('250');
+      expect(document.getElementById('debugOutputTokens').textContent).toBe('150');
+      expect(document.getElementById('debugTotalTokens').textContent).toBe('400');
+      
+      // Should not have unavailable class
+      expect(document.getElementById('debugInputTokens').classList.contains('token-unavailable')).toBe(false);
+      expect(document.getElementById('debugOutputTokens').classList.contains('token-unavailable')).toBe(false);
+      expect(document.getElementById('debugTotalTokens').classList.contains('token-unavailable')).toBe(false);
+    });
+
+    test('should display "Not available" when token usage is not provided', () => {
+      const feedbackManager = new FeedbackManager();
+      const mockTokenUsage = {
+        inputTokens: null,
+        outputTokens: null,
+        totalTokens: null,
+        hasUsage: false
+      };
+      
+      feedbackManager.updateTokenUsageInfo(mockTokenUsage);
+      
+      expect(document.getElementById('debugInputTokens').textContent).toBe('Not available');
+      expect(document.getElementById('debugOutputTokens').textContent).toBe('Not available');
+      expect(document.getElementById('debugTotalTokens').textContent).toBe('Not available');
+      
+      // Should have unavailable class
+      expect(document.getElementById('debugInputTokens').classList.contains('token-unavailable')).toBe(true);
+      expect(document.getElementById('debugOutputTokens').classList.contains('token-unavailable')).toBe(true);
+      expect(document.getElementById('debugTotalTokens').classList.contains('token-unavailable')).toBe(true);
+    });
+
+    test('should handle null token usage gracefully', () => {
+      const feedbackManager = new FeedbackManager();
+      
+      feedbackManager.updateTokenUsageInfo(null);
+      
+      expect(document.getElementById('debugInputTokens').textContent).toBe('Not available');
+      expect(document.getElementById('debugOutputTokens').textContent).toBe('Not available');
+      expect(document.getElementById('debugTotalTokens').textContent).toBe('Not available');
+      
+      // Should have unavailable class
+      expect(document.getElementById('debugInputTokens').classList.contains('token-unavailable')).toBe(true);
+      expect(document.getElementById('debugOutputTokens').classList.contains('token-unavailable')).toBe(true);
+      expect(document.getElementById('debugTotalTokens').classList.contains('token-unavailable')).toBe(true);
+    });
+
+    test('should format large token counts with thousands separators', () => {
+      const feedbackManager = new FeedbackManager();
+      const mockTokenUsage = {
+        inputTokens: 12345,
+        outputTokens: 6789,
+        totalTokens: 19134,
+        hasUsage: true
+      };
+      
+      feedbackManager.updateTokenUsageInfo(mockTokenUsage);
+      
+      expect(document.getElementById('debugInputTokens').textContent).toBe('12,345');
+      expect(document.getElementById('debugOutputTokens').textContent).toBe('6,789');
+      expect(document.getElementById('debugTotalTokens').textContent).toBe('19,134');
+    });
+
+    test('should display token usage from showFeedback method', () => {
+      const feedbackManager = new FeedbackManager();
+      const originalContent = { title: 'Test Story' };
+      const feedback = 'Great feedback!';
+      const promptInfo = { 
+        provider: 'openai', 
+        model: 'gpt-4',
+        temperature: 0.7,
+        timestamp: new Date().toISOString()
+      };
+      const rawResponse = 'Raw response';
+      const tokenUsage = {
+        inputTokens: 100,
+        outputTokens: 50,
+        totalTokens: 150,
+        hasUsage: true
+      };
+
+      feedbackManager.showFeedback(originalContent, feedback, promptInfo, rawResponse, tokenUsage);
+
+      expect(feedbackManager.currentTokenUsage).toBe(tokenUsage);
+      expect(document.getElementById('successState').style.display).toBe('block');
+    });
+
+    test('should update debug info with token usage when toggle is activated', () => {
+      const feedbackManager = new FeedbackManager();
+      const mockPromptInfo = {
+        provider: 'anthropic',
+        model: 'claude-3',
+        temperature: 0.5,
+        timestamp: new Date().toISOString()
+      };
+      const mockTokenUsage = {
+        inputTokens: 300,
+        outputTokens: 200,
+        totalTokens: 500,
+        hasUsage: true
+      };
+      
+      feedbackManager.currentPromptInfo = mockPromptInfo;
+      feedbackManager.currentTokenUsage = mockTokenUsage;
+      
+      feedbackManager.updateDebugInfo();
+      
+      expect(document.getElementById('debugProvider').textContent).toBe('Anthropic');
+      expect(document.getElementById('debugModel').textContent).toBe('claude-3');
+      expect(document.getElementById('debugTemperature').textContent).toBe('0.5');
+      expect(document.getElementById('debugInputTokens').textContent).toBe('300');
+      expect(document.getElementById('debugOutputTokens').textContent).toBe('200');
+      expect(document.getElementById('debugTotalTokens').textContent).toBe('500');
+    });
+
+    test('should handle missing token usage in updateDebugInfo', () => {
+      const feedbackManager = new FeedbackManager();
+      const mockPromptInfo = {
+        provider: 'mistral',
+        model: 'mistral-medium',
+        temperature: 0.8,
+        timestamp: new Date().toISOString()
+      };
+      
+      feedbackManager.currentPromptInfo = mockPromptInfo;
+      feedbackManager.currentTokenUsage = null;
+      
+      feedbackManager.updateDebugInfo();
+      
+      expect(document.getElementById('debugProvider').textContent).toBe('Mistral AI');
+      expect(document.getElementById('debugModel').textContent).toBe('mistral-medium');
+      expect(document.getElementById('debugInputTokens').textContent).toBe('Not available');
+      expect(document.getElementById('debugOutputTokens').textContent).toBe('Not available');
+      expect(document.getElementById('debugTotalTokens').textContent).toBe('Not available');
     });
   });
 });

@@ -29,21 +29,27 @@ class OptionsManager {
             ]
         };
         
-        this.defaultPrompt = `Please provide feedback on this user story. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
+        this.defaultPrompt = `Please provide feedback on this Azure DevOps work item. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
 
-User Story Content:
-{{storyContent}}
+Work Item Details:
+{{formattedContent}}
 
-Please provide your feedback in HTML format with clear sections for different aspects of the story. Use proper HTML tags like <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em> to structure your response. This will improve readability and allow for better formatting.
+Please provide your feedback in HTML format with clear sections for different aspects of the work item. Use proper HTML tags like <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em> to structure your response. This will improve readability and allow for better formatting.
 
-When providing specific text suggestions that can be copied and pasted directly into the user story (such as additional acceptance criteria, improved descriptions, or refined user story text), wrap these copyable snippets in <copyable></copyable> tags. For example:
+Consider the following aspects in your review:
+- **Work Item Type**: {{workItemType}} - tailor your feedback appropriately
+- **Current State**: {{state}} - consider what's appropriate for this stage
+- **Effort Estimation**: {{storyPoints}} story points - assess if this aligns with complexity
+- **Priority**: {{priority}} - evaluate if this matches business importance
+
+When providing specific text suggestions that can be copied and pasted directly into the Azure DevOps work item (such as additional acceptance criteria, improved descriptions, or refined user story text), wrap these copyable snippets in <copyable></copyable> tags. For example:
 - If suggesting a new acceptance criterion: <copyable>Given X when Y then Z</copyable>
 - If suggesting improved wording: <copyable>As a user, I want to...</copyable>
 - If suggesting additional details: <copyable>The system should validate...</copyable>
 
 Only use copyable tags for literal text that can be directly copied into Azure DevOps work items, not for explanatory text or analysis.
 
-Inside the copyable tags please use regular HTML formatting, so that formatting is transfered to Azure Devops as well. E.g. for lists use <ul> or <ol> tags etc.
+Inside the copyable tags please use regular HTML formatting, so that formatting is transfered to Azure DevOps as well. E.g. for lists use <ul> or <ol> tags etc.
 
 Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is presented option to cancel or continue</li><li>After canceling, the draft is discarded.</li></ol>`;
         
@@ -497,7 +503,18 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
         }
         
         // Check for unknown variables
-        const knownVariables = ['storyContent', 'timestamp', 'provider', 'feedbackType'];
+        const knownVariables = [
+            // Basic content variables
+            'storyContent', 'formattedContent', 'title', 'description', 'acceptanceCriteria', 'implementationDetails',
+            // Work item properties
+            'workItemId', 'workItemType', 'state', 'assignedTo', 'priority', 'storyPoints',
+            // Project organization
+            'areaPath', 'iterationPath', 'tags',
+            // Time tracking
+            'originalEstimate', 'remainingWork', 'completedWork',
+            // System information
+            'createdDate', 'modifiedDate', 'activity', 'timestamp', 'provider', 'feedbackType'
+        ];
         const unknownVars = variableNames.filter(name => !knownVariables.includes(name));
         
         if (unknownVars.length > 0) {
@@ -549,6 +566,56 @@ Acceptance Criteria:
 - User can click save button
 - Work is automatically saved every 5 minutes
 - User receives confirmation when save is complete`,
+            formattedContent: `Work Item ID: 12345
+Type: User Story
+Title: Sample User Story
+State: Active
+Assigned To: John Doe
+Priority: 2
+Story Points: 5
+Area Path: Project\\Feature Team
+Iteration: Sprint 23
+
+Description:
+As a user, I want to be able to save my work so that I don't lose my progress.
+
+Acceptance Criteria:
+- User can click save button
+- Work is automatically saved every 5 minutes
+- User receives confirmation when save is complete
+
+Implementation Details:
+- Use localStorage for client-side storage
+- Implement auto-save timer with 5-minute intervals
+- Show toast notification on successful save
+
+Tags: feature, user-experience
+Created: 2024-01-15
+Modified: 2024-01-18`,
+            // Basic content variables
+            title: 'Sample User Story',
+            description: 'As a user, I want to be able to save my work so that I don\'t lose my progress.',
+            acceptanceCriteria: '- User can click save button\\n- Work is automatically saved every 5 minutes\\n- User receives confirmation when save is complete',
+            implementationDetails: '- Use localStorage for client-side storage\\n- Implement auto-save timer with 5-minute intervals\\n- Show toast notification on successful save',
+            // Work item properties
+            workItemId: '12345',
+            workItemType: 'User Story',
+            state: 'Active',
+            assignedTo: 'John Doe',
+            priority: '2',
+            storyPoints: '5',
+            // Project organization
+            areaPath: 'Project\\\\Feature Team',
+            iterationPath: 'Sprint 23',
+            tags: 'feature, user-experience',
+            // Time tracking
+            originalEstimate: '8h',
+            remainingWork: '5h',
+            completedWork: '3h',
+            // System information
+            createdDate: '2024-01-15',
+            modifiedDate: '2024-01-18',
+            activity: 'Added implementation details and updated acceptance criteria',
             timestamp: new Date().toISOString(),
             provider: this.getProviderDisplayName(document.getElementById('apiProvider').value),
             feedbackType: 'General Review'

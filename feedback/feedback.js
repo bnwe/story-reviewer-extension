@@ -92,7 +92,7 @@ class FeedbackManager {
             const response = await this.sendToLLM(this.currentContent, this.currentSettings);
             
             if (response.success) {
-                this.showFeedback(this.currentContent, response.feedback, response.promptInfo, response.rawResponse);
+                this.showFeedback(this.currentContent, response.feedback, response.promptInfo, response.rawResponse, response.tokenUsage);
             } else {
                 this.showError(response.error || 'Failed to generate feedback', response.promptInfo);
             }
@@ -158,12 +158,13 @@ class FeedbackManager {
         document.getElementById('noApiKeyState').style.display = 'flex';
     }
     
-    showFeedback(originalContent, feedback, promptInfo = null, rawResponse = null) {
+    showFeedback(originalContent, feedback, promptInfo = null, rawResponse = null, tokenUsage = null) {
         this.hideAllStates();
         
-        // Store prompt info and raw response for debug display
+        // Store prompt info, raw response, and token usage for debug display
         this.currentPromptInfo = promptInfo;
         this.currentRawResponse = rawResponse;
+        this.currentTokenUsage = tokenUsage;
         
         // Display original content
         const originalDiv = document.getElementById('originalContent');
@@ -498,21 +499,18 @@ class FeedbackManager {
     
     updateDebugInfo() {
         const promptInfo = this.currentPromptInfo;
+        const tokenUsage = this.currentTokenUsage;
         
         if (!promptInfo) {
-            document.getElementById('debugPromptType').textContent = 'No prompt information available';
             document.getElementById('debugProvider').textContent = 'Unknown';
             document.getElementById('debugModel').textContent = 'Unknown';
             document.getElementById('debugTemperature').textContent = 'Unknown';
             document.getElementById('debugTimestamp').textContent = 'Unknown';
+            document.getElementById('debugInputTokens').textContent = 'No data';
+            document.getElementById('debugOutputTokens').textContent = 'No data';
+            document.getElementById('debugTotalTokens').textContent = 'No data';
             return;
         }
-        
-        // Update prompt type
-        const promptType = promptInfo.isCustom ? 
-            (promptInfo.error ? '❌ Custom (Error)' : '✅ Custom') : 
-            (promptInfo.error ? '❌ Default (Error)' : '🔧 Default');
-        document.getElementById('debugPromptType').textContent = promptType;
         
         // Update provider
         const providerNames = {
@@ -536,6 +534,47 @@ class FeedbackManager {
         const timestamp = new Date(promptInfo.timestamp);
         document.getElementById('debugTimestamp').textContent = 
             timestamp.toLocaleString();
+        
+        // Update token usage information
+        this.updateTokenUsageInfo(tokenUsage);
+    }
+    
+    updateTokenUsageInfo(tokenUsage) {
+        const inputTokensElement = document.getElementById('debugInputTokens');
+        const outputTokensElement = document.getElementById('debugOutputTokens');
+        const totalTokensElement = document.getElementById('debugTotalTokens');
+        
+        if (!tokenUsage || !tokenUsage.hasUsage) {
+            inputTokensElement.textContent = 'Not available';
+            outputTokensElement.textContent = 'Not available';
+            totalTokensElement.textContent = 'Not available';
+            
+            // Add a subtle indicator that token usage is not available
+            inputTokensElement.classList.add('token-unavailable');
+            outputTokensElement.classList.add('token-unavailable');
+            totalTokensElement.classList.add('token-unavailable');
+            return;
+        }
+        
+        // Remove unavailable styling if previously applied
+        inputTokensElement.classList.remove('token-unavailable');
+        outputTokensElement.classList.remove('token-unavailable');
+        totalTokensElement.classList.remove('token-unavailable');
+        
+        // Format token counts with thousands separators for better readability
+        const formatTokenCount = (count) => {
+            if (count === null || count === undefined) return 'N/A';
+            return count.toLocaleString();
+        };
+        
+        inputTokensElement.textContent = formatTokenCount(tokenUsage.inputTokens);
+        outputTokensElement.textContent = formatTokenCount(tokenUsage.outputTokens);
+        totalTokensElement.textContent = formatTokenCount(tokenUsage.totalTokens);
+        
+        // Show error message if there was an error extracting token usage
+        if (tokenUsage.error) {
+            console.warn('Token usage extraction error:', tokenUsage.error);
+        }
     }
     
     // Debug section population
