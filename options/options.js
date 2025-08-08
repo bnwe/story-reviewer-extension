@@ -124,6 +124,8 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
     
     handleProviderChange() {
         this.populateModelOptions();
+        // Ensure a default model is selected after provider change
+        this.ensureModelSelected();
         this.autoSave();
     }
     
@@ -166,6 +168,29 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
         
         // Add change listener to update help text
         modelSelect.addEventListener('change', this.updateModelHelp.bind(this));
+    }
+    
+    ensureModelSelected() {
+        const modelSelect = document.getElementById('modelSelect');
+        
+        // Exit early if element doesn't exist (e.g., in tests)
+        if (!modelSelect) return;
+        
+        // If no model is selected and there are options available
+        if (!modelSelect.value && modelSelect.options.length > 1) {
+            // Skip the first option which is "Select a model..."
+            for (let i = 1; i < modelSelect.options.length; i++) {
+                const option = modelSelect.options[i];
+                // Prefer recommended models
+                if (option.text.includes('Recommended')) {
+                    modelSelect.value = option.value;
+                    break;
+                } else if (i === 1) {
+                    // Fallback to first actual model if no recommended found
+                    modelSelect.value = option.value;
+                }
+            }
+        }
     }
     
     updateModelHelp() {
@@ -304,6 +329,9 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
         
         // Populate models with the saved model selection
         this.populateModelOptions(settings.model);
+        
+        // Ensure a model is always selected, even if settings.model is empty
+        this.ensureModelSelected();
     }
     
     async getStoredSettings() {
@@ -357,9 +385,18 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
             needsMigration = true;
         }
         
-        // Ensure model field exists
+        // Ensure model field exists and set default if empty
         if (!migrated.model) {
-            migrated.model = '';
+            // Set default model based on current provider
+            const provider = migrated.apiProvider || 'openai';
+            const providerModels = this.modelOptions[provider];
+            if (providerModels && providerModels.length > 0) {
+                // Find recommended model or use first one
+                const recommended = providerModels.find(m => m.label.includes('Recommended'));
+                migrated.model = recommended ? recommended.value : providerModels[0].value;
+            } else {
+                migrated.model = '';
+            }
             needsMigration = true;
         }
         

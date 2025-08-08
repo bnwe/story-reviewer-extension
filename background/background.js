@@ -402,11 +402,11 @@ function getApiHeaders(provider, apiKey) {
 }
 
 function getTestPayload(provider, model = null) {
-  // Get default models if none provided
+  // Get default models if none provided (should match options.js)
   const defaultModels = {
-    openai: 'gpt-3.5-turbo',
-    anthropic: 'claude-3-haiku-20240307', 
-    mistral: 'mistral-tiny'
+    openai: 'gpt-4.1',
+    anthropic: 'claude-sonnet-4-20250514', 
+    mistral: 'mistral-medium-latest'
   };
   
   const selectedModel = model || defaultModels[provider];
@@ -465,10 +465,10 @@ function getFeedbackPayload(provider, content, promptTemplate, model = null, tem
     content: content
   });
 
-  // Get default models if none provided
+  // Get default models if none provided (should match options.js)
   const defaultModels = {
     openai: 'gpt-4.1',
-    anthropic: 'claude-3-5-haiku-latest',
+    anthropic: 'claude-sonnet-4-20250514',
     mistral: 'mistral-medium-latest'
   };
   

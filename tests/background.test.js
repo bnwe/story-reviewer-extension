@@ -117,7 +117,7 @@ describe('Background Script Tests', () => {
     test('should generate correct test payload for OpenAI', () => {
       const payload = getTestPayload('openai');
       expect(payload).toEqual({
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4.1',
         messages: [
           { role: 'user', content: 'Test connection. Reply with "OK" if you receive this.' }
         ],
@@ -128,7 +128,7 @@ describe('Background Script Tests', () => {
     test('should generate correct test payload for Anthropic', () => {
       const payload = getTestPayload('anthropic');
       expect(payload).toEqual({
-        model: 'claude-3-haiku-20240307',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 10,
         messages: [
           { role: 'user', content: 'Test connection. Reply with "OK" if you receive this.' }
@@ -138,7 +138,7 @@ describe('Background Script Tests', () => {
 
     test('should generate correct test payload for Mistral', () => {
       const payload = getTestPayload('mistral');
-      expect(payload.model).toBe('mistral-tiny');
+      expect(payload.model).toBe('mistral-medium-latest');
       expect(payload.messages).toBeDefined();
       expect(payload.max_tokens).toBe(10);
     });
@@ -334,7 +334,7 @@ describe('Background Script Tests', () => {
       const promptTemplate = 'Please review: {{storyContent}}';
       const result = getFeedbackPayload('anthropic', content, promptTemplate);
       
-      expect(result.payload.model).toBe('claude-3-5-haiku-latest');
+      expect(result.payload.model).toBe('claude-sonnet-4-20250514');
       expect(result.payload.messages[0].content).toContain('Test Story');
       expect(result.payload.max_tokens).toBe(10000);
       expect(result.actualPrompt).toContain('Test Story');
