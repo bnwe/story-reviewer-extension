@@ -95,7 +95,7 @@ async function sendToLLM(content, settings) {
     // Get effective prompt (custom or default)
     const effectivePrompt = await getEffectivePrompt();
     const isCustomPrompt = await isUsingCustomPrompt(effectivePrompt);
-    const payloadData = getFeedbackPayload(settings.apiProvider, content, effectivePrompt, settings.model, settings.temperature);
+    const payloadData = getFeedbackPayload(settings.apiProvider, content, effectivePrompt, settings.model, settings.temperature, settings.maxTokens);
     const payload = payloadData.payload;
     actualPrompt = payloadData.actualPrompt;
     actualModel = payloadData.actualModel;
@@ -150,7 +150,7 @@ async function sendToLLM(content, settings) {
       let errorActualModel = null;
       if (!errorActualPrompt) {
         try {
-          const payloadData = getFeedbackPayload(settings.apiProvider, content, effectivePrompt, settings.model, settings.temperature);
+          const payloadData = getFeedbackPayload(settings.apiProvider, content, effectivePrompt, settings.model, settings.temperature, settings.maxTokens);
           errorActualPrompt = payloadData.actualPrompt;
           errorActualModel = payloadData.actualModel;
         } catch (payloadError) {
@@ -413,7 +413,7 @@ function getTestPayload(provider, model = null) {
   }
 }
 
-function getFeedbackPayload(provider, content, promptTemplate, model = null, temperature = 0.7) {
+function getFeedbackPayload(provider, content, promptTemplate, model = null, temperature = 0.7, maxTokens = 10000) {
   // Convert content to string if it's an object
   let contentString = '';
   if (typeof content === 'object' && content !== null) {
@@ -448,6 +448,8 @@ function getFeedbackPayload(provider, content, promptTemplate, model = null, tem
 
   // Ensure temperature is a valid number
   const validTemperature = typeof temperature === 'number' && !isNaN(temperature) ? temperature : 0.7;
+  // Ensure maxTokens is a valid number
+  const validMaxTokens = typeof maxTokens === 'number' && !isNaN(maxTokens) && maxTokens > 0 ? maxTokens : 10000;
 
   let payload;
   switch (provider) {
@@ -457,7 +459,7 @@ function getFeedbackPayload(provider, content, promptTemplate, model = null, tem
         messages: [
           { role: 'user', content: finalPrompt }
         ],
-        max_tokens: 2000,
+        max_tokens: validMaxTokens,
         temperature: validTemperature
       };
       break;
@@ -466,7 +468,7 @@ function getFeedbackPayload(provider, content, promptTemplate, model = null, tem
       // We'll include it for consistency but Claude API may ignore it
       payload = {
         model: selectedModel,
-        max_tokens: 2000,
+        max_tokens: validMaxTokens,
         messages: [
           { role: 'user', content: finalPrompt }
         ],
@@ -479,7 +481,7 @@ function getFeedbackPayload(provider, content, promptTemplate, model = null, tem
         messages: [
           { role: 'user', content: finalPrompt }
         ],
-        max_tokens: 2000,
+        max_tokens: validMaxTokens,
         temperature: validTemperature
       };
       break;

@@ -103,7 +103,8 @@ describe('Options Page Tests', () => {
         customPrompt: '',
         promptVersion: '1.0',
         promptBackups: [],
-        temperature: 0.7
+        temperature: 0.7,
+        maxTokens: 10000
       });
     });
 
@@ -191,7 +192,8 @@ describe('Options Page Tests', () => {
           apiKey: 'test-key',
           model: '',
           customPrompt: '',
-          temperature: 0.7
+          temperature: 0.7,
+          maxTokens: 10000
         }
       }, expect.any(Function));
       
@@ -236,7 +238,8 @@ describe('Options Page Tests', () => {
         apiKey: 'new-key',
         model: '',
         customPrompt: '',
-        temperature: 0.7
+        temperature: 0.7,
+        maxTokens: 10000
       }, expect.any(Function));
     });
   });
@@ -255,7 +258,8 @@ describe('Options Page Tests', () => {
         apiKey: 'test-key',
         model: '',
         customPrompt: '',
-        temperature: 0.7
+        temperature: 0.7,
+        maxTokens: 10000
       });
     });
 

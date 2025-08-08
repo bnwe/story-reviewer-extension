@@ -325,7 +325,7 @@ describe('Background Script Tests', () => {
       expect(result.payload.messages[0].content).toContain('Test Story');
       expect(result.actualPrompt).toContain('Test Story');
       expect(result.payload.messages[0].content).toContain('Test description');
-      expect(result.payload.max_tokens).toBe(2000);
+      expect(result.payload.max_tokens).toBe(10000);
       expect(result.payload.temperature).toBe(0.7);
     });
 
@@ -336,7 +336,7 @@ describe('Background Script Tests', () => {
       
       expect(result.payload.model).toBe('claude-3-5-haiku-latest');
       expect(result.payload.messages[0].content).toContain('Test Story');
-      expect(result.payload.max_tokens).toBe(2000);
+      expect(result.payload.max_tokens).toBe(10000);
       expect(result.actualPrompt).toContain('Test Story');
     });
 

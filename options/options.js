@@ -7,7 +7,8 @@ class OptionsManager {
             customPrompt: '',
             promptVersion: '1.0',
             promptBackups: [],
-            temperature: 0.7
+            temperature: 0.7,
+            maxTokens: 10000
         };
         
         this.modelOptions = {
@@ -111,6 +112,12 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
         const temperatureInput = document.getElementById('temperature');
         if (temperatureInput) {
             temperatureInput.addEventListener('input', this.autoSave.bind(this));
+        }
+        
+        // Max tokens input auto-save
+        const maxTokensInput = document.getElementById('maxTokens');
+        if (maxTokensInput) {
+            maxTokensInput.addEventListener('input', this.autoSave.bind(this));
         }
         
         // Enhanced UI functionality
@@ -257,12 +264,14 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
     getCurrentSettings() {
         const modelSelect = document.getElementById('modelSelect');
         const temperatureInput = document.getElementById('temperature');
+        const maxTokensInput = document.getElementById('maxTokens');
         return {
             apiProvider: document.getElementById('apiProvider').value,
             apiKey: document.getElementById('apiKey').value.trim(),
             model: modelSelect ? modelSelect.value : '',
             customPrompt: document.getElementById('customPrompt').value.trim(),
-            temperature: temperatureInput ? parseFloat(temperatureInput.value) || 0.7 : 0.7
+            temperature: temperatureInput ? parseFloat(temperatureInput.value) || 0.7 : 0.7,
+            maxTokens: maxTokensInput ? parseInt(maxTokensInput.value) || 10000 : 10000
         };
     }
     
@@ -284,6 +293,12 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
         const temperatureInput = document.getElementById('temperature');
         if (temperatureInput) {
             temperatureInput.value = settings.temperature || 0.7;
+        }
+        
+        // Load max tokens setting
+        const maxTokensInput = document.getElementById('maxTokens');
+        if (maxTokensInput) {
+            maxTokensInput.value = settings.maxTokens || 10000;
         }
         
         // Load custom prompt

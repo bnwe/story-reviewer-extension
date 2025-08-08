@@ -440,7 +440,8 @@ class FeedbackManager {
                 apiKey: '',
                 model: '',
                 customEndpoint: '',
-                temperature: 0.7
+                temperature: 0.7,
+                maxTokens: 10000
             }, (result) => {
                 if (chrome.runtime.lastError) {
                     reject(new Error(chrome.runtime.lastError.message));
