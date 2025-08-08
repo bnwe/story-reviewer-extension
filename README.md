@@ -203,6 +203,7 @@ The extension requires these permissions:
 ## Planned Features
 
 - Add input for entering arbitrary model id
+- Fix: Sometimes feedback cannot be generated but no error detail is shown (timeout?)
 
 ## License
 

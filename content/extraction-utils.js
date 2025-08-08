@@ -55,24 +55,46 @@ class ExtractionUtils {
     return this.sanitizeContent(element.innerHTML || element.textContent);
   }
 
-  static detectWorkItemType(url, title) {
+  static detectWorkItemType(title, document) {
+    // Method 1: Extract from page title (most reliable)
+    if (title) {
+      const titleMatch = title.match(/^(User Story|Bug|Task|Feature|Epic|Test Case|Product Backlog Item)/i);
+      if (titleMatch) {
+        return titleMatch[1];
+      }
+    }
+    
+    // Method 2: Extract from header link (secondary method)
+    if (document) {
+      const headerLinks = document.querySelectorAll('a[href*="_workitems"]');
+      for (const link of headerLinks) {
+        const linkText = link.textContent?.trim();
+        if (linkText) {
+          const linkMatch = linkText.match(/^(USER STORY|BUG|TASK|FEATURE|EPIC|TEST CASE|PRODUCT BACKLOG ITEM)\s+\d+/i);
+          if (linkMatch) {
+            // Normalize the text to proper case
+            return linkMatch[1].toLowerCase()
+              .split(' ')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ');
+          }
+        }
+      }
+    }
+    
+    // Method 3: Extract from image alt text
+    if (document) {
+      const workItemImage = document.querySelector('img[alt*="User Story"], img[alt*="Bug"], img[alt*="Task"], img[alt*="Feature"], img[alt*="Epic"]');
+      if (workItemImage) {
+        const altText = workItemImage.getAttribute('alt');
+        if (altText) {
+          return altText;
+        }
+      }
+    }
+    
+    // Method 4: Detect based on title patterns (last resort)
     const lowerTitle = (title || '').toLowerCase();
-    const lowerUrl = url.toLowerCase();
-    
-    // Detect based on URL parameters
-    if (lowerUrl.includes('witd=user%20story') || lowerUrl.includes('witd=user+story')) {
-      return 'User Story';
-    }
-    
-    if (lowerUrl.includes('witd=bug')) {
-      return 'Bug';
-    }
-    
-    if (lowerUrl.includes('witd=task')) {
-      return 'Task';
-    }
-    
-    // Detect based on title patterns
     if (lowerTitle.includes('as a ') && lowerTitle.includes('i want')) {
       return 'User Story';
     }
@@ -80,7 +102,7 @@ class ExtractionUtils {
     return 'Unknown';
   }
 
-  static validateExtractedContent(content) {
+  static validateExtractedContent(content, document) {
     const issues = [];
     
     if (!content.title || content.title.length < 5) {
@@ -92,7 +114,7 @@ class ExtractionUtils {
     }
     
     // Check for user story format if it's a user story
-    const workItemType = this.detectWorkItemType(content.url, content.title);
+    const workItemType = this.detectWorkItemType(content.title, document);
     if (workItemType === 'User Story') {
       const desc = content.description.toLowerCase();
       if (!desc.includes('as a') || !desc.includes('i want') || !desc.includes('so that')) {
@@ -121,13 +143,15 @@ class ExtractionUtils {
       enhanced.areaPath = this.safeExtract(() => this.extractAreaPath(document));
       enhanced.iterationPath = this.safeExtract(() => this.extractIterationPath(document));
       enhanced.implementationDetails = this.safeExtract(() => this.extractImplementationDetails(document));
-      enhanced.workItemType = this.safeExtract(() => this.detectWorkItemType(baseContent.url, baseContent.title), 'Unknown');
+      enhanced.workItemType = this.safeExtract(() => this.detectWorkItemType(baseContent.title, document), 'Unknown');
       enhanced.createdDate = this.safeExtract(() => this.extractCreatedDate(document));
       enhanced.modifiedDate = this.safeExtract(() => this.extractModifiedDate(document));
       enhanced.originalEstimate = this.safeExtract(() => this.extractOriginalEstimate(document));
       enhanced.remainingWork = this.safeExtract(() => this.extractRemainingWork(document));
       enhanced.completedWork = this.safeExtract(() => this.extractCompletedWork(document));
       enhanced.activity = this.safeExtract(() => this.extractLatestActivity(document));
+      enhanced.risk = this.safeExtract(() => this.extractRisk(document));
+      enhanced.valueArea = this.safeExtract(() => this.extractValueArea(document));
       
       // Validate and clean up extracted data
       enhanced.extractionStatus = this.validateExtractionResults(enhanced);
@@ -211,9 +235,9 @@ class ExtractionUtils {
 
   static extractWorkItemState(document) {
     const stateSelectors = [
-      '[aria-label*="State"] input',
-      '.work-item-form-state input',
-      '.workitem-state-dropdown input'
+      'input[id*="Stat"]',
+      '[aria-label="Assigned To"] ~ * input[value*="Will not implement"]',
+      'input[value*="Active"], input[value*="New"], input[value*="Resolved"], input[value*="Closed"], input[value*="Will not implement"]'
     ];
     
     for (const selector of stateSelectors) {
@@ -223,12 +247,21 @@ class ExtractionUtils {
       }
     }
     
+    // Try finding by ID pattern that matches Azure DevOps state inputs
+    const stateInputs = document.querySelectorAll('input[id*="State"], input[id*="Stat"]');
+    for (const input of stateInputs) {
+      if (input.value && input.value.trim()) {
+        return input.value.trim();
+      }
+    }
+    
     return null;
   }
 
   static extractAssignedTo(document) {
     const assigneeSelectors = [
-      '[aria-label*="Assigned To"] input',
+      'input[aria-label="Assigned To"]',
+      'input[id*="identity-picker"]',
       '.work-item-form-assignedto input',
       '.workitem-assignedto input'
     ];
@@ -262,7 +295,8 @@ class ExtractionUtils {
 
   static extractPriority(document) {
     const prioritySelectors = [
-      '[aria-label*="Priority"] input',
+      'input[id*="Priority"]',
+      'input[aria-label*="Priority"]',
       '.work-item-form-priority input',
       '.workitem-priority input',
       '[data-testid="priority"] input'
@@ -280,8 +314,9 @@ class ExtractionUtils {
 
   static extractStoryPoints(document) {
     const storyPointsSelectors = [
-      '[aria-label*="Story Points"] input',
-      '[aria-label*="Effort"] input',
+      'input[id*="Story-Points"]',
+      'input[aria-label*="Story Points"]',
+      'input[aria-label*="Effort"]',
       '.work-item-form-storypoints input',
       '.workitem-storypoints input',
       '[data-testid="story-points"] input',
@@ -301,8 +336,9 @@ class ExtractionUtils {
 
   static extractAreaPath(document) {
     const areaPathSelectors = [
-      '[aria-label*="Area Path"] input',
-      '[aria-label*="Area"] input',
+      'input[id*="Area"]',
+      'input[aria-label*="Area Path"]',
+      'input[aria-label*="Area"]',
       '.work-item-form-area input',
       '.workitem-area input'
     ];
@@ -319,9 +355,11 @@ class ExtractionUtils {
 
   static extractIterationPath(document) {
     const iterationSelectors = [
-      '[aria-label*="Iteration Path"] input',
-      '[aria-label*="Iteration"] input',
-      '[aria-label*="Sprint"] input',
+      'input[id*="ration"]',
+      'input[id*="Iteration"]',
+      'input[aria-label*="Iteration Path"]',
+      'input[aria-label*="Iteration"]',
+      'input[aria-label*="Sprint"]',
       '.work-item-form-iteration input',
       '.workitem-iteration input'
     ];
@@ -482,6 +520,43 @@ class ExtractionUtils {
     return null;
   }
 
+  static extractRisk(document) {
+    const riskSelectors = [
+      'input[id*="Risk"]',
+      'input[aria-label*="Risk"]',
+      '.work-item-form-risk input',
+      '.workitem-risk input'
+    ];
+    
+    for (const selector of riskSelectors) {
+      const element = document.querySelector(selector);
+      if (element && element.value) {
+        return element.value.trim();
+      }
+    }
+    
+    return null;
+  }
+
+  static extractValueArea(document) {
+    const valueAreaSelectors = [
+      'input[id*="Value-area"]',
+      'input[aria-label*="Value area"]',
+      'input[aria-label*="Value Area"]',
+      '.work-item-form-valuearea input',
+      '.workitem-valuearea input'
+    ];
+    
+    for (const selector of valueAreaSelectors) {
+      const element = document.querySelector(selector);
+      if (element && element.value) {
+        return element.value.trim();
+      }
+    }
+    
+    return null;
+  }
+
   static formatContentForTemplate(content) {
     if (!content) return '';
     
@@ -514,6 +589,14 @@ class ExtractionUtils {
     
     if (content.storyPoints) {
       formattedContent.push(`Story Points: ${content.storyPoints}`);
+    }
+    
+    if (content.risk) {
+      formattedContent.push(`Risk: ${content.risk}`);
+    }
+    
+    if (content.valueArea) {
+      formattedContent.push(`Value Area: ${content.valueArea}`);
     }
     
     // Area and iteration

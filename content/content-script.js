@@ -283,7 +283,7 @@ class AzureDevOpsStoryExtractor {
       // Validate extracted content accuracy
       let validation = { isValid: true, issues: [], workItemType: 'Unknown' };
       if (typeof ExtractionUtils !== 'undefined') {
-        validation = ExtractionUtils.validateExtractedContent(content);
+        validation = ExtractionUtils.validateExtractedContent(content, document);
       }
       
       // Check if we have minimum required content

@@ -553,7 +553,7 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
             // Basic content variables
             'storyContent', 'formattedContent', 'title', 'description', 'acceptanceCriteria', 'implementationDetails',
             // Work item properties
-            'workItemId', 'workItemType', 'state', 'assignedTo', 'priority', 'storyPoints',
+            'workItemId', 'workItemType', 'state', 'assignedTo', 'priority', 'storyPoints', 'risk', 'valueArea',
             // Project organization
             'areaPath', 'iterationPath', 'tags',
             // Time tracking
