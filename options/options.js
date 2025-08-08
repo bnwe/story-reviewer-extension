@@ -547,10 +547,6 @@ Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is prese
             return result;
         }
         
-        // Check for required storyContent variable
-        if (!prompt.includes('{{storyContent}}')) {
-            result.warnings.push('Consider including {{storyContent}} variable for story content');
-        }
         
         // Check for unknown variables
         const knownVariables = [
