@@ -28,16 +28,17 @@ class OptionsManager {
             ]
         };
         
-        this.defaultPrompt = `Please provide feedback on this Azure DevOps work item. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
+        this.defaultPrompt = `You are an experienced Product Manager, Product Owner, Software Engineer and QA Engineer. Please provide feedback on this Azure DevOps work item. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
 
 Work Item Details:
+<workitem>
 {{formattedContent}}
+</workitem>
 
 Please provide your feedback in HTML format with clear sections for different aspects of the work item. Use proper HTML tags like <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em> to structure your response. This will improve readability and allow for better formatting.
 
 Consider the following aspects in your review:
 - **Work Item Type**: {{workItemType}} - tailor your feedback appropriately
-- **Current State**: {{state}} - consider what's appropriate for this stage
 - **Effort Estimation**: {{storyPoints}} story points - assess if this aligns with complexity
 - **Priority**: {{priority}} - evaluate if this matches business importance
 
