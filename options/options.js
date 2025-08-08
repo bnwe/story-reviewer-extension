@@ -14,8 +14,6 @@ class OptionsManager {
         this.modelOptions = {
             openai: [
                 { value: 'gpt-4.1', label: 'GPT‑4.1 (Recommended)', description: 'Flagship multimodal powerhouse with huge context' },
-                { value: 'gpt-4.1-mini', label: 'GPT‑4.1 mini', description: 'Balanced, lower-cost general-purpose option' },
-                { value: 'gpt-4.1-nano', label: 'GPT‑4.1 nano', description: 'Ultra-fast, inexpensive small variant' },
                 { value: 'gpt-4o', label: 'GPT‑4o (Omni)', description: 'Multimodal (text, image, audio) flagship' }
             ],
             anthropic: [
