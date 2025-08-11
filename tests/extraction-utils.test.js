@@ -11,12 +11,12 @@ class MockElement {
     this.value = attributes.value || '';
   }
 
-  querySelector(selector) {
+  querySelector(selector) { // eslint-disable-line no-unused-vars
     // Simple mock implementation
     return null;
   }
 
-  querySelectorAll(selector) {
+  querySelectorAll(selector) { // eslint-disable-line no-unused-vars
     return [];
   }
 }

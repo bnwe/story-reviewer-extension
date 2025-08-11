@@ -121,7 +121,7 @@ describe('Options Page Tests', () => {
         callback(savedSettings);
       });
 
-      const options = new OptionsManager();
+      const options = new OptionsManager(); // eslint-disable-line no-unused-vars
       await new Promise(resolve => setTimeout(resolve, 0)); // Wait for async init
 
       expect(document.getElementById('apiProvider').value).toBe('anthropic');
@@ -173,7 +173,7 @@ describe('Options Page Tests', () => {
     test('should test connection with valid settings', async () => {
       const options = new OptionsManager();
       const statusElement = document.getElementById('connectionStatus');
-      const testBtn = document.getElementById('testConnection');
+      const testBtn = document.getElementById('testConnection'); // eslint-disable-line no-unused-vars
       
       document.getElementById('apiProvider').value = 'openai';
       document.getElementById('apiKey').value = 'test-key';

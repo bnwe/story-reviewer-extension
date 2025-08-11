@@ -45,7 +45,7 @@ global.document = mockDocument;
 global.window = mockWindow;
 
 describe('AzureDevOpsStoryExtractor', () => {
-  let extractor;
+  let extractor; // eslint-disable-line no-unused-vars
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -255,12 +255,12 @@ describe('AzureDevOpsStoryExtractor', () => {
 
   describe('UI feedback', () => {
     test('should show success notification for valid extraction', () => {
-      const mockContent = {
+      const mockContent = { // eslint-disable-line no-unused-vars
         title: 'Test Story',
         description: 'Test description'
       };
 
-      const mockValidation = {
+      const mockValidation = { // eslint-disable-line no-unused-vars
         isValid: true,
         issues: [],
         workItemType: 'User Story'

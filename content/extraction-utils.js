@@ -2,6 +2,7 @@
 // Handles different layouts, rich text formatting, and edge cases
 // Used by content-script.js for extraction operations
 
+// eslint-disable-next-line no-unused-vars
 class ExtractionUtils {
   
   static sanitizeContent(content) {

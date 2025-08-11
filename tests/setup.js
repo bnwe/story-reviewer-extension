@@ -246,7 +246,7 @@ global.ExtractionUtils = {
     assignedTo: null,
     tags: []
   })),
-  extractWorkItemId: jest.fn((mockDocument) => {
+  extractWorkItemId: jest.fn((mockDocument) => { // eslint-disable-line no-unused-vars
     // More realistic implementation that looks at window.location
     const url = global.window.location.href;
     const urlMatch = url.match(/workitems\/edit\/(\d+)/);

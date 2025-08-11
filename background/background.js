@@ -11,7 +11,7 @@ browserAPI.runtime.onInstalled.addListener(() => {
 });
 
 // Handle messages from content scripts and options page
-browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
+browserAPI.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'STORY_CONTENT_EXTRACTED') {
     // Store extracted content for popup access
     browserAPI.storage.local.set({

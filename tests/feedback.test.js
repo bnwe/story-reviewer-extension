@@ -135,7 +135,7 @@ describe('Feedback Window Tests', () => {
         });
       });
 
-      const feedbackManager = new FeedbackManager();
+      const feedbackManager = new FeedbackManager(); // eslint-disable-line no-unused-vars
       await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(document.getElementById('providerInfo').textContent).toBe('Provider: OpenAI');
@@ -152,7 +152,7 @@ describe('Feedback Window Tests', () => {
         callback(mockSettings);
       });
 
-      const feedbackManager = new FeedbackManager();
+      const feedbackManager = new FeedbackManager(); // eslint-disable-line no-unused-vars
       await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(document.getElementById('noApiKeyState').style.display).toBe('flex');
@@ -195,7 +195,7 @@ describe('Feedback Window Tests', () => {
         }
       });
 
-      const feedbackManager = new FeedbackManager();
+      const feedbackManager = new FeedbackManager(); // eslint-disable-line no-unused-vars
       await new Promise(resolve => setTimeout(resolve, 100));
 
       expect(mockChrome.runtime.sendMessage).toHaveBeenCalledWith({
@@ -220,7 +220,7 @@ describe('Feedback Window Tests', () => {
         callback({}); // No extracted content
       });
 
-      const feedbackManager = new FeedbackManager();
+      const feedbackManager = new FeedbackManager(); // eslint-disable-line no-unused-vars
       await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(document.getElementById('errorState').style.display).toBe('flex');
