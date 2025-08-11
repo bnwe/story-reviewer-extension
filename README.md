@@ -200,9 +200,15 @@ The extension requires these permissions:
 7. Push to branch: `git push origin feature/amazing-feature`
 8. Open a Pull Request
 
+### A note on spec-driven development
+
+This code base is entirely LLM-generated. I am using the BMad-Method: https://github.com/bmad-code-org/BMAD-METHOD
+
 ## Planned Features
 
+- Add GPT5
 - Add input for entering arbitrary model id
+- Add support for Jira
 - Fix: Sometimes feedback cannot be generated but no error detail is shown (timeout?)
 
 ## License
