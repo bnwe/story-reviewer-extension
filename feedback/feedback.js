@@ -350,6 +350,9 @@ class FeedbackManager {
     }
 
     sanitizeHtml(html) {
+        // First, fix any unclosed or malformed tags
+        html = this.fixMalformedTags(html);
+        
         // List of allowed HTML tags for security
         const allowedTags = [
             'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
@@ -391,6 +394,55 @@ class FeedbackManager {
         });
         
         return tempDiv.innerHTML;
+    }
+
+    fixMalformedTags(html) {
+        // Handle unclosed tags that are immediately followed by other opening tags
+        // Example: <p><copyable> becomes just <copyable>
+        
+        // List of self-closing tags that don't need closing tags
+        const selfClosingTags = ['br', 'hr', 'img', 'input', 'meta', 'link'];
+        
+        // List of tags that commonly appear unclosed in LLM responses
+        const tagsToFix = ['p', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'td', 'th'];
+        
+        // Remove problematic unclosed opening tags that are immediately followed by other opening tags
+        tagsToFix.forEach(tag => {
+            // Pattern: <tag><another_tag> where the first tag is never closed
+            // This removes the unclosed opening tag
+            const regex = new RegExp(`<${tag}(?:\\s[^>]*)?>\\s*(?=<(?:${tagsToFix.join('|')}|copyable)(?:\\s|>))`, 'gi');
+            html = html.replace(regex, '');
+        });
+        
+        // Handle specific case where unclosed tags appear at the end of content
+        // Remove opening tags that don't have corresponding closing tags and appear at problematic positions
+        tagsToFix.forEach(tag => {
+            // Pattern: <tag> at the end of content or before closing tags of other elements
+            const regex = new RegExp(`<${tag}(?:\\s[^>]*)?>\\s*$`, 'gi');
+            html = html.replace(regex, '');
+        });
+        
+        // Remove any standalone opening tags that appear without content or closing tags
+        const standaloneOpenTagRegex = /<([a-zA-Z]+)(?:\s[^>]*)?>\s*(?=<\/|\s*$|<(?:[a-zA-Z]+))/g;
+        html = html.replace(standaloneOpenTagRegex, (match, tagName) => {
+            // Only remove if it's not a self-closing tag and not followed by content
+            if (selfClosingTags.includes(tagName.toLowerCase())) {
+                return match; // Keep self-closing tags
+            }
+            
+            // Check if there's a corresponding closing tag later
+            const closingTagRegex = new RegExp(`</${tagName}>`, 'i');
+            const remainingHtml = html.substring(html.indexOf(match) + match.length);
+            
+            if (!closingTagRegex.test(remainingHtml)) {
+                // No closing tag found, remove the opening tag
+                return '';
+            }
+            
+            return match; // Keep if there's a closing tag
+        });
+        
+        return html;
     }
     
     escapeHtml(text) {

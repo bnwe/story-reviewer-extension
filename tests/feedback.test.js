@@ -449,6 +449,91 @@ describe('Feedback Window Tests', () => {
 
       expect(escaped).toBe('&lt;script&gt;alert("xss")&lt;/script&gt;');
     });
+
+    test('should fix unclosed tags that are immediately followed by other tags', () => {
+      const feedbackManager = new FeedbackManager();
+      const malformedHtml = '<h4>Implementation Details</h4><p><copyable><ul><li>Test item</li></ul></copyable>';
+
+      const fixed = feedbackManager.fixMalformedTags(malformedHtml);
+
+      expect(fixed).toBe('<h4>Implementation Details</h4><copyable><ul><li>Test item</li></ul></copyable>');
+      expect(fixed).not.toContain('<p><copyable>');
+    });
+
+    test('should remove unclosed tags at the end of content', () => {
+      const feedbackManager = new FeedbackManager();
+      const malformedHtml = '<h2>Title</h2><ul><li>Item 1</li><li>Item 2</li></ul><p>';
+
+      const fixed = feedbackManager.fixMalformedTags(malformedHtml);
+
+      expect(fixed).toBe('<h2>Title</h2><ul><li>Item 1</li><li>Item 2</li></ul>');
+      expect(fixed).not.toContain('<p>');
+    });
+
+    test('should preserve properly closed tags', () => {
+      const feedbackManager = new FeedbackManager();
+      const validHtml = '<h2>Title</h2><p>This is a proper paragraph.</p><ul><li>Item</li></ul>';
+
+      const fixed = feedbackManager.fixMalformedTags(validHtml);
+
+      expect(fixed).toBe(validHtml);
+    });
+
+    test('should handle multiple unclosed tags', () => {
+      const feedbackManager = new FeedbackManager();
+      const malformedHtml = '<div><h3><p><span>Content</span></p></h3></div>';
+
+      const fixed = feedbackManager.fixMalformedTags(malformedHtml);
+
+      expect(fixed).toContain('<span>Content</span>');
+      expect(fixed).toContain('</p>');
+      expect(fixed).toContain('</h3>');
+      expect(fixed).toContain('</div>');
+    });
+
+    test('should preserve self-closing tags', () => {
+      const feedbackManager = new FeedbackManager();
+      const htmlWithSelfClosing = '<p>Line 1<br>Line 2</p><hr><img>';
+
+      const fixed = feedbackManager.fixMalformedTags(htmlWithSelfClosing);
+
+      expect(fixed).toContain('<br>');
+      expect(fixed).toContain('<hr>');
+      expect(fixed).toContain('<img>');
+    });
+
+    test('should handle the specific example from the issue', () => {
+      const feedbackManager = new FeedbackManager();
+      const issueExample = `<h4>Implementation Details</h4>
+<p><copyable>
+<ul>
+    <li>Ensure backward compatibility with existing apps that rely on the old language matching behavior.</li>
+    <li>Update the language matching algorithm to prioritize exact matches over partial matches.</li>
+    <li>Test the autofield with various language codes, including edge cases like unsupported languages.</li>
+</ul>
+</copyable>`;
+
+      const fixed = feedbackManager.fixMalformedTags(issueExample);
+
+      expect(fixed).not.toContain('<p><copyable>');
+      expect(fixed).toContain('<copyable>');
+      expect(fixed).toContain('</copyable>');
+      expect(fixed).toContain('<ul>');
+      expect(fixed).toContain('</ul>');
+    });
+
+    test('should integrate malformed tag fixing into sanitizeHtml', () => {
+      const feedbackManager = new FeedbackManager();
+      const malformedHtml = '<h2>Title</h2><p><div><span>Text';
+
+      const sanitized = feedbackManager.sanitizeHtml(malformedHtml);
+
+      expect(sanitized).toContain('<h2>Title</h2>');
+      expect(sanitized).toContain('Text'); // Content should be preserved
+      // The DOM parser will automatically close unclosed tags when parsing, 
+      // but our fixMalformedTags should prevent problematic structures
+      expect(sanitized).not.toContain('<p><div>'); // Should not have nested block elements
+    });
   });
 
   describe('Provider Display Names', () => {
