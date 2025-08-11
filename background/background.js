@@ -401,13 +401,24 @@ function getTestPayload(provider, model = null) {
   
   switch (provider) {
     case 'openai':
-      return {
-        model: selectedModel,
-        messages: [
-          { role: 'user', content: 'Test connection. Reply with "OK" if you receive this.' }
-        ],
-        max_tokens: 10
-      };
+      // GPT-5 models use different parameters
+      if (selectedModel === 'gpt-5' || selectedModel === 'gpt-5-mini') {
+        return {
+          model: selectedModel,
+          messages: [
+            { role: 'user', content: 'Test connection. Reply with "OK" if you receive this.' }
+          ],
+          max_completion_tokens: 10
+        };
+      } else {
+        return {
+          model: selectedModel,
+          messages: [
+            { role: 'user', content: 'Test connection. Reply with "OK" if you receive this.' }
+          ],
+          max_tokens: 10
+        };
+      }
     case 'anthropic':
       return {
         model: selectedModel,
@@ -470,14 +481,25 @@ function getFeedbackPayload(provider, content, promptTemplate, model = null, tem
   let payload;
   switch (provider) {
     case 'openai':
-      payload = {
-        model: selectedModel,
-        messages: [
-          { role: 'user', content: finalPrompt }
-        ],
-        max_tokens: validMaxTokens,
-        temperature: validTemperature
-      };
+      // GPT-5 models use different parameters
+      if (selectedModel === 'gpt-5' || selectedModel === 'gpt-5-mini') {
+        payload = {
+          model: selectedModel,
+          messages: [
+            { role: 'user', content: finalPrompt }
+          ],
+          max_completion_tokens: validMaxTokens
+        };
+      } else {
+        payload = {
+          model: selectedModel,
+          messages: [
+            { role: 'user', content: finalPrompt }
+          ],
+          max_tokens: validMaxTokens,
+          temperature: validTemperature
+        };
+      }
       break;
     case 'anthropic':
       // Anthropic doesn't use temperature, uses 'temperature' parameter but it's optional

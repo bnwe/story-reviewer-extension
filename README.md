@@ -15,6 +15,8 @@ A browser extension that extracts user story content from Azure DevOps work item
 
 Models gpt-4.1-nano and gpt-4.1-mini have a hard time following the formatting instructions of the prompt. gpt-4.1 gives flawless performance in this regard.
 
+Note that GPT-5(-mini) does not support temperature as it is a reasoning model.
+
 ## Installation
 
 ### From Source
@@ -204,10 +206,10 @@ This code base is entirely LLM-generated. I am using the BMad-Method: https://gi
 
 ## Planned Features
 
-- Add GPT5
 - Add input for entering arbitrary model id
 - Add support for Jira
 - Fix: Sometimes feedback cannot be generated but no error detail is shown (timeout?)
+- Use streaming API for more immediate feedback
 
 ## License
 

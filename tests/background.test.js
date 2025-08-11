@@ -125,6 +125,28 @@ describe('Background Script Tests', () => {
       });
     });
 
+    test('should generate correct test payload for GPT-4.1 (with temperature)', () => {
+      const payload = getTestPayload('openai', 'gpt-4.1');
+      expect(payload).toEqual({
+        model: 'gpt-4.1',
+        messages: [
+          { role: 'user', content: 'Test connection. Reply with "OK" if you receive this.' }
+        ],
+        max_tokens: 10
+      });
+    });
+
+    test('should generate correct test payload for GPT-5 mini', () => {
+      const payload = getTestPayload('openai', 'gpt-5-mini');
+      expect(payload).toEqual({
+        model: 'gpt-5-mini',
+        messages: [
+          { role: 'user', content: 'Test connection. Reply with "OK" if you receive this.' }
+        ],
+        max_completion_tokens: 10
+      });
+    });
+
     test('should generate correct test payload for Anthropic', () => {
       const payload = getTestPayload('anthropic');
       expect(payload).toEqual({
@@ -327,6 +349,28 @@ describe('Background Script Tests', () => {
       expect(result.payload.messages[0].content).toContain('Test description');
       expect(result.payload.max_tokens).toBe(10000);
       expect(result.payload.temperature).toBe(0.7);
+    });
+
+    test('should generate correct feedback payload for GPT-4.1 (with temperature)', () => {
+      const content = { title: 'Test Story', description: 'Test description' };
+      const promptTemplate = 'Please review: {{storyContent}}';
+      const result = getFeedbackPayload('openai', content, promptTemplate, 'gpt-4.1');
+      
+      expect(result.payload.model).toBe('gpt-4.1');
+      expect(result.payload.max_tokens).toBe(10000);
+      expect(result.payload.temperature).toBe(0.7);
+      expect(result.payload.max_completion_tokens).toBeUndefined();
+    });
+
+    test('should generate correct feedback payload for GPT-5 mini', () => {
+      const content = { title: 'Test Story', description: 'Test description' };
+      const promptTemplate = 'Please review: {{storyContent}}';
+      const result = getFeedbackPayload('openai', content, promptTemplate, 'gpt-5-mini');
+      
+      expect(result.payload.model).toBe('gpt-5-mini');
+      expect(result.payload.max_completion_tokens).toBe(10000);
+      expect(result.payload.temperature).toBeUndefined();
+      expect(result.payload.max_tokens).toBeUndefined();
     });
 
     test('should generate correct feedback payload for Anthropic', () => {

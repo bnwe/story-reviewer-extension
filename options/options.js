@@ -14,6 +14,8 @@ class OptionsManager {
         this.modelOptions = {
             openai: [
                 { value: 'gpt-4.1', label: 'GPT‑4.1 (Recommended)', description: 'Flagship multimodal powerhouse with huge context' },
+                { value: 'gpt-5', label: 'GPT‑5', description: 'Flagship model for coding, reasoning, and agentic tasks across domains' },
+                { value: 'gpt-5-mini', label: 'GPT‑5 mini', description: 'GPT-5 mini is a faster, more cost-efficient version of GPT-5. It\'s great for well-defined tasks and precise prompts.' },
                 { value: 'gpt-4o', label: 'GPT‑4o (Omni)', description: 'Multimodal (text, image, audio) flagship' }
             ],
             anthropic: [
