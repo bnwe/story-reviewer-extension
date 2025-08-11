@@ -216,7 +216,7 @@ class FeedbackManager {
         
         // Check if feedback contains HTML tags
         if (this.isHtmlContent(feedback)) {
-            // Sanitize and clean whitespace, then return HTML content
+            // Sanitize HTML for security and clean excessive whitespace
             return this.cleanWhitespace(this.sanitizeHtml(feedback));
         } else {
             // Fallback to simple formatting for plain text
@@ -307,6 +307,48 @@ class FeedbackManager {
         return htmlTagRegex.test(text);
     }
     
+    cleanWhitespace(html) {
+        // Create a temporary div to parse HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        
+        // Remove excessive whitespace between block elements, but preserve list structure
+        this.removeExcessiveWhitespace(tempDiv);
+        
+        return tempDiv.innerHTML;
+    }
+    
+    removeExcessiveWhitespace(element) {
+        // Process all child nodes
+        const childNodes = Array.from(element.childNodes);
+        
+        childNodes.forEach((node, index) => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                // Check if this is a whitespace-only text node
+                if (/^\s*$/.test(node.textContent)) {
+                    const prevSibling = childNodes[index - 1];
+                    const nextSibling = childNodes[index + 1];
+                    
+                    // Block elements where we want to remove excess whitespace
+                    const blockElements = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'DIV', 'BLOCKQUOTE'];
+                    
+                    // Only remove whitespace between block elements, but NOT around list elements
+                    // This preserves the structure of lists while cleaning up spacing between major sections
+                    if ((prevSibling && prevSibling.nodeType === Node.ELEMENT_NODE && blockElements.includes(prevSibling.tagName)) &&
+                        (nextSibling && nextSibling.nodeType === Node.ELEMENT_NODE && blockElements.includes(nextSibling.tagName))) {
+                        node.remove();
+                    }
+                } else {
+                    // Normalize excessive whitespace within text nodes (multiple spaces/tabs to single space)
+                    node.textContent = node.textContent.replace(/\s+/g, ' ');
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                // Recursively process child elements
+                this.removeExcessiveWhitespace(node);
+            }
+        });
+    }
+
     sanitizeHtml(html) {
         // List of allowed HTML tags for security
         const allowedTags = [
@@ -349,47 +391,6 @@ class FeedbackManager {
         });
         
         return tempDiv.innerHTML;
-    }
-    
-    cleanWhitespace(html) {
-        // Create a temporary div to parse HTML
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-        
-        // Remove whitespace-only text nodes and normalize spacing
-        this.removeWhitespaceNodes(tempDiv);
-        
-        return tempDiv.innerHTML;
-    }
-    
-    removeWhitespaceNodes(element) {
-        // Process all child nodes
-        const childNodes = Array.from(element.childNodes);
-        
-        childNodes.forEach(node => {
-            if (node.nodeType === Node.TEXT_NODE) {
-                // Check if this is a whitespace-only text node
-                if (/^\s*$/.test(node.textContent)) {
-                    // Remove whitespace-only text nodes between block elements
-                    const prevSibling = node.previousSibling;
-                    const nextSibling = node.nextSibling;
-                    
-                    // Check if surrounded by block elements
-                    const blockElements = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'DIV', 'UL', 'OL', 'LI', 'BLOCKQUOTE'];
-                    
-                    if ((prevSibling && blockElements.includes(prevSibling.tagName)) ||
-                        (nextSibling && blockElements.includes(nextSibling.tagName))) {
-                        node.remove();
-                    }
-                } else {
-                    // Normalize whitespace in text nodes
-                    node.textContent = node.textContent.replace(/\s+/g, ' ');
-                }
-            } else if (node.nodeType === Node.ELEMENT_NODE) {
-                // Recursively process child elements
-                this.removeWhitespaceNodes(node);
-            }
-        });
     }
     
     escapeHtml(text) {

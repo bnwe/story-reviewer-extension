@@ -404,7 +404,6 @@ body {
 }
 
 .feedback-content {
-    white-space: pre-wrap;
     max-height: 500px;
     overflow-y: auto;
     scrollbar-width: thin;
