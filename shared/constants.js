@@ -13,7 +13,7 @@ Please provide your feedback in HTML format with clear sections for different as
 
 Consider the following aspects in your review:
 - **Work Item Type**: {{workItemType}} - tailor your feedback appropriately
-- **Effort Estimation**: {{storyPoints}} story points - assess if this aligns with complexity
+- **Effort Estimation**: {{storyPoints}} - assess if this aligns with complexity
 - **Priority**: {{priority}} - evaluate if this matches business importance
 
 When providing specific text suggestions that can be copied and pasted directly into the Azure DevOps work item (such as additional acceptance criteria, improved descriptions, or refined user story text), wrap these copyable snippets in <copyable></copyable> tags. For example:
@@ -23,7 +23,7 @@ When providing specific text suggestions that can be copied and pasted directly 
 
 Only use copyable tags for literal text that can be directly copied into Azure DevOps work items, not for explanatory text or analysis.
 
-Inside the copyable tags please use regular HTML formatting, so that formatting is transfered to Azure DevOps as well. E.g. for lists use <ul> or <ol> tags etc.
+Inside the copyable tags please use regular HTML formatting, so that formatting is transfered to Azure DevOps as well. E.g. for lists use <ul> or <ol> tags etc. Do NOT encode html tags in the copyable tags (e.g. do not do this: &lt;p&gt; ). 
 
 Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is presented option to cancel or continue</li><li>After canceling, the draft is discarded.</li></ol>
 
