@@ -7,11 +7,9 @@ A browser extension that extracts user story content from Azure DevOps work item
 - **Smart Content Extraction**: Automatically extracts user stories, acceptance criteria, and metadata from Azure DevOps work items
 - **AI-Powered Feedback**: Get intelligent suggestions to improve story quality using AI
 - **Customizable**: Choose your model from OpenAI, Anthropic Claude, or Mistral and customize model temperature
-- **Rich Text Support**: Handles various Azure DevOps text editors including Monaco editor and rich text fields
-- **Validation**: Built-in validation for user story format and completeness
+- **Copyable snippets**: Copy feedback with one click that contains actionable text you can directly paste into Azure DevOps work items. It supports both plain text and html for pasting back.
 - **Cross-Browser Support**: Works with Firefox and Chrome-based browsers
 - **Secure**: API keys stored locally, no data sent to third parties except chosen AI providers
-- The extension provides intelligent **copyable snippets** for feedback that contains actionable text you can directly paste into Azure DevOps work items. It supports both plain text and html for pasting back.
 
 ## A note on models
 
