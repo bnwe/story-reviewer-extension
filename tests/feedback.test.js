@@ -536,6 +536,233 @@ describe('Feedback Window Tests', () => {
     });
   });
 
+  describe('Nested Copyable Content Processing', () => {
+    test('should handle paragraph content inside copyable tags', () => {
+      const feedbackManager = new FeedbackManager();
+      const content = '<copyable><p>As an app builder, I want an autofield that returns the App\'s current language.</p></copyable>';
+
+      const result = feedbackManager.processCopyableTags(content);
+
+      expect(result).toContain('class="copyable-snippet"');
+      expect(result).toContain('As an app builder, I want an autofield');
+      expect(result).not.toContain('<p><p>'); // No double wrapping
+    });
+
+    test('should handle list content inside copyable tags', () => {
+      const feedbackManager = new FeedbackManager();
+      const content = `<copyable>
+        <ul>
+          <li>First acceptance criterion</li>
+          <li>Second acceptance criterion</li>
+        </ul>
+      </copyable>`;
+
+      const result = feedbackManager.processCopyableTags(content);
+
+      expect(result).toContain('class="copyable-snippet"');
+      expect(result).toContain('<ul>');
+      expect(result).toContain('<li>First acceptance criterion</li>');
+      expect(result).toContain('<li>Second acceptance criterion</li>');
+      expect(result).toContain('</ul>');
+    });
+
+    test('should handle complex nested structure inside copyable tags', () => {
+      const feedbackManager = new FeedbackManager();
+      const content = `<copyable>
+        <h4>Implementation Details</h4>
+        <ul>
+          <li>Ensure backward compatibility with existing apps</li>
+          <li>Update the language matching algorithm</li>
+          <li>Test with various language codes</li>
+        </ul>
+      </copyable>`;
+
+      const result = feedbackManager.processCopyableTags(content);
+
+      expect(result).toContain('class="copyable-snippet"');
+      expect(result).toContain('<h4>Implementation Details</h4>');
+      expect(result).toContain('<ul>');
+      expect(result).toContain('Ensure backward compatibility');
+      expect(result).toContain('Update the language matching');
+      expect(result).toContain('Test with various language');
+      expect(result).toContain('</ul>');
+    });
+
+    test('should handle plain text inside copyable tags', () => {
+      const feedbackManager = new FeedbackManager();
+      const content = '<copyable>Simple text content without HTML</copyable>';
+
+      const result = feedbackManager.processCopyableTags(content);
+
+      expect(result).toContain('class="copyable-snippet"');
+      expect(result).toContain('Simple text content without HTML');
+    });
+
+    test('should handle mixed content inside copyable tags', () => {
+      const feedbackManager = new FeedbackManager();
+      const content = `<copyable>
+        <p>Introduction text</p>
+        <ul>
+          <li>First point</li>
+          <li>Second point</li>
+        </ul>
+        <p>Concluding text</p>
+      </copyable>`;
+
+      const result = feedbackManager.processCopyableTags(content);
+
+      expect(result).toContain('class="copyable-snippet"');
+      expect(result).toContain('Introduction text');
+      expect(result).toContain('<ul>');
+      expect(result).toContain('First point');
+      expect(result).toContain('Second point');
+      expect(result).toContain('</ul>');
+      expect(result).toContain('Concluding text');
+    });
+
+    test('should fix malformed paragraph wrappers in copyable content', () => {
+      const feedbackManager = new FeedbackManager();
+      const content = `<copyable>
+        <p>
+          <ul>
+            <li>Item wrapped in paragraph</li>
+            <li>Another item</li>
+          </ul>
+        </p>
+      </copyable>`;
+
+      const result = feedbackManager.processCopyableTags(content);
+
+      expect(result).toContain('class="copyable-snippet"');
+      expect(result).toContain('<ul>');
+      expect(result).toContain('Item wrapped in paragraph');
+      expect(result).not.toContain('<p><ul>'); // Should unwrap the paragraph
+    });
+
+    test('should process copyable tags correctly - debug version', () => {
+      const feedbackManager = new FeedbackManager();
+      const simpleContent = '<copyable><p>Test content</p></copyable>';
+
+      // Test processCopyableTags directly with simple content
+      const processed = feedbackManager.processCopyableTags(simpleContent);
+      
+      // This should definitely work
+      expect(processed).toContain('class="copyable-snippet"');
+      expect(processed).toContain('Test content');
+      expect(processed).toContain('data-copy-html');
+    });
+
+    test('should handle the exact user-provided problematic example', () => {
+      const feedbackManager = new FeedbackManager();
+      // This is the exact content the user provided that was not working
+      const content = `<h2>Suggested Copyable Content</h2>
+
+<p>Improved user story description (replace current description):</p>
+<copyable>
+<p>As an app builder, I want an autofield that returns the App's current language so I can use the App language as a target language in AI Translation shapes.</p>
+</copyable>`;
+
+      const result = feedbackManager.formatFeedback(content);
+
+      // Should contain the header
+      expect(result).toContain('<h2>Suggested Copyable Content</h2>');
+      
+      // Should contain the copyable snippet with all required attributes
+      expect(result).toContain('class="copyable-snippet"');
+      expect(result).toContain('data-copyable-id');
+      expect(result).toContain('data-copy-html');
+      expect(result).toContain('title="Click to copy"');
+      
+      // Should contain the actual content
+      expect(result).toContain('As an app builder, I want an autofield');
+      expect(result).toContain('AI Translation shapes');
+      
+      // The data-copy-html attribute should contain properly escaped content that can be copied to Azure DevOps
+      const copyHtmlMatch = result.match(/data-copy-html="([^"]*)"/);
+      expect(copyHtmlMatch).toBeTruthy();
+      const copyableContent = copyHtmlMatch[1];
+      expect(copyableContent).toContain('As an app builder');
+      
+      // The copyable content should be clickable
+      expect(result).toMatch(/<span class="copyable-snippet"[^>]*>.*As an app builder.*<\/span>/);
+    });
+
+    test('should handle the original problematic example - debug version', () => {
+      const feedbackManager = new FeedbackManager();
+      const content = `<h2>Suggested Copyable Content</h2>
+      <p>Improved user story description (replace current description):</p>
+      <copyable>
+      <p>As an app builder, I want an autofield that returns the App's current language so I can use the App language as a target language in AI Translation shapes.</p>
+      </copyable>`;
+
+      // Test processCopyableTags directly first
+      const processed = feedbackManager.processCopyableTags(content);
+      expect(processed).toContain('class="copyable-snippet"');
+
+      // Test full flow step by step
+      const stripped = feedbackManager.stripMarkdownCodeBlocks(content);
+      const withCopyable = feedbackManager.processCopyableTags(stripped);
+      expect(withCopyable).toContain('class="copyable-snippet"');
+      
+      // Now test if sanitizeHtml preserves the copyable snippets
+      const sanitized = feedbackManager.sanitizeHtml(withCopyable);
+      expect(sanitized).toContain('class="copyable-snippet"');
+      
+      // Test full formatFeedback flow
+      const result = feedbackManager.formatFeedback(content);
+      expect(result).toContain('class="copyable-snippet"');
+    });
+
+    test('should handle empty or whitespace-only copyable tags', () => {
+      const feedbackManager = new FeedbackManager();
+      const content = '<copyable>   </copyable>';
+
+      const result = feedbackManager.processCopyableTags(content);
+
+      expect(result).toContain('class="copyable-snippet"');
+      // Should handle gracefully, even if content is minimal
+    });
+
+    test('should preserve formatting for Azure DevOps compatibility', () => {
+      const feedbackManager = new FeedbackManager();
+      const content = `<copyable>
+        <strong>Bold text</strong> and <em>italic text</em>
+        <ul>
+          <li><strong>Bold list item</strong></li>
+          <li><em>Italic list item</em></li>
+        </ul>
+      </copyable>`;
+
+      const result = feedbackManager.processCopyableTags(content);
+
+      expect(result).toContain('class="copyable-snippet"');
+      expect(result).toContain('<strong>Bold text</strong>');
+      expect(result).toContain('<em>italic text</em>');
+      expect(result).toContain('<ul>');
+      expect(result).toContain('<strong>Bold list item</strong>');
+      expect(result).toContain('<em>Italic list item</em>');
+    });
+
+    test('should handle multiple copyable tags in one content', () => {
+      const feedbackManager = new FeedbackManager();
+      const content = `
+        <h2>First Section</h2>
+        <copyable><p>First copyable content</p></copyable>
+        <h2>Second Section</h2>
+        <copyable><ul><li>Second copyable content</li></ul></copyable>
+      `;
+
+      const result = feedbackManager.processCopyableTags(content);
+
+      const copyableMatches = result.match(/class="copyable-snippet"/g);
+      expect(copyableMatches).toHaveLength(2);
+      expect(result).toContain('First copyable content');
+      expect(result).toContain('Second copyable content');
+      expect(result).toContain('data-copyable-id="copyable-0"');
+      expect(result).toContain('data-copyable-id="copyable-1"');
+    });
+  });
+
   describe('Provider Display Names', () => {
     test('should return correct display names for providers', () => {
       const feedbackManager = new FeedbackManager();

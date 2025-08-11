@@ -145,7 +145,7 @@ class FeedbackManager {
         document.getElementById('loadingState').style.display = 'flex';
     }
     
-    showError(message, promptInfo = null, errorDetails = null) {
+    showError(_, promptInfo = null, errorDetails = null) {
         this.hideAllStates();
         // Note: message parameter is no longer displayed in the UI, error details contain the information
         document.getElementById('errorState').style.display = 'flex';
@@ -241,7 +241,7 @@ class FeedbackManager {
         }
         
         // Otherwise, replace individual code blocks
-        return content.replace(codeBlockRegex, (match, codeContent) => {
+        return content.replace(codeBlockRegex, (_, codeContent) => {
             return codeContent.trim();
         });
     }
@@ -251,12 +251,126 @@ class FeedbackManager {
         const copyableRegex = /<copyable>([\s\S]*?)<\/copyable>/gi;
         let copyableIndex = 0;
         
-        return content.replace(copyableRegex, (match, innerContent) => {
+        return content.replace(copyableRegex, (_, innerContent) => {
             const id = `copyable-${copyableIndex++}`;
-            const cleanedHtmlContent = this.cleanHtmlForAzureDevOps(innerContent.trim());
+            const cleanedHtmlContent = this.processNestedCopyableContent(innerContent.trim());
             const escapedHtmlContent = this.escapeHtml(cleanedHtmlContent).replace(/"/g, '&quot;');
             return `<span class="copyable-snippet" data-copyable-id="${id}" data-copy-html="${escapedHtmlContent}" title="Click to copy">${cleanedHtmlContent}</span>`;
         });
+    }
+    
+    processNestedCopyableContent(htmlContent) {
+        // Handle nested HTML content within copyable tags more robustly
+        
+        // If the content is just plain text, return it as is
+        if (!this.isHtmlContent(htmlContent)) {
+            return htmlContent;
+        }
+        
+        // Create a temporary container to work with the HTML
+        const tempDiv = document.createElement('div');
+        
+        try {
+            tempDiv.innerHTML = htmlContent;
+        } catch (error) {
+            // If HTML parsing fails, treat as plain text
+            return htmlContent;
+        }
+        
+        // Fix common nested structure issues before processing
+        this.fixNestedStructureIssues(tempDiv);
+        
+        // Apply the full cleanHtmlForAzureDevOps process which includes sanitization
+        // We need to get the innerHTML, clean it through the full process, then put it back
+        const innerHtml = tempDiv.innerHTML;
+        const fullyCleanedHtml = this.cleanHtmlForAzureDevOps(innerHtml);
+        tempDiv.innerHTML = fullyCleanedHtml;
+        
+        // Remove excessive whitespace while preserving structure
+        this.removeExcessiveWhitespace(tempDiv);
+        
+        // Get the cleaned HTML
+        const cleanedContent = tempDiv.innerHTML;
+        
+        // If the result is empty or just whitespace, return the original content
+        if (!cleanedContent.trim()) {
+            return htmlContent;
+        }
+        
+        return cleanedContent;
+    }
+    
+    fixNestedStructureIssues(element) {
+        // Fix common nested structure issues that occur in LLM responses
+        
+        // Remove empty paragraphs that might wrap other block elements
+        const emptyParagraphs = element.querySelectorAll('p');
+        emptyParagraphs.forEach(p => {
+            // If paragraph only contains block elements or is empty, unwrap it
+            const hasOnlyBlockElements = Array.from(p.childNodes).every(node => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    return !node.textContent.trim(); // Only whitespace text nodes
+                }
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    const blockTags = ['div', 'p', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote'];
+                    return blockTags.includes(node.tagName.toLowerCase());
+                }
+                return false;
+            });
+            
+            if (hasOnlyBlockElements) {
+                // Unwrap the paragraph, keeping its content
+                p.replaceWith(...p.childNodes);
+            }
+        });
+        
+        // Fix nested list issues - ensure li elements are properly structured
+        const listItems = element.querySelectorAll('li');
+        listItems.forEach(li => {
+            // If li contains block elements at the root level, ensure proper structure
+            const directBlockChildren = Array.from(li.childNodes).filter(node => {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    const blockTags = ['div', 'p', 'ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+                    return blockTags.includes(node.tagName.toLowerCase());
+                }
+                return false;
+            });
+            
+            // If we have mixed content (text + block elements), wrap text in spans
+            if (directBlockChildren.length > 0) {
+                Array.from(li.childNodes).forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+                        const span = document.createElement('span');
+                        span.textContent = node.textContent;
+                        node.replaceWith(span);
+                    }
+                });
+            }
+        });
+        
+        // Remove duplicate or unnecessary wrapper elements
+        this.removeDuplicateWrappers(element);
+    }
+    
+    removeDuplicateWrappers(element) {
+        // Remove unnecessary nested elements of the same type
+        const duplicatePatterns = [
+            'div > div:only-child',
+            'span > span:only-child',
+            'p > p:only-child'
+        ];
+        
+        duplicatePatterns.forEach(pattern => {
+            const matches = element.querySelectorAll(pattern);
+            matches.forEach(match => {
+                // Move children to parent and remove the duplicate wrapper
+                match.replaceWith(...match.childNodes);
+            });
+        });
+        
+        // Remove empty elements that serve no purpose
+        const emptyElements = element.querySelectorAll('p:empty, div:empty, span:empty');
+        emptyElements.forEach(el => el.remove());
     }
     
     cleanHtmlForAzureDevOps(htmlContent) {
@@ -350,8 +464,12 @@ class FeedbackManager {
     }
 
     sanitizeHtml(html) {
-        // First, fix any unclosed or malformed tags
-        html = this.fixMalformedTags(html);
+        // First, fix any unclosed or malformed tags, but only if we don't already have processed copyable snippets
+        // If we have copyable snippets, they're already well-formed and shouldn't be modified
+        const hasCopyableSnippets = html.includes('class="copyable-snippet"');
+        if (!hasCopyableSnippets) {
+            html = this.fixMalformedTags(html);
+        }
         
         // List of allowed HTML tags for security
         const allowedTags = [
