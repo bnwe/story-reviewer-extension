@@ -7,7 +7,7 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "azure-devops-story-reviewer@extension.local",
-      "strict_min_version": "92.0"
+      "strict_min_version": "126.0"
     }
   },
   
