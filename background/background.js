@@ -1,6 +1,8 @@
 // Background script for Azure DevOps Story Reviewer extension
 // Handles extension lifecycle and communication between content scripts and popup
 
+/* global getDefaultPromptTemplate, DEFAULT_PROMPT_TEMPLATE */
+
 // Cross-browser compatibility
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
@@ -264,30 +266,15 @@ function validatePromptTemplate(prompt) {
 
 // Get default prompt (same for all providers)
 function getDefaultPrompt() {
-  return `You are an experienced Product Manager, Product Owner, Software Engineer and QA Engineer. Please provide feedback on this Azure DevOps work item. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
-
-Work Item Details:
-<workitem>
-{{formattedContent}}
-</workitem>
-
-Please provide your feedback in HTML format with clear sections for different aspects of the work item. Use proper HTML tags like <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em> to structure your response. This will improve readability and allow for better formatting.
-
-Consider the following aspects in your review:
-- **Work Item Type**: {{workItemType}} - tailor your feedback appropriately
-- **Effort Estimation**: {{storyPoints}} story points - assess if this aligns with complexity
-- **Priority**: {{priority}} - evaluate if this matches business importance
-
-When providing specific text suggestions that can be copied and pasted directly into the Azure DevOps work item (such as additional acceptance criteria, improved descriptions, or refined user story text), wrap these copyable snippets in <copyable></copyable> tags. For example:
-- If suggesting a new acceptance criterion: <copyable>Given X when Y then Z</copyable>
-- If suggesting improved wording: <copyable>As a user, I want to...</copyable>
-- If suggesting additional details: <copyable>The system should validate...</copyable>
-
-Only use copyable tags for literal text that can be directly copied into Azure DevOps work items, not for explanatory text or analysis.
-
-Inside the copyable tags please use regular HTML formatting, so that formatting is transfered to Azure DevOps as well. E.g. for lists use <ul> or <ol> tags etc.
-
-Example: <p>Here are some improved acceptance criteria:</p><ol><li>User is presented option to cancel or continue</li><li>After canceling, the draft is discarded.</li></ol>`;
+  // Access the shared constants - in background script context, these are loaded globally
+  if (typeof getDefaultPromptTemplate !== 'undefined') {
+    return getDefaultPromptTemplate();
+  } else if (typeof window !== 'undefined' && window.StoryReviewerConstants) {
+    return window.StoryReviewerConstants.getDefaultPromptTemplate();
+  } else {
+    // Fallback for any edge cases
+    return DEFAULT_PROMPT_TEMPLATE;
+  }
 }
 
 // Emergency fallback prompt (last resort)

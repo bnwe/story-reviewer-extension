@@ -33,7 +33,7 @@
   ],
   
   "background": {
-    "scripts": ["background/background.js"],
+    "scripts": ["shared/constants.js", "background/background.js"],
     "persistent": false
   },
   

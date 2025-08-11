@@ -63,6 +63,17 @@ global.window = {
   }
 };
 
+// Load shared constants for tests
+const constants = require('../shared/constants.js');
+global.DEFAULT_PROMPT_TEMPLATE = constants.DEFAULT_PROMPT_TEMPLATE;
+global.getDefaultPromptTemplate = constants.getDefaultPromptTemplate;
+
+// Make constants available as they would be in browser environment
+global.window.StoryReviewerConstants = {
+  DEFAULT_PROMPT_TEMPLATE: constants.DEFAULT_PROMPT_TEMPLATE,
+  getDefaultPromptTemplate: constants.getDefaultPromptTemplate
+};
+
 // Mock console methods to reduce test noise
 global.console = {
   ...console,
