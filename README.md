@@ -14,15 +14,19 @@ A browser extension that extracts user story content from Azure DevOps work item
 ## Screenshots
 
 Feedback button integrated in Azure Devops UI:
+
 <img src="screenshots/button.png" alt="Button in Azure Devops" width="400"/>
 
 LLM-generated feedback:
+
 <img src="screenshots/feedback.png" alt="Feedback" width="400"/>
 
 LLM API settings:
+
 <img src="screenshots/settings-api.png" alt="API settings" width="400"/>
 
 Define your own template:
+
 <img src="screenshots/settings-prompt.png" alt="Prompt template" width="400"/>
 
 ## A note on models
