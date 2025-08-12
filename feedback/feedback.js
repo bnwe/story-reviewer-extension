@@ -80,7 +80,22 @@ class FeedbackManager {
             
         } catch (error) {
             console.error('Failed to load feedback:', error);
-            this.showError('Failed to load story content');
+            
+            // Create detailed error information for load failures
+            const errorDetails = {
+                originalError: error.message,
+                isNetworkError: false,
+                timestamp: new Date().toISOString(),
+                requestData: {
+                    provider: 'Unknown (failed to load)',
+                    model: 'Unknown (failed to load)',
+                    hasApiKey: false,
+                    loadingPhase: 'Initial load'
+                },
+                troubleshooting: this.getTroubleshootingStepsForGeneralError(error)
+            };
+            
+            this.showError('Failed to load story content', null, errorDetails);
         }
     }
     
@@ -100,7 +115,23 @@ class FeedbackManager {
             
         } catch (error) {
             console.error('Failed to generate feedback:', error);
-            this.showError(error.message);
+            
+            // Create detailed error information for race condition and other errors
+            const errorDetails = {
+                originalError: error.message,
+                isNetworkError: false,
+                timestamp: new Date().toISOString(),
+                requestData: {
+                    provider: this.currentSettings?.apiProvider || 'Unknown',
+                    model: this.currentSettings?.model || 'Unknown',
+                    hasApiKey: !!this.currentSettings?.apiKey,
+                    hasContent: !!this.currentContent,
+                    hasSettings: !!this.currentSettings
+                },
+                troubleshooting: this.getTroubleshootingStepsForGeneralError(error)
+            };
+            
+            this.showError(error.message, null, errorDetails);
         }
     }
     
@@ -648,12 +679,56 @@ class FeedbackManager {
                 settings: settings
             }, (response) => {
                 if (chrome.runtime.lastError) {
+                    const runtimeError = chrome.runtime.lastError.message;
                     resolve({
                         success: false,
-                        error: chrome.runtime.lastError.message
+                        error: runtimeError,
+                        errorDetails: {
+                            originalError: runtimeError,
+                            isNetworkError: false,
+                            timestamp: new Date().toISOString(),
+                            requestData: {
+                                provider: settings.apiProvider || 'Unknown',
+                                model: settings.model || 'Unknown',
+                                hasApiKey: !!settings.apiKey,
+                                hasContent: !!content,
+                                errorType: 'Chrome Runtime Error'
+                            },
+                            troubleshooting: [
+                                'Extension context may have been invalidated',
+                                'Try refreshing the feedback window',
+                                'Close and reopen the feedback window',
+                                'If persistent, reload the browser extension',
+                                'Check if the extension is still enabled in browser settings'
+                            ]
+                        }
+                    });
+                } else if (!response) {
+                    resolve({
+                        success: false,
+                        error: 'No response received from background script',
+                        errorDetails: {
+                            originalError: 'No response received from background script',
+                            isNetworkError: false,
+                            timestamp: new Date().toISOString(),
+                            requestData: {
+                                provider: settings.apiProvider || 'Unknown',
+                                model: settings.model || 'Unknown',
+                                hasApiKey: !!settings.apiKey,
+                                hasContent: !!content,
+                                errorType: 'Background Script Communication Error'
+                            },
+                            troubleshooting: [
+                                'Background script may not be responding (possible race condition)',
+                                'Try waiting a few seconds and clicking "Retry" again',
+                                'This often happens when the extension is loading - try again',
+                                'If persistent, close and reopen the feedback window',
+                                'Check browser console for additional error messages'
+                            ]
+                        }
                     });
                 } else {
-                    resolve(response || { success: false, error: 'No response received' });
+                    resolve(response);
                 }
             });
         });
@@ -1040,6 +1115,54 @@ class FeedbackManager {
             `;
             technicalDetails.innerHTML = detailsHtml;
         }
+    }
+    
+    getTroubleshootingStepsForGeneralError(error) {
+        const steps = [];
+        const errorMessage = error.message.toLowerCase();
+        
+        // Race condition errors (missing content or settings)
+        if (errorMessage.includes('missing content') || errorMessage.includes('missing settings')) {
+            steps.push('This may be a timing issue with extension initialization');
+            steps.push('Try refreshing the feedback window or clicking "Get Feedback" again');
+            steps.push('Ensure you extracted story content from an Azure DevOps work item first');
+            steps.push('Check that your API settings are properly configured');
+            return steps;
+        }
+        
+        // Chrome extension errors
+        if (errorMessage.includes('extension context') || errorMessage.includes('runtime.lastError')) {
+            steps.push('Extension context was invalidated - try reloading the extension');
+            steps.push('Close and reopen the feedback window');
+            steps.push('If persistent, disable and re-enable the extension in Chrome settings');
+            return steps;
+        }
+        
+        // Storage errors
+        if (errorMessage.includes('storage') || errorMessage.includes('local.get')) {
+            steps.push('Browser storage access failed');
+            steps.push('Check if you have sufficient storage quota available');
+            steps.push('Try clearing extension storage and reconfigure settings');
+            steps.push('Ensure extension has proper permissions');
+            return steps;
+        }
+        
+        // Settings-related errors
+        if (errorMessage.includes('settings') || errorMessage.includes('configuration')) {
+            steps.push('Check your API configuration in extension settings');
+            steps.push('Verify your API key is valid and active');
+            steps.push('Ensure you have selected the correct API provider');
+            steps.push('Try testing your API connection in the settings page');
+            return steps;
+        }
+        
+        // Generic fallback steps
+        steps.push('Try refreshing the feedback window');
+        steps.push('Check extension settings and API configuration');
+        steps.push('Ensure you have extracted story content from Azure DevOps first');
+        steps.push('If the issue persists, try reloading the browser extension');
+        
+        return steps;
     }
     
     toggleErrorDetails() {
