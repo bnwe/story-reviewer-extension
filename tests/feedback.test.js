@@ -185,9 +185,17 @@ describe('Feedback Window Tests', () => {
         });
       });
 
-      // Mock successful LLM response
+      // Mock successful LLM response and readiness check
       mockChrome.runtime.sendMessage.mockImplementation((message, callback) => {
-        if (message.action === 'sendToLLM') {
+        if (message.action === 'testReadiness') {
+          callback({
+            success: true,
+            ready: true,
+            promptLength: 100,
+            isCustomPrompt: false,
+            hasDefaultPrompt: true
+          });
+        } else if (message.action === 'sendToLLM') {
           callback({
             success: true,
             feedback: 'This is great feedback for your story!'
@@ -196,8 +204,14 @@ describe('Feedback Window Tests', () => {
       });
 
       const feedbackManager = new FeedbackManager(); // eslint-disable-line no-unused-vars
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 300)); // Increased timeout for readiness check
 
+      // Should first call testReadiness then sendToLLM
+      expect(mockChrome.runtime.sendMessage).toHaveBeenCalledWith({
+        action: 'testReadiness',
+        settings: mockSettings
+      }, expect.any(Function));
+      
       expect(mockChrome.runtime.sendMessage).toHaveBeenCalledWith({
         action: 'sendToLLM',
         content: mockContent,

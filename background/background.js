@@ -37,6 +37,19 @@ browserAPI.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         error: error.message 
       }));
     return true; // Keep message channel open for async response
+  } else if (message.action === 'ping') {
+    // Handle simple readiness ping from feedback window
+    sendResponse({ success: true, ready: true });
+  } else if (message.action === 'testReadiness') {
+    // Handle comprehensive readiness test that exercises the same code paths as LLM requests
+    testBackgroundScriptReadiness(message.settings)
+      .then(result => sendResponse(result))
+      .catch(error => sendResponse({ 
+        success: false, 
+        ready: false,
+        error: error.message 
+      }));
+    return true; // Keep message channel open for async response
   }
   
   return true; // Keep message channel open for async response
@@ -96,6 +109,47 @@ async function testApiConnection(settings) {
         troubleshooting: getTroubleshootingSteps(error, isNetworkError)
       }
     };
+  }
+}
+
+// Test background script readiness by exercising the same code paths as LLM requests
+async function testBackgroundScriptReadiness(settings) {
+  try {
+    // Test the same async operations that cause race conditions in sendToLLM
+    
+    // 1. Test getEffectivePrompt() - this is the main source of race conditions
+    const effectivePrompt = await getEffectivePrompt();
+    if (!effectivePrompt) {
+      throw new Error('Effective prompt not available');
+    }
+    
+    // 2. Test isUsingCustomPrompt() 
+    const isCustomPrompt = await isUsingCustomPrompt(effectivePrompt);
+    
+    // 3. Test variable substitution with minimal content
+    const testContent = { title: 'Test', description: 'Test content' };
+    const finalPrompt = substituteVariables(effectivePrompt, {
+      storyContent: 'Test story content',
+      provider: settings.apiProvider || 'openai',
+      content: testContent
+    });
+    
+    if (!finalPrompt || finalPrompt.length === 0) {
+      throw new Error('Prompt template processing failed');
+    }
+    
+    // If we get here, all the async operations that cause race conditions work properly
+    return { 
+      success: true, 
+      ready: true,
+      promptLength: finalPrompt.length,
+      isCustomPrompt: isCustomPrompt,
+      hasDefaultPrompt: !!effectivePrompt
+    };
+    
+  } catch (error) {
+    console.warn('Background script readiness test failed:', error);
+    throw error;
   }
 }
 

@@ -74,8 +74,9 @@ class FeedbackManager {
                 return;
             }
             
-            // Show loading state and generate feedback
+            // Show loading state and wait for background script to be ready
             this.showLoadingState();
+            await this.waitForBackgroundScriptReady();
             await this.generateFeedback();
             
         } catch (error) {
@@ -637,6 +638,52 @@ class FeedbackManager {
         }
         
         document.body.removeChild(textArea);
+    }
+    
+    // Background script readiness check
+    async waitForBackgroundScriptReady(maxAttempts = 5, initialDelay = 200) {
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                // Test if background script is ready by sending a lightweight message
+                const isReady = await this.testBackgroundScriptReady();
+                if (isReady) {
+                    console.log(`Background script ready after ${attempt} attempt(s)`);
+                    return true;
+                }
+            } catch (error) {
+                console.warn(`Background script readiness check attempt ${attempt} failed:`, error.message);
+            }
+            
+            // Wait before next attempt, but don't wait after the last attempt
+            // Use exponential backoff: start with short delays, increase over time
+            if (attempt < maxAttempts) {
+                const delay = initialDelay * Math.pow(2, attempt - 1); // 200ms, 400ms, 800ms, 1600ms
+                console.log(`Waiting ${delay}ms before next readiness check...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+        
+        console.warn(`Background script not ready after ${maxAttempts} attempts, proceeding anyway`);
+        return false;
+    }
+    
+    async testBackgroundScriptReady() {
+        return new Promise((resolve, reject) => {
+            // Test background script readiness by attempting a lightweight operation
+            // that exercises the same code path as the actual LLM request
+            chrome.runtime.sendMessage({
+                action: 'testReadiness',
+                settings: this.currentSettings || {}
+            }, (response) => {
+                if (chrome.runtime.lastError) {
+                    reject(new Error(chrome.runtime.lastError.message));
+                } else if (response && response.success && response.ready) {
+                    resolve(true);
+                } else {
+                    reject(new Error('Background script not ready yet'));
+                }
+            });
+        });
     }
     
     // API methods
