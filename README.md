@@ -11,6 +11,20 @@ A browser extension that extracts user story content from Azure DevOps work item
 - **Cross-Browser Support**: Works with Firefox and Chrome-based browsers
 - **Secure**: API keys stored locally, no data sent to third parties except chosen AI providers
 
+## Screenshots
+
+Feedback button integrated in Azure Devops UI:
+<img src="screenshots/button.png" alt="Button in Azure Devops" width="400"/>
+
+LLM-generated feedback:
+<img src="screenshots/feedback.png" alt="Feedback" width="400"/>
+
+LLM API settings:
+<img src="screenshots/settings-api.png" alt="API settings" width="400"/>
+
+Define your own template:
+<img src="screenshots/settings-prompt.png" alt="Prompt template" width="400"/>
+
 ## A note on models
 
 Models gpt-4.1-nano and gpt-4.1-mini have a hard time following the formatting instructions of the prompt. gpt-4.1 gives flawless performance in this regard.
@@ -206,9 +220,9 @@ This code base is entirely LLM-generated. I am using the BMad-Method: https://gi
 
 ## Planned Features
 
+- Show input tokens when editing prompt
 - Add input for entering arbitrary model id
 - Add support for Jira
-- Fix: Sometimes feedback cannot be generated but no error detail is shown (timeout?)
 - Use streaming API for more immediate feedback
 
 ## License
