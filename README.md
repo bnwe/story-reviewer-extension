@@ -71,7 +71,9 @@ Note that GPT-5(-mini) does not support temperature as it is a reasoning model.
 
 ### From Browser Store
 
-*Coming soon - extension will be available on Firefox Add-ons and Chrome Web Store*
+Firefox: https://addons.mozilla.org/de/firefox/addon/story-reviewer/
+
+*Coming soon - extension will be available in Chrome Web Store*
 
 ## Setup
 
