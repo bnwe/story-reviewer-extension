@@ -231,6 +231,7 @@ This code base is entirely LLM-generated. I am using the BMad-Method: https://gi
 - Add support for Jira
 - Add support for other work item types like Bugs, Features
 - Use streaming API for more immediate feedback
+- Consider using sth like DOMPurify to fix invalid HTML from the LLM instead of the current regex based approach
 
 ## License
 
