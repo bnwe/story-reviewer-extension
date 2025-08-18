@@ -229,6 +229,7 @@ This code base is entirely LLM-generated. I am using the BMad-Method: https://gi
 - Show input tokens when editing prompt
 - Add input for entering arbitrary model id
 - Add support for Jira
+- Add support for other work item types like Bugs, Features
 - Use streaming API for more immediate feedback
 
 ## License

@@ -536,6 +536,83 @@ describe('Feedback Window Tests', () => {
       expect(fixed).toContain('</ul>');
     });
 
+    test('should remove outer p tags wrapping copyable content - user reported case', () => {
+      const feedbackManager = new FeedbackManager();
+      
+      // The exact snippet provided by the user
+      const userSnippet = `<h3>1. Clarity</h3>
+<p>
+The work item lacks a clear and detailed description of the bug. The title, "Lexical sorting case-sensitive," is ambiguous and does not provide enough context for developers, testers, or stakeholders to understand the issue. There is no information about where the bug occurs, what the expected behavior is, or what the actual behavior is.
+</p>
+<ul>
+  <li><strong>Title:</strong> Needs to specify where the sorting issue occurs (e.g., which feature, module, or UI element).</li>
+  <li><strong>Description:</strong> Is empty. Should include steps to reproduce, expected vs. actual results, and any relevant screenshots or logs.</li>
+</ul>
+<p>
+<copyable>
+<p><strong>Improved Title:</strong> Lexical sorting is case-sensitive in [specific feature/module]</p>
+</copyable>
+</p>`;
+
+      const fixed = feedbackManager.fixMalformedTags(userSnippet);
+      
+      // The problematic outer p tag wrapping copyable should be removed
+      expect(fixed).not.toContain('<p>\n<copyable>');
+      expect(fixed).not.toContain('<p><copyable>');
+      
+      // The copyable content should still be there
+      expect(fixed).toContain('<copyable>');
+      expect(fixed).toContain('</copyable>');
+      
+      // The inner p tag with meaningful content should be preserved
+      expect(fixed).toContain('<p><strong>Improved Title:</strong>');
+      
+      // Other structure should remain intact
+      expect(fixed).toContain('<h3>1. Clarity</h3>');
+      expect(fixed).toContain('<ul>');
+      expect(fixed).toContain('<li><strong>Title:</strong>');
+      
+      // Verify no malformed p-copyable nesting remains
+      expect(fixed).not.toMatch(/<p[^>]*>\s*<copyable>/);
+    });
+
+    test('should handle complete formatting flow with outer p tag removal', () => {
+      const feedbackManager = new FeedbackManager();
+      
+      // Test the full formatFeedback flow with the user's exact reported case
+      const userReportedHtml = `<p>
+<copyable>
+<p><strong>Description:</strong> When sorting items lexically, the current implementation treats uppercase and lowercase letters differently, resulting in case-sensitive sorting. This causes items starting with uppercase letters to be grouped separately from those with lowercase letters, which is not the expected behavior for users who expect case-insensitive sorting.</p>
+</copyable>
+</p>`;
+
+      const formatted = feedbackManager.formatFeedback(userReportedHtml);
+      
+      // Should create a proper copyable snippet
+      expect(formatted).toContain('class="copyable-snippet"');
+      expect(formatted).toContain('data-copyable-id=');
+      expect(formatted).toContain('data-copy-html=');
+      
+      // Should preserve the inner content in both the span and the data attribute
+      expect(formatted).toContain('<strong>Description:</strong>');
+      
+      // Should not have malformed p-copyable structure at the start
+      expect(formatted).not.toMatch(/^[^<]*<p[^>]*>\s*<copyable>/);
+      expect(formatted).not.toMatch(/^[^<]*<p[^>]*>\s*<span[^>]*class="copyable-snippet"/);
+      
+      // The main content should be a copyable span, not wrapped in problematic p tags
+      expect(formatted).toMatch(/^[^<]*<span[^>]*class="copyable-snippet"/);
+      
+      // The data-copy-html should contain the proper inner p tag content (not entity-encoded since it's in a data attribute)
+      expect(formatted).toMatch(/data-copy-html="[^"]*<p><strong>Description:<\/strong>[^"]*<\/p>[^"]*"/);
+      
+      // CRITICAL: Check that trailing </p> tags are properly removed
+      expect(formatted).not.toMatch(/<\/span>\s*<\/p>\s*$/);  // No </p> after the closing span
+      expect(formatted).not.toMatch(/<\/span><\/p>$/);        // No </p> immediately after span  
+      expect(formatted).not.toMatch(/<p><\/p>/);              // No empty p tags
+      expect(formatted).not.toMatch(/<\/p>\s*$/);             // Should not end with </p>
+    });
+
     test('should integrate malformed tag fixing into sanitizeHtml', () => {
       const feedbackManager = new FeedbackManager();
       const malformedHtml = '<h2>Title</h2><p><div><span>Text';

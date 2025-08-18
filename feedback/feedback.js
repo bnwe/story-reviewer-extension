@@ -243,12 +243,18 @@ class FeedbackManager {
         // First, strip markdown code blocks if present
         feedback = this.stripMarkdownCodeBlocks(feedback);
         
-        // Then, process copyable tags before other formatting
-        feedback = this.processCopyableTags(feedback);
-        
         // Check if feedback contains HTML tags
         if (this.isHtmlContent(feedback)) {
-            // Sanitize HTML for security and clean excessive whitespace
+            // Fix malformed tags BEFORE processing copyable tags
+            // This ensures outer p tags wrapping copyable content are removed
+            if (this.hasObviousMalformation(feedback)) {
+                feedback = this.fixMalformedTags(feedback);
+            }
+            
+            // Then, process copyable tags after structure is fixed
+            feedback = this.processCopyableTags(feedback);
+            
+            // Finally, sanitize HTML for security and clean excessive whitespace
             return this.cleanWhitespace(this.sanitizeHtml(feedback));
         } else {
             // Fallback to simple formatting for plain text
@@ -309,27 +315,26 @@ class FeedbackManager {
             return htmlContent;
         }
         
-        // Fix common nested structure issues before processing
+        // Apply minimal fixes - be more conservative to preserve content
         this.fixNestedStructureIssues(tempDiv);
         
-        // Apply the full cleanHtmlForAzureDevOps process which includes sanitization
-        // We need to get the innerHTML, clean it through the full process, then put it back
-        const innerHtml = tempDiv.innerHTML;
-        const fullyCleanedHtml = this.cleanHtmlForAzureDevOps(innerHtml);
-        tempDiv.innerHTML = fullyCleanedHtml;
+        // For copyable content, do minimal cleaning - just sanitize for Azure DevOps compatibility
+        // Skip the aggressive HTML cleaning to preserve the LLM's formatting intent
+        const cleanedContent = this.cleanHtmlForAzureDevOps(tempDiv.innerHTML);
+        tempDiv.innerHTML = cleanedContent;
         
-        // Remove excessive whitespace while preserving structure
+        // Remove only excessive whitespace, preserve semantic structure
         this.removeExcessiveWhitespace(tempDiv);
         
-        // Get the cleaned HTML
-        const cleanedContent = tempDiv.innerHTML;
+        // Get the final HTML
+        const finalContent = tempDiv.innerHTML;
         
-        // If the result is empty or just whitespace, return the original content
-        if (!cleanedContent.trim()) {
+        // Return original content if cleaning resulted in empty content
+        if (!finalContent.trim()) {
             return htmlContent;
         }
         
-        return cleanedContent;
+        return finalContent;
     }
     
     fixNestedStructureIssues(element) {
@@ -453,6 +458,13 @@ class FeedbackManager {
         return htmlTagRegex.test(text);
     }
     
+    hasObviousMalformation(html) {
+        // Check for patterns that indicate malformed HTML structure
+        return /<[a-zA-Z]+(?:\s[^>]*)?>\s*<\1(?:\s[^>]*)?>/i.test(html) || 
+               /<[a-zA-Z]+(?:\s[^>]*)?>\s*$/.test(html) ||
+               /<p(?:\s[^>]*)?>\s*(?=<copyable)/i.test(html); // Specific pattern: <p><copyable>
+    }
+    
     cleanWhitespace(html) {
         // Create a temporary div to parse HTML
         const tempDiv = document.createElement('div');
@@ -496,12 +508,8 @@ class FeedbackManager {
     }
 
     sanitizeHtml(html) {
-        // First, fix any unclosed or malformed tags, but only if we don't already have processed copyable snippets
-        // If we have copyable snippets, they're already well-formed and shouldn't be modified
-        const hasCopyableSnippets = html.includes('class="copyable-snippet"');
-        if (!hasCopyableSnippets) {
-            html = this.fixMalformedTags(html);
-        }
+        // Malformed tag fixes are now handled in formatFeedback() before copyable processing
+        // This function focuses only on security sanitization
         
         // List of allowed HTML tags for security
         const allowedTags = [
@@ -543,53 +551,49 @@ class FeedbackManager {
             }
         });
         
-        return tempDiv.innerHTML;
+        // Clean up orphaned and empty elements that may have been created
+        let cleanedHtml = tempDiv.innerHTML;
+        
+        // Remove empty p tags
+        cleanedHtml = cleanedHtml.replace(/<p>\s*<\/p>/g, '');
+        
+        // Remove trailing orphaned closing p tags at the very end
+        cleanedHtml = cleanedHtml.replace(/<\/p>\s*$/, '');
+        
+        return cleanedHtml;
     }
 
     fixMalformedTags(html) {
-        // Handle unclosed tags that are immediately followed by other opening tags
-        // Example: <p><copyable> becomes just <copyable>
+        // More conservative approach to fixing malformed HTML
+        // Focus on preserving semantic structure while fixing actual issues
         
-        // List of self-closing tags that don't need closing tags
+        // List of self-closing tags that should be preserved
         const selfClosingTags = ['br', 'hr', 'img', 'input', 'meta', 'link'];
         
-        // List of tags that commonly appear unclosed in LLM responses
-        const tagsToFix = ['p', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'td', 'th'];
+        // Only fix genuinely problematic patterns, not all nested structures
         
-        // Remove problematic unclosed opening tags that are immediately followed by other opening tags
-        tagsToFix.forEach(tag => {
-            // Pattern: <tag><another_tag> where the first tag is never closed
-            // This removes the unclosed opening tag
-            const regex = new RegExp(`<${tag}(?:\\s[^>]*)?>\\s*(?=<(?:${tagsToFix.join('|')}|copyable)(?:\\s|>))`, 'gi');
-            html = html.replace(regex, '');
+        // 1. Remove empty opening tags at the very end of content, but preserve self-closing tags
+        html = html.replace(/<([a-zA-Z]+)(?:\s[^>]*)?>[\s]*$/g, (match, tagName) => {
+            return selfClosingTags.includes(tagName.toLowerCase()) ? match : '';
         });
         
-        // Handle specific case where unclosed tags appear at the end of content
-        // Remove opening tags that don't have corresponding closing tags and appear at problematic positions
-        tagsToFix.forEach(tag => {
-            // Pattern: <tag> at the end of content or before closing tags of other elements
-            const regex = new RegExp(`<${tag}(?:\\s[^>]*)?>\\s*$`, 'gi');
-            html = html.replace(regex, '');
-        });
+        // 2. Fix specific malformed pattern: <p>\s*<copyable> where <p> is never closed
+        // This handles the common case of LLMs wrapping copyable content in unclosed paragraphs
+        html = html.replace(/<p(?:\s[^>]*)?>[\s]*(?=<copyable)/gi, '');
         
-        // Remove any standalone opening tags that appear without content or closing tags
-        const standaloneOpenTagRegex = /<([a-zA-Z]+)(?:\s[^>]*)?>\s*(?=<\/|\s*$|<(?:[a-zA-Z]+))/g;
-        html = html.replace(standaloneOpenTagRegex, (match, tagName) => {
-            // Only remove if it's not a self-closing tag and not followed by content
-            if (selfClosingTags.includes(tagName.toLowerCase())) {
-                return match; // Keep self-closing tags
-            }
-            
-            // Check if there's a corresponding closing tag later
-            const closingTagRegex = new RegExp(`</${tagName}>`, 'i');
-            const remainingHtml = html.substring(html.indexOf(match) + match.length);
-            
-            if (!closingTagRegex.test(remainingHtml)) {
-                // No closing tag found, remove the opening tag
-                return '';
-            }
-            
-            return match; // Keep if there's a closing tag
+        // 3. Remove duplicate consecutive opening tags of the same type (e.g., <p><p>)
+        const duplicateOpenTags = /<([a-zA-Z]+)(?:\s[^>]*)?>[\s]*<\1(?:\s[^>]*)?>/gi;
+        html = html.replace(duplicateOpenTags, '<$1>');
+        
+        // 4. Only remove opening tags that are clearly orphaned (no content and no closing tag)
+        // Be more selective - only remove if there's strong evidence of malformation
+        const problematicPatterns = [
+            // Empty tags with no content between them and the next opening tag
+            /<(p|div)(?:\s[^>]*)?>[\s]*(?=<(?:h[1-6]|p|div|ul|ol))/gi,
+        ];
+        
+        problematicPatterns.forEach(pattern => {
+            html = html.replace(pattern, '');
         });
         
         return html;
