@@ -1,12 +1,12 @@
 {
   "manifest_version": 2,
-  "name": "Azure DevOps Story Reviewer (Dev)",
-  "version": "1.0.0",
+  "name": "Azure DevOps Story Reviewer",
+  "version": "1.0.1",
   "description": "Provide AI-powered feedback on user stories directly integrated into Azure Devops",
   
   "browser_specific_settings": {
     "gecko": {
-      "id": "azure-devops-story-reviewer-dev@extension.local",
+      "id": "azure-devops-story-reviewer@extension.local",
       "strict_min_version": "126.0"
     }
   },
