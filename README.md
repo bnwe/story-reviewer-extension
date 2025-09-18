@@ -222,7 +222,10 @@ The extension requires these permissions:
 
 ### A note on spec-driven development
 
-This code base is entirely LLM-generated. I am using the BMad-Method: https://github.com/bmad-code-org/BMAD-METHOD
+This code base is mostly LLM-generated. The following tools are used:
+
+- BMad-Method: https://github.com/bmad-code-org/BMAD-METHOD
+- Kiro, Cursor, Claude Code
 
 ## Planned Features
 
