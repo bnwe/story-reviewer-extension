@@ -264,6 +264,11 @@ describe('Refresh Workflow Integration Tests', () => {
         callback(mockSettings);
       });
 
+      // Mock stored tab ID
+      mockChrome.storage.local.get.mockImplementation((keys, callback) => {
+        callback({ azureDevOpsTabId: 1 });
+      });
+
       // Mock active Azure DevOps tab
       mockChrome.tabs.query.mockImplementation((query, callback) => {
         callback([{
@@ -288,12 +293,18 @@ describe('Refresh Workflow Integration Tests', () => {
       // Simulate message handling
       mockChrome.runtime.sendMessage.mockImplementation((message, callback) => {
         if (message.type === 'REFRESH_CONTENT') {
-          setTimeout(() => {
-            callback({
-              type: 'CONTENT_REFRESHED',
-              success: false,
-              error: 'Content extraction failed: Failed to extract content from page'
-            });
+          // Simulate background script handling the refresh request with content extraction failure
+          setTimeout(async () => {
+            try {
+              // Simulate content extraction failure in background script
+              throw new Error('Content extraction failed: Failed to extract content from page');
+            } catch (error) {
+              callback({
+                type: 'CONTENT_REFRESHED',
+                success: false,
+                error: error.message
+              });
+            }
           }, 0);
         }
       });
@@ -386,6 +397,11 @@ describe('Refresh Workflow Integration Tests', () => {
         callback(mockSettings);
       });
 
+      // Mock stored tab ID
+      mockChrome.storage.local.get.mockImplementation((keys, callback) => {
+        callback({ azureDevOpsTabId: 1 });
+      });
+
       // Mock no active tabs
       mockChrome.tabs.query.mockImplementation((query, callback) => {
         callback([]);
@@ -423,6 +439,11 @@ describe('Refresh Workflow Integration Tests', () => {
         callback(mockSettings);
       });
 
+      // Mock stored tab ID
+      mockChrome.storage.local.get.mockImplementation((keys, callback) => {
+        callback({ azureDevOpsTabId: 1 });
+      });
+
       // Mock active tab that's not Azure DevOps
       mockChrome.tabs.query.mockImplementation((query, callback) => {
         callback([{
@@ -458,6 +479,11 @@ describe('Refresh Workflow Integration Tests', () => {
     test('should correctly pass messages between all components', async () => {
       const messageLog = [];
       
+      // Mock stored tab ID
+      mockChrome.storage.local.get.mockImplementation((keys, callback) => {
+        callback({ azureDevOpsTabId: 1 });
+      });
+      
       // Track all message passing
       mockChrome.runtime.sendMessage.mockImplementation((message, callback) => {
         messageLog.push({ type: 'runtime.sendMessage', message });
@@ -484,12 +510,17 @@ describe('Refresh Workflow Integration Tests', () => {
       // Verify message flow
       expect(messageLog).toContainEqual({
         type: 'runtime.sendMessage',
-        message: { type: 'REFRESH_CONTENT' }
+        message: { type: 'REFRESH_CONTENT', tabId: 1 }
       });
     }, 5000); // 5 second timeout
 
     test('should validate message structure and content', async () => {
       const feedbackManager = new FeedbackManager();
+      
+      // Mock stored tab ID
+      mockChrome.storage.local.get.mockImplementation((keys, callback) => {
+        callback({ azureDevOpsTabId: 1 });
+      });
       
       let capturedMessage;
       mockChrome.runtime.sendMessage.mockImplementation((message, callback) => {
@@ -514,7 +545,8 @@ describe('Refresh Workflow Integration Tests', () => {
 
       // Verify message structure
       expect(capturedMessage).toEqual({
-        type: 'REFRESH_CONTENT'
+        type: 'REFRESH_CONTENT',
+        tabId: 1
       });
     }, 5000); // 5 second timeout
   });

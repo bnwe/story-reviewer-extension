@@ -56,3 +56,12 @@
   - Updated tests to expect the new `extractedContent` field in refresh responses
   - Now when refresh is clicked, both the feedback and original story content are updated with newly extracted data
   - _Addresses: Bug fix for refresh functionality to update all content sections_
+
+- [x] 9. Fix failing refresh integration test suite
+  - Fixed timeout issues in refresh integration tests that were failing due to missing mocks
+  - Root cause: Tests were missing `chrome.storage.local.get` mock for tab ID retrieval
+  - Solution: Added missing `mockChrome.storage.local.get` implementation to all failing tests
+  - Updated test expectations to include new `tabId` field in `REFRESH_CONTENT` messages
+  - Fixed async handling in test mocks to properly simulate Chrome extension message passing
+  - All 9 refresh integration tests now pass, validating the complete refresh workflow
+  - _Addresses: Test suite maintenance and validation of refresh functionality_
