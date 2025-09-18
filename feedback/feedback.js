@@ -143,7 +143,22 @@ class FeedbackManager {
         }
         
         this.showLoadingState();
-        await this.generateFeedback();
+        
+        try {
+            // Send refresh content message to background script
+            const response = await this.sendRefreshContentMessage();
+            
+            if (response.success) {
+                // Handle successful refresh response
+                this.handleContentRefreshed(response);
+            } else {
+                // Handle refresh error
+                this.showError(response.error || 'Failed to refresh content');
+            }
+        } catch (error) {
+            console.error('Refresh operation failed:', error);
+            this.showError('Failed to refresh content: ' + error.message);
+        }
     }
     
     async retryFeedback() {
@@ -783,6 +798,77 @@ class FeedbackManager {
                 }
             });
         });
+    }
+
+    async sendRefreshContentMessage() {
+        return new Promise((resolve) => {
+            chrome.runtime.sendMessage({
+                type: 'REFRESH_CONTENT'
+            }, (response) => {
+                if (chrome.runtime.lastError) {
+                    const runtimeError = chrome.runtime.lastError.message;
+                    resolve({
+                        success: false,
+                        error: runtimeError,
+                        errorDetails: {
+                            originalError: runtimeError,
+                            isNetworkError: false,
+                            timestamp: new Date().toISOString(),
+                            requestData: {
+                                errorType: 'Chrome Runtime Error'
+                            },
+                            troubleshooting: [
+                                'Extension context may have been invalidated',
+                                'Try refreshing the feedback window',
+                                'Close and reopen the feedback window',
+                                'If persistent, reload the browser extension',
+                                'Check if the extension is still enabled in browser settings'
+                            ]
+                        }
+                    });
+                } else if (!response) {
+                    resolve({
+                        success: false,
+                        error: 'No response received from background script',
+                        errorDetails: {
+                            originalError: 'No response received from background script',
+                            isNetworkError: false,
+                            timestamp: new Date().toISOString(),
+                            requestData: {
+                                errorType: 'Background Script Communication Error'
+                            },
+                            troubleshooting: [
+                                'Background script may not be responding',
+                                'Try waiting a few seconds and clicking refresh again',
+                                'Ensure you are on an Azure DevOps work item page',
+                                'If persistent, close and reopen the feedback window',
+                                'Check browser console for additional error messages'
+                            ]
+                        }
+                    });
+                } else {
+                    resolve(response);
+                }
+            });
+        });
+    }
+
+    handleContentRefreshed(response) {
+        // Update the current content with the newly extracted content
+        this.currentContent = response.extractedContent || this.currentContent;
+        
+        // Update timestamp
+        const timestamp = new Date().toLocaleString();
+        document.getElementById('timestampInfo').textContent = `Last updated: ${timestamp}`;
+        
+        // Display the new feedback
+        this.showFeedback(
+            this.currentContent, 
+            response.feedback, 
+            response.promptInfo, 
+            response.rawResponse, 
+            response.tokenUsage
+        );
     }
     
     // Debug functionality methods

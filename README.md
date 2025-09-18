@@ -226,8 +226,10 @@ This code base is entirely LLM-generated. I am using the BMad-Method: https://gi
 
 ## Planned Features
 
+- Re-fetch user story content before refresh
 - Show input tokens when editing prompt
 - Add input for entering arbitrary model id
+- Enhance context for the LLM through the parent Feature and Epic
 - Add support for Jira
 - Add support for other work item types like Bugs, Features
 - Use streaming API for more immediate feedback
