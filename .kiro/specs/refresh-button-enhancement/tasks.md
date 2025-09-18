@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. Add refresh message constants to shared constants
+- [x] 1. Add refresh message constants to shared constants
   - Add new message type constants `REFRESH_CONTENT` and `CONTENT_REFRESHED` to `shared/constants.js`
   - Ensure constants follow existing naming conventions in the file
   - _Addresses: Requirement 1 - Acceptance Criteria 1_

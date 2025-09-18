@@ -1,6 +1,10 @@
 // Shared constants for the Azure DevOps Story Reviewer extension
 // This file centralizes constants used across multiple components
 
+// Message types for extension communication
+const REFRESH_CONTENT = 'REFRESH_CONTENT';
+const CONTENT_REFRESHED = 'CONTENT_REFRESHED';
+
 // Default prompt template used for all AI providers
 const DEFAULT_PROMPT_TEMPLATE = `You are an experienced Product Manager, Product Owner, Software Engineer and QA Engineer. Please provide feedback on this Azure DevOps work item. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
 
@@ -39,7 +43,9 @@ if (typeof module !== 'undefined' && module.exports) {
   // Node.js environment (for tests)
   module.exports = {
     DEFAULT_PROMPT_TEMPLATE,
-    getDefaultPromptTemplate
+    getDefaultPromptTemplate,
+    REFRESH_CONTENT,
+    CONTENT_REFRESHED
   };
 }
 
@@ -47,6 +53,8 @@ if (typeof module !== 'undefined' && module.exports) {
 if (typeof window !== 'undefined') {
   window.StoryReviewerConstants = {
     DEFAULT_PROMPT_TEMPLATE,
-    getDefaultPromptTemplate
+    getDefaultPromptTemplate,
+    REFRESH_CONTENT,
+    CONTENT_REFRESHED
   };
 }
