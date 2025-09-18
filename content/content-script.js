@@ -264,16 +264,13 @@ class AzureDevOpsStoryExtractor {
     // First extract current content if not already extracted
     this.extractStoryContent(true);
     
-    // Store the current tab ID for refresh operations
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs && tabs.length > 0) {
-        const currentTabId = tabs[0].id;
-        chrome.storage.local.set({ azureDevOpsTabId: currentTabId });
-      }
+    // Send message to background script to store the current tab ID for refresh operations
+    browserAPI.runtime.sendMessage({
+      type: 'STORE_TAB_ID'
     });
     
     // Open feedback window
-    const feedbackUrl = chrome.runtime.getURL('feedback/feedback.html');
+    const feedbackUrl = browserAPI.runtime.getURL('feedback/feedback.html');
     const windowFeatures = 'width=1000,height=700,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,directories=no,status=no';
     
     try {

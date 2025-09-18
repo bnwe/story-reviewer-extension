@@ -39,3 +39,12 @@
   - Use specific tab ID instead of active tab in `background/background.js` handleRefreshContent function
   - Updated tests to include tabs.get mock and corrected error message
   - _Addresses: Bug fix for refresh functionality when feedback window has focus_
+
+- [x] 7. Fix popup "Get Feedback" button failure
+  - Fixed critical bug where "Get Feedback" button in popup failed with "Failed to open feedback window"
+  - Root cause: Content script tried to use `chrome.tabs.query()` API which is not available in content script context
+  - Solution: Moved tab ID storage to background script using new `STORE_TAB_ID` message
+  - Added `STORE_TAB_ID` message handler in background script to store tab ID from sender.tab.id
+  - Updated content script to send `STORE_TAB_ID` message instead of directly accessing tabs API
+  - Added new message constant to `shared/constants.js`
+  - _Addresses: Critical bug fix for popup functionality_

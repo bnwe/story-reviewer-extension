@@ -19,6 +19,14 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
       extractionTimestamp: Date.now()
     });
     sendResponse({ success: true });
+  } else if (message.type === 'STORE_TAB_ID') {
+    // Store the current tab ID for refresh operations
+    if (sender.tab && sender.tab.id) {
+      browserAPI.storage.local.set({ azureDevOpsTabId: sender.tab.id });
+      sendResponse({ success: true });
+    } else {
+      sendResponse({ success: false, error: 'No tab ID available' });
+    }
   } else if (message.type === 'REFRESH_CONTENT') {
     // Handle refresh content request from feedback window
     handleRefreshContent(message, sender, sendResponse);

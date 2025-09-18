@@ -4,6 +4,7 @@
 // Message types for extension communication
 const REFRESH_CONTENT = 'REFRESH_CONTENT';
 const CONTENT_REFRESHED = 'CONTENT_REFRESHED';
+const STORE_TAB_ID = 'STORE_TAB_ID';
 
 // Default prompt template used for all AI providers
 const DEFAULT_PROMPT_TEMPLATE = `You are an experienced Product Manager, Product Owner, Software Engineer and QA Engineer. Please provide feedback on this Azure DevOps work item. Analyze it for clarity, completeness, testability, and adherence to best practices. Provide specific, actionable suggestions for improvement.
@@ -45,7 +46,8 @@ if (typeof module !== 'undefined' && module.exports) {
     DEFAULT_PROMPT_TEMPLATE,
     getDefaultPromptTemplate,
     REFRESH_CONTENT,
-    CONTENT_REFRESHED
+    CONTENT_REFRESHED,
+    STORE_TAB_ID
   };
 }
 
@@ -55,6 +57,7 @@ if (typeof window !== 'undefined') {
     DEFAULT_PROMPT_TEMPLATE,
     getDefaultPromptTemplate,
     REFRESH_CONTENT,
-    CONTENT_REFRESHED
+    CONTENT_REFRESHED,
+    STORE_TAB_ID
   };
 }
