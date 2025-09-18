@@ -1420,11 +1420,9 @@ The work item lacks a clear and detailed description of the bug. The title, "Lex
       };
 
       // Mock timeout by never calling callback
-      mockChrome.runtime.sendMessage.mockImplementation((message, callback) => {
+      mockChrome.runtime.sendMessage.mockImplementation(() => {
         // Simulate timeout - callback never called
       });
-
-      const showErrorSpy = jest.spyOn(feedbackManager, 'showError');
 
       // Add timeout to prevent test hanging
       const refreshPromise = Promise.race([

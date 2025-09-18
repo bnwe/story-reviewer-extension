@@ -4,7 +4,6 @@
 describe('Refresh Workflow Integration Tests', () => {
   let mockChrome;
   let FeedbackManager;
-  let backgroundHandlers;
 
   beforeEach(() => {
     // Mock Chrome APIs with message passing simulation
@@ -92,11 +91,7 @@ describe('Refresh Workflow Integration Tests', () => {
     global.sendToLLM = jest.fn();
     global.getDefaultPrompt = jest.fn(() => 'Default prompt template');
 
-    // Store background handlers for testing
-    backgroundHandlers = {
-      handleRefreshContent: global.handleRefreshContent,
-      sendToLLM: global.sendToLLM
-    };
+    // Background handlers are available globally for testing
   });
 
   afterEach(() => {
@@ -178,7 +173,6 @@ describe('Refresh Workflow Integration Tests', () => {
       const showFeedbackSpy = jest.spyOn(feedbackManager, 'showFeedback');
 
       // Simulate message passing between components
-      let refreshResponse;
       mockChrome.runtime.sendMessage.mockImplementation((message, callback) => {
         if (message.type === 'REFRESH_CONTENT') {
           // Simulate background script handling the refresh request
@@ -186,7 +180,6 @@ describe('Refresh Workflow Integration Tests', () => {
             try {
               // Simulate background script processing
               const response = await simulateBackgroundRefreshHandling(mockSettings, mockContent);
-              refreshResponse = response;
               callback(response);
             } catch (error) {
               callback({

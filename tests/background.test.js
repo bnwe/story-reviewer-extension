@@ -1165,12 +1165,9 @@ describe('Background Script Tests', () => {
 
     test('should handle refresh message workflow integration', async () => {
       // Test that refresh message is properly handled by message listener
-      const messageHandler = jest.fn();
       
       // Mock the message listener behavior
       const message = { type: 'REFRESH_CONTENT' };
-      const sender = {};
-      const sendResponse = jest.fn();
 
       // Verify that REFRESH_CONTENT message type is recognized
       expect(message.type).toBe('REFRESH_CONTENT');
