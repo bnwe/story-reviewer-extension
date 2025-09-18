@@ -802,9 +802,14 @@ class FeedbackManager {
 
     async sendRefreshContentMessage() {
         return new Promise((resolve) => {
-            chrome.runtime.sendMessage({
-                type: 'REFRESH_CONTENT'
-            }, (response) => {
+            // Get the stored Azure DevOps tab ID
+            chrome.storage.local.get(['azureDevOpsTabId'], (result) => {
+                const tabId = result.azureDevOpsTabId;
+                
+                chrome.runtime.sendMessage({
+                    type: 'REFRESH_CONTENT',
+                    tabId: tabId
+                }, (response) => {
                 if (chrome.runtime.lastError) {
                     const runtimeError = chrome.runtime.lastError.message;
                     resolve({
@@ -849,6 +854,7 @@ class FeedbackManager {
                 } else {
                     resolve(response);
                 }
+                });
             });
         });
     }

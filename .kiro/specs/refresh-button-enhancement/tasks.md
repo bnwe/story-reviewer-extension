@@ -31,3 +31,11 @@
   - Validate that refresh uses existing content extraction and API processing logic
   - Ensure error handling works correctly across all components
   - _Addresses: Complete workflow validation for Requirement 1_
+
+- [x] 6. Fix refresh button bug when feedback window is active
+  - Fixed issue where refresh failed with "Active tab is not an Azure DevOps page" when feedback window was active
+  - Store Azure DevOps tab ID when opening feedback window in `content/content-script.js`
+  - Pass tab ID in REFRESH_CONTENT message from `feedback/feedback.js`
+  - Use specific tab ID instead of active tab in `background/background.js` handleRefreshContent function
+  - Updated tests to include tabs.get mock and corrected error message
+  - _Addresses: Bug fix for refresh functionality when feedback window has focus_

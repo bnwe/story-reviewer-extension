@@ -730,7 +730,8 @@ describe('Background Script Tests', () => {
       // Mock Chrome tabs API
       mockTabs = {
         query: jest.fn(),
-        sendMessage: jest.fn()
+        sendMessage: jest.fn(),
+        get: jest.fn()
       };
       
       // Mock Chrome storage API
@@ -760,6 +761,14 @@ describe('Background Script Tests', () => {
           id: 1,
           url: 'https://dev.azure.com/myorg/myproject/_workitems/edit/123'
         }]);
+      });
+
+      // Mock tabs.get to return tab information
+      mockTabs.get.mockImplementation((tabId, callback) => {
+        callback({
+          id: tabId,
+          url: 'https://dev.azure.com/myorg/myproject/_workitems/edit/123'
+        });
       });
 
       // Mock content extraction success
@@ -861,6 +870,14 @@ describe('Background Script Tests', () => {
         }]);
       });
 
+      // Mock tabs.get to return non-Azure DevOps tab information
+      mockTabs.get.mockImplementation((tabId, callback) => {
+        callback({
+          id: tabId,
+          url: 'https://google.com'
+        });
+      });
+
       const message = { type: 'REFRESH_CONTENT' };
       const sender = {};
       const sendResponse = jest.fn();
@@ -871,7 +888,7 @@ describe('Background Script Tests', () => {
         expect(sendResponse).toHaveBeenCalledWith({
           type: 'CONTENT_REFRESHED',
           success: false,
-          error: 'Active tab is not an Azure DevOps page'
+          error: 'Target tab is not an Azure DevOps page'
         });
       } else {
         // Verify mock setup
@@ -886,6 +903,14 @@ describe('Background Script Tests', () => {
           id: 1,
           url: 'https://dev.azure.com/myorg/myproject/_workitems/edit/123'
         }]);
+      });
+
+      // Mock tabs.get to return tab information
+      mockTabs.get.mockImplementation((tabId, callback) => {
+        callback({
+          id: tabId,
+          url: 'https://dev.azure.com/myorg/myproject/_workitems/edit/123'
+        });
       });
 
       // Mock content extraction failure
@@ -915,6 +940,14 @@ describe('Background Script Tests', () => {
           id: 1,
           url: 'https://dev.azure.com/myorg/myproject/_workitems/edit/123'
         }]);
+      });
+
+      // Mock tabs.get to return tab information
+      mockTabs.get.mockImplementation((tabId, callback) => {
+        callback({
+          id: tabId,
+          url: 'https://dev.azure.com/myorg/myproject/_workitems/edit/123'
+        });
       });
 
       // Mock content extraction success
@@ -963,6 +996,14 @@ describe('Background Script Tests', () => {
           id: 1,
           url: 'https://dev.azure.com/myorg/myproject/_workitems/edit/123'
         }]);
+      });
+
+      // Mock tabs.get to return tab information
+      mockTabs.get.mockImplementation((tabId, callback) => {
+        callback({
+          id: tabId,
+          url: 'https://dev.azure.com/myorg/myproject/_workitems/edit/123'
+        });
       });
 
       // Mock content extraction success
@@ -1020,6 +1061,14 @@ describe('Background Script Tests', () => {
         }]);
       });
 
+      // Mock tabs.get to return tab information
+      mockTabs.get.mockImplementation((tabId, callback) => {
+        callback({
+          id: tabId,
+          url: 'https://dev.azure.com/myorg/myproject/_workitems/edit/123'
+        });
+      });
+
       // Mock content script timeout (no response)
       mockTabs.sendMessage.mockImplementation((tabId, message, callback) => {
         // Simulate timeout by not calling callback
@@ -1049,6 +1098,14 @@ describe('Background Script Tests', () => {
           id: 1,
           url: 'https://myorg.visualstudio.com/myproject/_workitems/edit/123'
         }]);
+      });
+
+      // Mock tabs.get to return tab information
+      mockTabs.get.mockImplementation((tabId, callback) => {
+        callback({
+          id: tabId,
+          url: 'https://myorg.visualstudio.com/myproject/_workitems/edit/123'
+        });
       });
 
       // Mock content extraction success

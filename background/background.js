@@ -780,25 +780,38 @@ function getTroubleshootingSteps(error, isNetworkError) {
 // Handle refresh content request from feedback window
 async function handleRefreshContent(message, sender, sendResponse) {
   try {
-    // Get the active tab (should be the Azure DevOps tab)
-    const tabs = await new Promise((resolve) => {
-      browserAPI.tabs.query({ active: true, currentWindow: true }, resolve);
+    let targetTabId = message.tabId;
+    
+    // If no tab ID provided, fall back to finding active tab
+    if (!targetTabId) {
+      const tabs = await new Promise((resolve) => {
+        browserAPI.tabs.query({ active: true, currentWindow: true }, resolve);
+      });
+      
+      if (!tabs || tabs.length === 0) {
+        throw new Error('No active tab found');
+      }
+      
+      targetTabId = tabs[0].id;
+    }
+    
+    // Get tab information to validate it's an Azure DevOps page
+    const targetTab = await new Promise((resolve) => {
+      browserAPI.tabs.get(targetTabId, resolve);
     });
     
-    if (!tabs || tabs.length === 0) {
-      throw new Error('No active tab found');
+    if (!targetTab) {
+      throw new Error('Target tab not found');
     }
     
-    const activeTab = tabs[0];
-    
-    // Check if the active tab is an Azure DevOps page
-    if (!activeTab.url || (!activeTab.url.includes('dev.azure.com') && !activeTab.url.includes('visualstudio.com'))) {
-      throw new Error('Active tab is not an Azure DevOps page');
+    // Check if the target tab is an Azure DevOps page
+    if (!targetTab.url || (!targetTab.url.includes('dev.azure.com') && !targetTab.url.includes('visualstudio.com'))) {
+      throw new Error('Target tab is not an Azure DevOps page');
     }
     
-    // Request content extraction from the active tab
+    // Request content extraction from the target tab
     const extractionResult = await new Promise((resolve) => {
-      browserAPI.tabs.sendMessage(activeTab.id, { action: 'extractContent' }, (response) => {
+      browserAPI.tabs.sendMessage(targetTabId, { action: 'extractContent' }, (response) => {
         if (browserAPI.runtime.lastError) {
           resolve({ success: false, error: browserAPI.runtime.lastError.message });
         } else {
