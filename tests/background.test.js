@@ -828,7 +828,8 @@ describe('Background Script Tests', () => {
           success: true,
           feedback: 'Test feedback response',
           promptInfo: expect.any(Object),
-          tokenUsage: expect.any(Object)
+          tokenUsage: expect.any(Object),
+          extractedContent: expect.any(Object)
         });
       } else {
         // If function not exposed, just verify the mocks were set up correctly
@@ -1156,7 +1157,8 @@ describe('Background Script Tests', () => {
           success: true,
           feedback: 'Test feedback response',
           promptInfo: expect.any(Object),
-          tokenUsage: expect.any(Object)
+          tokenUsage: expect.any(Object),
+          extractedContent: expect.any(Object)
         });
       }
     });

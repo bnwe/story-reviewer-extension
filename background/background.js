@@ -866,7 +866,8 @@ async function handleRefreshContent(message, sender, sendResponse) {
       success: true,
       feedback: llmResult.feedback,
       promptInfo: llmResult.promptInfo,
-      tokenUsage: llmResult.tokenUsage
+      tokenUsage: llmResult.tokenUsage,
+      extractedContent: storedData.extractedContent
     });
     
   } catch (error) {

@@ -48,3 +48,11 @@
   - Updated content script to send `STORE_TAB_ID` message instead of directly accessing tabs API
   - Added new message constant to `shared/constants.js`
   - _Addresses: Critical bug fix for popup functionality_
+
+- [x] 8. Fix refresh not updating "Original Story" content
+  - Fixed bug where refresh button updated feedback but not the "Original Story" section
+  - Root cause: Background script's `handleRefreshContent` function didn't include `extractedContent` in response
+  - Solution: Added `extractedContent: storedData.extractedContent` to the refresh response in background script
+  - Updated tests to expect the new `extractedContent` field in refresh responses
+  - Now when refresh is clicked, both the feedback and original story content are updated with newly extracted data
+  - _Addresses: Bug fix for refresh functionality to update all content sections_
