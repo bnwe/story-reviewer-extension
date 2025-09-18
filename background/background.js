@@ -11,7 +11,7 @@ browserAPI.runtime.onInstalled.addListener(() => {
 });
 
 // Handle messages from content scripts and options page
-browserAPI.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'STORY_CONTENT_EXTRACTED') {
     // Store extracted content for popup access
     browserAPI.storage.local.set({
@@ -19,6 +19,10 @@ browserAPI.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       extractionTimestamp: Date.now()
     });
     sendResponse({ success: true });
+  } else if (message.type === 'REFRESH_CONTENT') {
+    // Handle refresh content request from feedback window
+    handleRefreshContent(message, sender, sendResponse);
+    return true; // Keep message channel open for async response
   } else if (message.action === 'testApiConnection') {
     // Handle API connection testing from options page
     testApiConnection(message.settings)
@@ -771,6 +775,89 @@ function getTroubleshootingSteps(error, isNetworkError) {
   steps.push('Review the error details below for more information');
   
   return steps;
+}
+
+// Handle refresh content request from feedback window
+async function handleRefreshContent(message, sender, sendResponse) {
+  try {
+    // Get the active tab (should be the Azure DevOps tab)
+    const tabs = await new Promise((resolve) => {
+      browserAPI.tabs.query({ active: true, currentWindow: true }, resolve);
+    });
+    
+    if (!tabs || tabs.length === 0) {
+      throw new Error('No active tab found');
+    }
+    
+    const activeTab = tabs[0];
+    
+    // Check if the active tab is an Azure DevOps page
+    if (!activeTab.url || (!activeTab.url.includes('dev.azure.com') && !activeTab.url.includes('visualstudio.com'))) {
+      throw new Error('Active tab is not an Azure DevOps page');
+    }
+    
+    // Request content extraction from the active tab
+    const extractionResult = await new Promise((resolve) => {
+      browserAPI.tabs.sendMessage(activeTab.id, { action: 'extractContent' }, (response) => {
+        if (browserAPI.runtime.lastError) {
+          resolve({ success: false, error: browserAPI.runtime.lastError.message });
+        } else {
+          resolve(response || { success: false, error: 'No response from content script' });
+        }
+      });
+    });
+    
+    if (!extractionResult.success) {
+      throw new Error(`Content extraction failed: ${extractionResult.error || 'Unknown error'}`);
+    }
+    
+    // Wait for the extracted content to be stored
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Get the stored extracted content
+    const storedData = await new Promise((resolve) => {
+      browserAPI.storage.local.get(['extractedContent'], resolve);
+    });
+    
+    if (!storedData.extractedContent) {
+      throw new Error('No extracted content available');
+    }
+    
+    // Get API settings for processing
+    const settings = await new Promise((resolve) => {
+      browserAPI.storage.sync.get(['apiProvider', 'apiKey', 'model', 'temperature', 'maxTokens'], resolve);
+    });
+    
+    if (!settings.apiProvider || !settings.apiKey) {
+      throw new Error('API settings not configured. Please configure API settings in extension options.');
+    }
+    
+    // Process extracted content through existing AI API workflow
+    const llmResult = await sendToLLM(storedData.extractedContent, settings);
+    
+    if (!llmResult.success) {
+      throw new Error(`AI processing failed: ${llmResult.error || 'Unknown error'}`);
+    }
+    
+    // Send successful response back to feedback window
+    sendResponse({
+      type: 'CONTENT_REFRESHED',
+      success: true,
+      feedback: llmResult.feedback,
+      promptInfo: llmResult.promptInfo,
+      tokenUsage: llmResult.tokenUsage
+    });
+    
+  } catch (error) {
+    console.error('Refresh content failed:', error);
+    
+    // Send error response back to feedback window
+    sendResponse({
+      type: 'CONTENT_REFRESHED',
+      success: false,
+      error: error.message
+    });
+  }
 }
 
 // Sanitize error messages to remove any potential API key information
