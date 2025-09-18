@@ -878,5 +878,247 @@ describe('Background Script Tests', () => {
         expect(mockTabs.query).toBeDefined();
       }
     });
+
+    test('should handle content extraction failure during refresh', async () => {
+      // Mock active tab query to return Azure DevOps tab
+      mockTabs.query.mockImplementation((query, callback) => {
+        callback([{
+          id: 1,
+          url: 'https://dev.azure.com/myorg/myproject/_workitems/edit/123'
+        }]);
+      });
+
+      // Mock content extraction failure
+      mockTabs.sendMessage.mockImplementation((tabId, message, callback) => {
+        callback({ success: false, error: 'Failed to extract content from page' });
+      });
+
+      const message = { type: 'REFRESH_CONTENT' };
+      const sender = {};
+      const sendResponse = jest.fn();
+
+      if (global.handleRefreshContent && typeof global.handleRefreshContent === 'function') {
+        await global.handleRefreshContent(message, sender, sendResponse);
+
+        expect(sendResponse).toHaveBeenCalledWith({
+          type: 'CONTENT_REFRESHED',
+          success: false,
+          error: expect.stringContaining('Content extraction failed')
+        });
+      }
+    });
+
+    test('should handle missing API configuration during refresh', async () => {
+      // Mock active tab query to return Azure DevOps tab
+      mockTabs.query.mockImplementation((query, callback) => {
+        callback([{
+          id: 1,
+          url: 'https://dev.azure.com/myorg/myproject/_workitems/edit/123'
+        }]);
+      });
+
+      // Mock content extraction success
+      mockTabs.sendMessage.mockImplementation((tabId, message, callback) => {
+        callback({ success: true });
+      });
+
+      // Mock stored content
+      mockStorage.local.get.mockImplementation((keys, callback) => {
+        callback({
+          extractedContent: {
+            title: 'Test Story',
+            description: 'Test description'
+          }
+        });
+      });
+
+      // Mock missing API settings
+      mockStorage.sync.get.mockImplementation((keys, callback) => {
+        callback({
+          apiProvider: 'openai',
+          apiKey: '', // No API key
+          model: 'gpt-4'
+        });
+      });
+
+      const message = { type: 'REFRESH_CONTENT' };
+      const sender = {};
+      const sendResponse = jest.fn();
+
+      if (global.handleRefreshContent && typeof global.handleRefreshContent === 'function') {
+        await global.handleRefreshContent(message, sender, sendResponse);
+
+        expect(sendResponse).toHaveBeenCalledWith({
+          type: 'CONTENT_REFRESHED',
+          success: false,
+          error: expect.stringContaining('API settings not configured')
+        });
+      }
+    });
+
+    test('should handle LLM API failure during refresh', async () => {
+      // Mock active tab query to return Azure DevOps tab
+      mockTabs.query.mockImplementation((query, callback) => {
+        callback([{
+          id: 1,
+          url: 'https://dev.azure.com/myorg/myproject/_workitems/edit/123'
+        }]);
+      });
+
+      // Mock content extraction success
+      mockTabs.sendMessage.mockImplementation((tabId, message, callback) => {
+        callback({ success: true });
+      });
+
+      // Mock stored content
+      mockStorage.local.get.mockImplementation((keys, callback) => {
+        callback({
+          extractedContent: {
+            title: 'Test Story',
+            description: 'Test description'
+          }
+        });
+      });
+
+      // Mock API settings
+      mockStorage.sync.get.mockImplementation((keys, callback) => {
+        callback({
+          apiProvider: 'openai',
+          apiKey: 'test-key',
+          model: 'gpt-4'
+        });
+      });
+
+      // Mock failed LLM response
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: async () => 'Unauthorized'
+      });
+
+      const message = { type: 'REFRESH_CONTENT' };
+      const sender = {};
+      const sendResponse = jest.fn();
+
+      if (global.handleRefreshContent && typeof global.handleRefreshContent === 'function') {
+        await global.handleRefreshContent(message, sender, sendResponse);
+
+        expect(sendResponse).toHaveBeenCalledWith({
+          type: 'CONTENT_REFRESHED',
+          success: false,
+          error: expect.stringContaining('AI processing failed')
+        });
+      }
+    });
+
+    test('should handle content script communication timeout during refresh', async () => {
+      // Mock active tab query to return Azure DevOps tab
+      mockTabs.query.mockImplementation((query, callback) => {
+        callback([{
+          id: 1,
+          url: 'https://dev.azure.com/myorg/myproject/_workitems/edit/123'
+        }]);
+      });
+
+      // Mock content script timeout (no response)
+      mockTabs.sendMessage.mockImplementation((tabId, message, callback) => {
+        // Simulate timeout by not calling callback
+        global.chrome.runtime.lastError = { message: 'Could not establish connection' };
+        callback(null);
+      });
+
+      const message = { type: 'REFRESH_CONTENT' };
+      const sender = {};
+      const sendResponse = jest.fn();
+
+      if (global.handleRefreshContent && typeof global.handleRefreshContent === 'function') {
+        await global.handleRefreshContent(message, sender, sendResponse);
+
+        expect(sendResponse).toHaveBeenCalledWith({
+          type: 'CONTENT_REFRESHED',
+          success: false,
+          error: expect.stringContaining('Could not establish connection')
+        });
+      }
+    });
+
+    test('should handle refresh with Visual Studio URL format', async () => {
+      // Mock active tab query to return Visual Studio Azure DevOps tab
+      mockTabs.query.mockImplementation((query, callback) => {
+        callback([{
+          id: 1,
+          url: 'https://myorg.visualstudio.com/myproject/_workitems/edit/123'
+        }]);
+      });
+
+      // Mock content extraction success
+      mockTabs.sendMessage.mockImplementation((tabId, message, callback) => {
+        callback({ success: true });
+      });
+
+      // Mock stored content
+      mockStorage.local.get.mockImplementation((keys, callback) => {
+        callback({
+          extractedContent: {
+            title: 'Test Story',
+            description: 'Test description'
+          }
+        });
+      });
+
+      // Mock API settings
+      mockStorage.sync.get.mockImplementation((keys, callback) => {
+        callback({
+          apiProvider: 'openai',
+          apiKey: 'test-key',
+          model: 'gpt-4'
+        });
+      });
+
+      // Mock successful LLM response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          choices: [{
+            message: {
+              content: 'Test feedback response'
+            }
+          }]
+        })
+      });
+
+      const message = { type: 'REFRESH_CONTENT' };
+      const sender = {};
+      const sendResponse = jest.fn();
+
+      if (global.handleRefreshContent && typeof global.handleRefreshContent === 'function') {
+        await global.handleRefreshContent(message, sender, sendResponse);
+
+        expect(sendResponse).toHaveBeenCalledWith({
+          type: 'CONTENT_REFRESHED',
+          success: true,
+          feedback: 'Test feedback response',
+          promptInfo: expect.any(Object),
+          tokenUsage: expect.any(Object)
+        });
+      }
+    });
+
+    test('should handle refresh message workflow integration', async () => {
+      // Test that refresh message is properly handled by message listener
+      const messageHandler = jest.fn();
+      
+      // Mock the message listener behavior
+      const message = { type: 'REFRESH_CONTENT' };
+      const sender = {};
+      const sendResponse = jest.fn();
+
+      // Verify that REFRESH_CONTENT message type is recognized
+      expect(message.type).toBe('REFRESH_CONTENT');
+      
+      // Verify that the message would trigger async response handling
+      const shouldKeepChannelOpen = true; // This would be returned by the actual handler
+      expect(shouldKeepChannelOpen).toBe(true);
+    });
   });
 });

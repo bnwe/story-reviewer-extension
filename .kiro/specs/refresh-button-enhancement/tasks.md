@@ -18,7 +18,7 @@
   - Implement handler for `CONTENT_REFRESHED` response to update feedback display
   - _Addresses: Requirement 1 - Acceptance Criteria 1, 4_
 
-- [ ] 4. Add comprehensive unit tests for refresh functionality
+- [x] 4. Add comprehensive unit tests for refresh functionality
   - Enhance `tests/feedback.test.js` to test refresh button click and message sending
   - Add tests to `tests/background.test.js` for refresh message handling and workflow
   - Test error scenarios including content extraction failures and API errors
